@@ -1,13 +1,21 @@
 import pytest
-from automation.resources.sorting_data import SORT_AVG_EXPECTED_OUTPUT, SORT_MAX_EXPECTED_OUTPUT, SORT_SELECTION_TESTS, \
-    SORT_BUBBLE_TESTS, SORT_INSERTION_TESTS, SORT_MERGE_TESTS, SORT_QUICK_TESTS, SORT_HEAP_TESTS, SORT_RADIX_TESTS, \
-    SORT_STALIN_TESTS
+from automation.resources.sorting_data import (
+    SORT_AVG_EXPECTED_OUTPUT,
+    SORT_MAX_EXPECTED_OUTPUT,
+    SORT_SELECTION_TESTS,
+    SORT_BUBBLE_TESTS,
+    SORT_INSERTION_TESTS,
+    SORT_MERGE_TESTS,
+    SORT_QUICK_TESTS,
+    SORT_HEAP_TESTS,
+    SORT_RADIX_TESTS,
+    SORT_STALIN_TESTS,
+)
 from automation.test_sorting import TestSortingAlgorithms
 from sorting import PracticeSortingAlgorithms
 
 
 class TestPracticeSortingAlgorithms(TestSortingAlgorithms):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.sorter = PracticeSortingAlgorithms()

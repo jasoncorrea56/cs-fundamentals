@@ -3,7 +3,6 @@ from data_structures.linked_list_single import Node
 
 
 class FastSlowPointers(object):
-
     @staticmethod
     def has_cycle_in_linked_list(head: Node) -> bool:
         """
@@ -68,7 +67,6 @@ class FastSlowPointers(object):
 
 
 class PracticeFastSlowPointers(object):
-
     @staticmethod
     def has_cycle_in_linked_list(head: Node) -> bool:
         """

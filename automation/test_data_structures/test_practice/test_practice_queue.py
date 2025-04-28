@@ -1,10 +1,12 @@
 import pytest
 from automation.test_data_structures.test_queue import TestQueue
-from data_structures.queue import PracticeQueueCircularArray, PracticeQueueCircularLinkedList
+from data_structures.queue import (
+    PracticeQueueCircularArray,
+    PracticeQueueCircularLinkedList,
+)
 
 
 class TestPracticeQueue(TestQueue):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.queue_array = PracticeQueueCircularArray(4)

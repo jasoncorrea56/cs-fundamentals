@@ -4,7 +4,6 @@ from data_structures.linked_list_double import PracticeDoublyLinkedList
 
 
 class TestPracticeLinkedListSingle(TestLinkedListDouble):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.linked_list = PracticeDoublyLinkedList()

@@ -4,7 +4,6 @@ from data_structures.stack import PracticeStackArray, PracticeStackLinkedList
 
 
 class TestPracticeStack(TestStack):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.stack_array = PracticeStackArray()

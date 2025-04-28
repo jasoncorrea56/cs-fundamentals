@@ -12,6 +12,7 @@ class BinarySearchTree(BinaryTreeNode):
     While traditional traversals (pre/in/post-order) are possible, inorder traversal in BST will be in ascending order.
     Note: Inorder traversal is the most common traversal method of a BST.
     """
+
     def __init__(self, value=0, left=None, right=None):
         super().__init__(value, left, right)
 

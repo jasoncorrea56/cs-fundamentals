@@ -24,14 +24,17 @@ class MinHeap(object):
             return False
 
         self.min_heap[self.real_size] = element  # Add element to the heap
-        index = self.real_size                   # Index of the newly added element
-        parent = index // 2                      # Parent index of the newly added element
+        index = self.real_size  # Index of the newly added element
+        parent = index // 2  # Parent index of the newly added element
 
         # If the newly added element is smaller than its parent, swap the parent and new element
         while (self.min_heap[index] < self.min_heap[parent]) and index > 1:
-            self.min_heap[parent], self.min_heap[index] = self.min_heap[index], self.min_heap[parent]
-            index = parent                       # Update index of the newly added element to its parent
-            parent = index // 2                  # Update index of the parent to its parent
+            self.min_heap[parent], self.min_heap[index] = (
+                self.min_heap[index],
+                self.min_heap[parent],
+            )
+            index = parent  # Update index of the newly added element to its parent
+            parent = index // 2  # Update index of the parent to its parent
 
         return True
 
@@ -45,22 +48,36 @@ class MinHeap(object):
             return sys.maxsize
         else:
             popped_element = self.min_heap[1]
-            self.min_heap[1] = self.min_heap[self.real_size]  # Put the last element in the Heap to the top
-            self.real_size -= 1                               # Decrement number of elements in the Heap
-            index = 1                                         # Index of the popped element
+            self.min_heap[1] = self.min_heap[
+                self.real_size
+            ]  # Put the last element in the Heap to the top
+            self.real_size -= 1  # Decrement number of elements in the Heap
+            index = 1  # Index of the popped element
 
             # While the popped element is not a leaf node
             while index <= (self.real_size // 2):
-                left = index * 2        # Get the index for the left child of the popped element
-                right = (index * 2)     # Get the index for the right child of the popped element
+                left = (
+                    index * 2
+                )  # Get the index for the left child of the popped element
+                right = (
+                    index * 2
+                )  # Get the index for the right child of the popped element
 
                 # If the popped element is larger than the left or right child, swap values with the smaller of the two
-                if (self.min_heap[index] > self.min_heap[left]) or (self.min_heap[index] > self.min_heap[right]):
+                if (self.min_heap[index] > self.min_heap[left]) or (
+                    self.min_heap[index] > self.min_heap[right]
+                ):
                     if self.min_heap[left] < self.min_heap[right]:
-                        self.min_heap[left], self.min_heap[index] = self.min_heap[index], self.min_heap[left]
+                        self.min_heap[left], self.min_heap[index] = (
+                            self.min_heap[index],
+                            self.min_heap[left],
+                        )
                         index = left
                     else:
-                        self.min_heap[right], self.min_heap[index] = self.min_heap[index], self.min_heap[right]
+                        self.min_heap[right], self.min_heap[index] = (
+                            self.min_heap[index],
+                            self.min_heap[right],
+                        )
                         index = right
 
             return popped_element
@@ -80,7 +97,7 @@ class MinHeap(object):
         return self.real_size
 
     def __str__(self):
-        return str(self.min_heap[1: self.real_size + 1])
+        return str(self.min_heap[1 : self.real_size + 1])
 
 
 class MaxHeap(object):
@@ -106,14 +123,17 @@ class MaxHeap(object):
             return False
 
         self.max_heap[self.real_size] = element  # Add element to the heap
-        index = self.real_size                   # Index of the newly added element
-        parent = index // 2                      # Parent index of the newly added element
+        index = self.real_size  # Index of the newly added element
+        parent = index // 2  # Parent index of the newly added element
 
         # If the newly added element is larger than its parent, swap the parent and new element
         while (self.max_heap[index] > self.max_heap[parent]) and index > 1:
-            self.max_heap[parent], self.max_heap[index] = self.max_heap[index], self.max_heap[parent]
-            index = parent                       # Update index of the newly added element to its parent
-            parent = index // 2                  # Update index of the parent to its parent
+            self.max_heap[parent], self.max_heap[index] = (
+                self.max_heap[index],
+                self.max_heap[parent],
+            )
+            index = parent  # Update index of the newly added element to its parent
+            parent = index // 2  # Update index of the parent to its parent
 
         return True
 
@@ -127,22 +147,36 @@ class MaxHeap(object):
             return -sys.maxsize
         else:
             popped_element = self.max_heap[1]
-            self.max_heap[1] = self.max_heap[self.real_size]  # Put the last element in the Heap to the top
-            self.real_size -= 1                               # Decrement number of elements in the Heap
-            index = 1                                         # Index of the popped element
+            self.max_heap[1] = self.max_heap[
+                self.real_size
+            ]  # Put the last element in the Heap to the top
+            self.real_size -= 1  # Decrement number of elements in the Heap
+            index = 1  # Index of the popped element
 
             # While the popped element is not a leaf node
             while index <= (self.real_size // 2):
-                left = index * 2        # Get the index for the left child of the popped element
-                right = (index * 2)     # Get the index for the right child of the popped element
+                left = (
+                    index * 2
+                )  # Get the index for the left child of the popped element
+                right = (
+                    index * 2
+                )  # Get the index for the right child of the popped element
 
                 # If the popped element is smaller than the left or right child, swap values with the larger of the two
-                if (self.max_heap[index] < self.max_heap[left]) or (self.max_heap[index] < self.max_heap[right]):
+                if (self.max_heap[index] < self.max_heap[left]) or (
+                    self.max_heap[index] < self.max_heap[right]
+                ):
                     if self.max_heap[left] > self.max_heap[right]:
-                        self.max_heap[left], self.max_heap[index] = self.max_heap[index], self.max_heap[left]
+                        self.max_heap[left], self.max_heap[index] = (
+                            self.max_heap[index],
+                            self.max_heap[left],
+                        )
                         index = left
                     else:
-                        self.max_heap[right], self.max_heap[index] = self.max_heap[index], self.max_heap[right]
+                        self.max_heap[right], self.max_heap[index] = (
+                            self.max_heap[index],
+                            self.max_heap[right],
+                        )
                         index = right
 
             return popped_element
@@ -162,7 +196,7 @@ class MaxHeap(object):
         return self.real_size
 
     def __str__(self):
-        return str(self.max_heap[1: self.real_size + 1])
+        return str(self.max_heap[1 : self.real_size + 1])
 
 
 class PracticeMinHeap(object):

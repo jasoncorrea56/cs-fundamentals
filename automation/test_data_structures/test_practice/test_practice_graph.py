@@ -1,22 +1,30 @@
 import pytest
-from automation.resources.data_structures.graph_data import GRAPH_UNION_FIND_FIND_TESTS, \
-    GRAPH_UNION_FIND_IS_CONNECTED_TESTS, GRAPH_UNION_FIND_UNION_TESTS, GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS
+from automation.resources.data_structures.graph_data import (
+    GRAPH_UNION_FIND_FIND_TESTS,
+    GRAPH_UNION_FIND_IS_CONNECTED_TESTS,
+    GRAPH_UNION_FIND_UNION_TESTS,
+    GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS,
+)
 from automation.test_data_structures.test_graph import TestGraph
-from data_structures.graph import UndirectedGraphVertex, UndirectedGraph, PracticeUnionFind, PracticeGraphProblems
+from data_structures.graph import (
+    UndirectedGraphVertex,
+    UndirectedGraph,
+    PracticeUnionFind,
+    PracticeGraphProblems,
+)
 
 
 class TestPracticeGraph(TestGraph):
-
     @classmethod
     def setup_class(cls):
         cls.search = PracticeUnionFind(10)
         cls.undirected_graph = UndirectedGraph()
         cls.problems = PracticeGraphProblems()
-        cls.node_a = UndirectedGraphVertex('A')
-        cls.node_b = UndirectedGraphVertex('B')
-        cls.node_c = UndirectedGraphVertex('C')
-        cls.node_d = UndirectedGraphVertex('D')
-        cls.node_e = UndirectedGraphVertex('E')
+        cls.node_a = UndirectedGraphVertex("A")
+        cls.node_b = UndirectedGraphVertex("B")
+        cls.node_c = UndirectedGraphVertex("C")
+        cls.node_d = UndirectedGraphVertex("D")
+        cls.node_e = UndirectedGraphVertex("E")
 
     def test_build_undirected_graph_vertices(self):
         try:
@@ -81,9 +89,13 @@ class TestPracticeGraph(TestGraph):
         except NotImplementedError:
             assert True
 
-    @pytest.mark.parametrize("m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS)
+    @pytest.mark.parametrize(
+        "m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS
+    )
     def test_problem_number_of_islands_2(self, m, n, positions, output):
         try:
-            super(TestPracticeGraph, self).test_problem_number_of_islands_2(m, n, positions, output)
+            super(TestPracticeGraph, self).test_problem_number_of_islands_2(
+                m, n, positions, output
+            )
         except NotImplementedError:
             assert True

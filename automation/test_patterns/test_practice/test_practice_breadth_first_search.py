@@ -4,7 +4,6 @@ from patterns.breadth_first_search import PracticeBreadthFirstSearch
 
 
 class TestPracticeBreadthFirstSearch(TestBreadthFirstSearch):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.bfs = PracticeBreadthFirstSearch()

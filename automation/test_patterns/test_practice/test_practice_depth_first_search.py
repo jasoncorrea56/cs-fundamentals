@@ -4,7 +4,6 @@ from patterns.depth_first_search import PracticeDepthFirstSearch
 
 
 class TestPracticeDepthFirstSearch(TestDepthFirstSearch):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.dfs = PracticeDepthFirstSearch()
@@ -15,7 +14,6 @@ class TestPracticeDepthFirstSearch(TestDepthFirstSearch):
             super().test_preorder_dfs(dfs_root)
         except NotImplementedError:
             assert True
-
 
     @pytest.mark.usefixtures("dfs_root2")
     def test_preorder_dfs_2(self, dfs_root2):

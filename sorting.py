@@ -2,7 +2,6 @@ import sys
 
 
 class SortingAlgorithms:
-
     @staticmethod
     def selection_sort(nums: list[int]) -> list[int]:
         """
@@ -10,9 +9,9 @@ class SortingAlgorithms:
         :param nums: List of integers.
         :return: Sorted list of integers.
         """
-        for i in range(len(nums)-1):
+        for i in range(len(nums) - 1):
             min_index = i
-            for j in range(i+1, len(nums)):
+            for j in range(i + 1, len(nums)):
                 if nums[j] < nums[min_index]:
                     min_index = j
             nums[min_index], nums[i] = nums[i], nums[min_index]
@@ -25,10 +24,10 @@ class SortingAlgorithms:
         :param nums: List of integers.
         :return: Sorted list of integers.
         """
-        for i in range(len(nums)-1):
-            for j in range(len(nums)-i-1):
-                if nums[j] > nums[j+1]:
-                    nums[j], nums[j+1] = nums[j+1], nums[j]
+        for i in range(len(nums) - 1):
+            for j in range(len(nums) - i - 1):
+                if nums[j] > nums[j + 1]:
+                    nums[j], nums[j + 1] = nums[j + 1], nums[j]
         return nums
 
     @staticmethod
@@ -40,11 +39,11 @@ class SortingAlgorithms:
         """
         for i in range(1, len(nums)):
             key = nums[i]
-            j = i-1
+            j = i - 1
             while j >= 0 and nums[j] > key:
-                nums[j+1] = nums[j]
+                nums[j + 1] = nums[j]
                 j -= 1
-            nums[j+1] = key
+            nums[j + 1] = key
         return nums
 
     def merge_sort(self, nums: list[int]) -> list[int]:
@@ -94,13 +93,13 @@ class SortingAlgorithms:
         :param high: Ending index
         :return:
         """
-        i = (low - 1)
+        i = low - 1
         pivot = nums[high]
         for j in range(low, high):
             if nums[j] <= pivot:
                 i += 1
                 nums[i], nums[j] = nums[j], nums[i]
-        nums[i+1], nums[high] = nums[high], nums[i+1]
+        nums[i + 1], nums[high] = nums[high], nums[i + 1]
         return i + 1
 
     def quick_sort(self, nums: list[int], low: int, high: int) -> list[int]:
@@ -173,7 +172,7 @@ class SortingAlgorithms:
 
         # Store count of occurrences in count[]
         for i in range(0, n):
-            index = (nums[i] / exp1)
+            index = nums[i] / exp1
             count[int(index % 10)] += 1
 
         # Change count[i] so that count[i] now contains actual position of this exp1 in output array
@@ -183,7 +182,7 @@ class SortingAlgorithms:
         # Build the output array
         i = n - 1
         while i >= 0:
-            index = (nums[i] / exp1)
+            index = nums[i] / exp1
             output[count[int(index % 10)] - 1] = nums[i]
             count[int(index % 10)] -= 1
             i -= 1
@@ -246,24 +245,23 @@ class SortingAlgorithms:
         """
         previous = -sys.maxsize
         # Convert list to dict for O(1) element access time complexity
-        nums_dict = {nums[i]: None for i in range(0, len(nums))}        # O(n)
+        nums_dict = {nums[i]: None for i in range(0, len(nums))}  # O(n)
 
         # When iterating over a dict you cannot delete from it, so make a copy
-        loop_dict = nums_dict.copy()                                    # O(n)
+        loop_dict = nums_dict.copy()  # O(n)
 
         # Iterate over list eliminating out of order elements
-        for num in loop_dict:                                           # O(n)
-            if num < previous:                                          # O(1)
-                del nums_dict[num]                                      # O(1)
+        for num in loop_dict:  # O(n)
+            if num < previous:  # O(1)
+                del nums_dict[num]  # O(1)
             else:
-                previous = num                                          # O(1)
+                previous = num  # O(1)
 
-        nums = [i for i in nums_dict]                                   # O(n)
+        nums = [i for i in nums_dict]  # O(n)
         return nums
 
 
 class PracticeSortingAlgorithms:
-
     @staticmethod
     def selection_sort(nums: list[int]) -> list[int]:
         """

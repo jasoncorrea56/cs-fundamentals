@@ -20,7 +20,6 @@ class NormalClass(object):
 
 
 class NormalChild(NormalClass):
-
     def print_access(self):
         print("Normal class_access = {}".format(self.get_class_access()))
         print("Normal instance_access = {}".format(self.get_instance_access()))
@@ -30,7 +29,7 @@ class SingletonClass(object):
     __class_var = None
 
     def __new__(cls):
-        if not hasattr(cls, 'instance'):
+        if not hasattr(cls, "instance"):
             cls.instance = super(SingletonClass, cls).__new__(cls)
         return cls.instance
 
@@ -52,7 +51,6 @@ class SingletonClass(object):
 
 
 class SingletonChild(SingletonClass):
-
     def print_access(self):
         print("Singleton class_access = {}".format(self.get_class_access()))
         print("Singleton instance_access = {}".format(self.get_instance_access()))
@@ -85,7 +83,6 @@ class BorgSingletonClass(object):
 
 
 class BorgSingletonChild(BorgSingletonClass):
-
     def print_access(self):
         print("BorgSingleton class_access = {}".format(self.get_class_access()))
         print("BorgSingleton instance_access = {}".format(self.get_instance_access()))
@@ -134,31 +131,25 @@ borg_child2.print_access()
 
 
 class PracticeSingletonClass(object):
-
     def __new__(cls):
         raise NotImplementedError
 
 
 class PracticeSingletonChild(PracticeSingletonClass):
-
     def print_access(self):
         raise NotImplementedError
 
 
 class PracticeBorgSingletonClass(object):
-
     def __new__(cls, *args, **kwargs):
         raise NotImplementedError
 
 
 class PracticeBorgSingletonChild(PracticeBorgSingletonClass):
-
     def print_access(self):
         raise NotImplementedError
 
 
 class PracticeBorgSingletonResetChild(PracticeBorgSingletonClass):
-
     def print_access(self):
         raise NotImplementedError
-

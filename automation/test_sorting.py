@@ -1,13 +1,25 @@
 import pytest
-from automation.resources.sorting_data import SORT_AVG_EXPECTED_OUTPUT, SORT_MAX_EXPECTED_OUTPUT, SORT_X, SORT_Y, SORT_BUCKET_NUMS, \
-    SORT_SORTED_BUCKET_NUMS_OUTPUT, SORT_SELECTION_TESTS, SORT_BUBBLE_TESTS, SORT_INSERTION_TESTS, SORT_MERGE_TESTS, \
-    SORT_QUICK_TESTS, SORT_HEAP_TESTS, SORT_RADIX_TESTS, SORT_STALIN_TESTS
+from automation.resources.sorting_data import (
+    SORT_AVG_EXPECTED_OUTPUT,
+    SORT_MAX_EXPECTED_OUTPUT,
+    SORT_X,
+    SORT_Y,
+    SORT_BUCKET_NUMS,
+    SORT_SORTED_BUCKET_NUMS_OUTPUT,
+    SORT_SELECTION_TESTS,
+    SORT_BUBBLE_TESTS,
+    SORT_INSERTION_TESTS,
+    SORT_MERGE_TESTS,
+    SORT_QUICK_TESTS,
+    SORT_HEAP_TESTS,
+    SORT_RADIX_TESTS,
+    SORT_STALIN_TESTS,
+)
 
 from sorting import SortingAlgorithms
 
 
 class TestSortingAlgorithms(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.sorter = SortingAlgorithms()
@@ -52,7 +64,7 @@ class TestSortingAlgorithms(object):
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_QUICK_TESTS)
     def test_quick_sort(self, nums, sorted_nums):
-        results = self.sorter.quick_sort(nums, 0, len(nums)-1)
+        results = self.sorter.quick_sort(nums, 0, len(nums) - 1)
         assert results == sorted_nums
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_HEAP_TESTS)

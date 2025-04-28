@@ -2,7 +2,6 @@ import math
 
 
 class SlidingWindow(object):
-
     @staticmethod
     def avg_subarray_of_size_k(nums: list[int], k: int) -> list[float]:
         """
@@ -23,9 +22,9 @@ class SlidingWindow(object):
         window_sum = 0
         for end in range(len(nums)):
             window_sum += nums[end]
-            if end >= k-1:
-                result.append(window_sum/k)
-                window_sum -= nums[end-k+1]
+            if end >= k - 1:
+                result.append(window_sum / k)
+                window_sum -= nums[end - k + 1]
         return result
 
     @staticmethod
@@ -49,9 +48,9 @@ class SlidingWindow(object):
         max_sum = win_sum = 0
         for end in range(len(nums)):
             win_sum += nums[end]
-            if end >= k-1:
+            if end >= k - 1:
                 max_sum = max(max_sum, win_sum)
-                win_sum -= nums[end-k+1]
+                win_sum -= nums[end - k + 1]
         return max_sum
 
     @staticmethod
@@ -82,7 +81,7 @@ class SlidingWindow(object):
         for end in range(len(nums)):
             window_sum += nums[end]
             while window_sum >= s:
-                min_len = min(min_len, end-start+1)
+                min_len = min(min_len, end - start + 1)
                 window_sum -= nums[start]
                 start += 1
         return 0 if min_len == math.inf else min_len
@@ -110,7 +109,7 @@ class SlidingWindow(object):
                 if char_freq[left] == 0:
                     del char_freq[left]
                 start += 1
-            sub_len = max(sub_len, end-start+1)
+            sub_len = max(sub_len, end - start + 1)
         return sub_len
 
     @staticmethod
@@ -141,7 +140,7 @@ class SlidingWindow(object):
                     del fruit_freq[left]
                 start += 1
 
-            max_fruit = max(max_fruit, end-start+1)
+            max_fruit = max(max_fruit, end - start + 1)
         return max_fruit
 
     @staticmethod
@@ -179,7 +178,9 @@ class SlidingWindow(object):
         return result
 
     @staticmethod
-    def longest_substring_with_same_letters_after_replacement(input_string: str, k: int) -> int:
+    def longest_substring_with_same_letters_after_replacement(
+        input_string: str, k: int
+    ) -> int:
         """
         Given a string of lowercase letters, if you are allowed to replace no more than ‘k’ letters
         with any letter, find the length of the longest substring having the same letters after replacement.
@@ -229,7 +230,6 @@ class SlidingWindow(object):
 
 
 class PracticeSlidingWindow(object):
-
     @staticmethod
     def avg_subarray_of_size_k(nums: list[int], k: int) -> list[float]:
         """
@@ -299,7 +299,9 @@ class PracticeSlidingWindow(object):
         raise NotImplementedError
 
     @staticmethod
-    def longest_substring_with_same_letters_after_replacement(input_string: str, k: int) -> int:
+    def longest_substring_with_same_letters_after_replacement(
+        input_string: str, k: int
+    ) -> int:
         """
         Given a string of lowercase letters, if you are allowed to replace no more than ‘k’ letters
         with any letter, find the length of the longest substring having the same letters after replacement.

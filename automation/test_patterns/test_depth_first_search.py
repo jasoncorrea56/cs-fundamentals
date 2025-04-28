@@ -1,11 +1,17 @@
 import pytest
-from automation.resources.patterns.dfs_data import DFS_PREORDER_OUTPUT, DFS_PREORDER_2_OUTPUT, \
-    DFS_INORDER_OUTPUT, DFS_INORDER_2_OUTPUT, DFS_POSTORDER_OUTPUT, DFS_POSTORDER_2_OUTPUT, DFS_LEVEL_AVG_OUTPUT
+from automation.resources.patterns.dfs_data import (
+    DFS_PREORDER_OUTPUT,
+    DFS_PREORDER_2_OUTPUT,
+    DFS_INORDER_OUTPUT,
+    DFS_INORDER_2_OUTPUT,
+    DFS_POSTORDER_OUTPUT,
+    DFS_POSTORDER_2_OUTPUT,
+    DFS_LEVEL_AVG_OUTPUT,
+)
 from patterns.depth_first_search import DepthFirstSearch, Node
 
 
 class TestDepthFirstSearch(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.dfs = DepthFirstSearch()

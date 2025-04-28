@@ -4,7 +4,6 @@ from data_structures.stack import StackArray, StackLinkedList
 
 
 class TestStack(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.stack_array = StackArray()

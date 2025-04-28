@@ -4,7 +4,6 @@ from data_structures.binary_search_tree import PracticeBinarySearchTree
 
 
 class TestPracticeBinarySearchTree(TestBinarySearchTree):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.bst = PracticeBinarySearchTree()

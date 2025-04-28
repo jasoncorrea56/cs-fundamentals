@@ -1,11 +1,14 @@
-import pytest
 from automation.test_singleton import TestSingletonPattern
-from singleton import PracticeSingletonClass, PracticeSingletonChild, PracticeBorgSingletonClass, \
-    PracticeBorgSingletonChild, PracticeBorgSingletonResetChild
+from singleton import (
+    PracticeSingletonClass,
+    PracticeSingletonChild,
+    PracticeBorgSingletonClass,
+    PracticeBorgSingletonChild,
+    PracticeBorgSingletonResetChild,
+)
 
 
 class TestPracticeSingletonPattern(TestSingletonPattern):
-
     @classmethod
     def setup_class(cls) -> None:
         pass

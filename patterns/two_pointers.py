@@ -3,7 +3,6 @@ from collections import deque
 
 
 class TwoPointers(object):
-
     #
     # Easy Difficulty
     #
@@ -69,9 +68,9 @@ class TwoPointers(object):
         nums.sort()
         results = []
         for i in range(len(nums)):
-            if i > 0 and nums[i] == nums[i-1]:
+            if i > 0 and nums[i] == nums[i - 1]:
                 continue
-            find_pair(-nums[i], i+1)
+            find_pair(-nums[i], i + 1)
         return results
 
     @staticmethod
@@ -114,7 +113,7 @@ class TwoPointers(object):
         :return: Sorted list of the square of the input integers
         """
         n = len(nums)
-        left, right, biggest_index = 0, n-1, n-1
+        left, right, biggest_index = 0, n - 1, n - 1
         squared = [0] * n
         while left <= right:
             left_square = nums[left] * nums[left]
@@ -144,15 +143,17 @@ class TwoPointers(object):
         """
         nums.sort()
         smallest_diff = math.inf
-        for i in range(len(nums)-2):
+        for i in range(len(nums) - 2):
             left = i + 1
             right = len(nums) - 1
             while left < right:
                 target_diff = target - nums[i] - nums[left] - nums[right]
                 if target_diff == 0:
                     return target
-                if abs(target_diff) < abs(smallest_diff) or \
-                        (abs(target_diff) == abs(smallest_diff) and target_diff > smallest_diff):
+                if abs(target_diff) < abs(smallest_diff) or (
+                    abs(target_diff) == abs(smallest_diff)
+                    and target_diff > smallest_diff
+                ):
                     smallest_diff = target_diff
                 if target_diff > 0:
                     left += 1
@@ -187,13 +188,15 @@ class TwoPointers(object):
         arr.sort()
         result = 0
         triplets = []
-        for i in range(len(arr)-2):
+        for i in range(len(arr) - 2):
             result += search_pair(target - arr[i], i)
         print("\nTriplets = {}".format(triplets))
         return result
 
     @staticmethod
-    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list]:
+    def subarrays_with_product_less_than_target(
+        arr: list[int], target: int
+    ) -> list[list]:
         """
         Given an array with positive numbers and a positive target number,
         find all contiguous subarrays whose product is less than the target number.
@@ -209,7 +212,7 @@ class TwoPointers(object):
                 product /= arr[left]
                 left += 1
             temp = deque()
-            for i in range(right, left-1, -1):
+            for i in range(right, left - 1, -1):
                 temp.appendleft(arr[i])
                 result.append(list(temp))
         return result
@@ -222,7 +225,7 @@ class TwoPointers(object):
         :param arr: Unsorted list of 0s, 1s, & 2s
         :return: Sorted list of 0s, 1s, & 2s
         """
-        i, low, high = 0, 0, len(arr)-1
+        i, low, high = 0, 0, len(arr) - 1
         while i <= high:
             if arr[i] == 0:
                 arr[i], arr[low] = arr[low], arr[i]
@@ -237,7 +240,6 @@ class TwoPointers(object):
 
 
 class PracticeTwoPointers(object):
-
     #
     # Easy Difficulty
     #
@@ -320,7 +322,9 @@ class PracticeTwoPointers(object):
         raise NotImplementedError
 
     @staticmethod
-    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list]:
+    def subarrays_with_product_less_than_target(
+        arr: list[int], target: int
+    ) -> list[list]:
         """
         Given an array with positive numbers and a positive target number,
         find all contiguous subarrays whose product is less than the target number.
