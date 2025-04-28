@@ -1,5 +1,3 @@
-
-
 class Node:
     def __init__(self, data, next_node=None, prev_node=None):
         self.value = data
@@ -62,8 +60,8 @@ class DoublyLinkedList(object):
         """
         new_node = Node(val)
         new_node.next = self.head
-        if self.head:                   #
-            self.head.prev = new_node   #
+        if self.head:  #
+            self.head.prev = new_node  #
         self.head = new_node
         return
 
@@ -79,7 +77,7 @@ class DoublyLinkedList(object):
         new_node = Node(val)
         prev_node = self.get_tail()
         prev_node.next = new_node
-        new_node.prev = prev_node       #
+        new_node.prev = prev_node  #
         return
 
     def add_at_index(self, index: int, val: int) -> None:
@@ -96,12 +94,12 @@ class DoublyLinkedList(object):
         if not prev_node:
             return
         new_node = Node(val)
-        next_node = prev_node.next      #
-        new_node.prev = prev_node       #
+        next_node = prev_node.next  #
+        new_node.prev = prev_node  #
         new_node.next = prev_node.next
         prev_node.next = new_node
-        if next_node:                   #
-            next_node.prev = new_node   #
+        if next_node:  #
+            next_node.prev = new_node  #
         return
 
     def delete_at_index(self, index: int) -> None:
@@ -113,9 +111,9 @@ class DoublyLinkedList(object):
         del_node = self.get_node(index)
         if not del_node:
             return
-        next_node = del_node.next       #
-        prev_node = del_node.prev       #
-        if prev_node:                   #
+        next_node = del_node.next  #
+        prev_node = del_node.prev  #
+        if prev_node:  #
             prev_node.next = next_node  #
         else:
             self.head = next_node

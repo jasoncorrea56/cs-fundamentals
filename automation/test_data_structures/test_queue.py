@@ -1,10 +1,12 @@
 import pytest
-from automation.resources.data_structures.queue_data import QUEUE_ARRAY_OUTPUT, QUEUE_LINKED_LIST_OUTPUT
+from automation.resources.data_structures.queue_data import (
+    QUEUE_ARRAY_OUTPUT,
+    QUEUE_LINKED_LIST_OUTPUT,
+)
 from data_structures.queue import QueueCircularArray, QueueCircularLinkedList
 
 
 class TestQueue(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.queue_array = QueueCircularArray(4)

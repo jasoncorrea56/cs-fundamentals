@@ -4,7 +4,6 @@ from data_structures.linked_list_single import PracticeSinglyLinkedList
 
 
 class TestPracticeLinkedListSingle(TestLinkedListSingle):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.linked_list = PracticeSinglyLinkedList()

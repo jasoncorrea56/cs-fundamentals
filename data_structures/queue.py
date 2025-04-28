@@ -5,7 +5,7 @@ from typing import Optional
 
 class QueueCircularArray(object):
     def __init__(self, capacity: int):
-        self.queue = [0]*capacity
+        self.queue = [0] * capacity
         self.capacity = capacity
         self.size = 0
         self.head = 0

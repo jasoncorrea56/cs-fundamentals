@@ -9,7 +9,6 @@ class Node(object):
 
 
 class BreadthFirstSearch(object):
-
     @staticmethod
     def level_order_bfs(root: Node):
         result = []
@@ -40,6 +39,7 @@ class BreadthFirstSearch(object):
         :param root: Root node of binary tree
         :return: List of averages for each level
         """
+
         def bfs(node):
             if not node:
                 return None
@@ -77,7 +77,6 @@ class BreadthFirstSearch(object):
 
 
 class PracticeBreadthFirstSearch(object):
-
     @staticmethod
     def level_order_bfs(root: Node):
         raise NotImplementedError

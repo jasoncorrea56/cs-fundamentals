@@ -1,11 +1,12 @@
 import pytest
-from automation.resources.patterns.fast_slow_pointers_data import FAST_SLOW_POINTERS_OUTPUT
+from automation.resources.patterns.fast_slow_pointers_data import (
+    FAST_SLOW_POINTERS_OUTPUT,
+)
 from data_structures.linked_list_single import SinglyLinkedList
 from patterns.fast_slow_pointers import FastSlowPointers
 
 
 class TestFastSlowPointers(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.fs_pointers = FastSlowPointers()
@@ -31,5 +32,7 @@ class TestFastSlowPointers(object):
         assert results is True
 
     def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node):
-        results = self.fs_pointers.get_first_node_for_cycle_in_linked_list(self.linked_list.head)
+        results = self.fs_pointers.get_first_node_for_cycle_in_linked_list(
+            self.linked_list.head
+        )
         assert results == cycle_first_node

@@ -1,5 +1,3 @@
-
-
 class Node(object):
     def __init__(self, value):
         self.value = value
@@ -8,7 +6,6 @@ class Node(object):
 
 
 class DepthFirstSearch(object):
-
     def preorder_dfs(self, node, data):
         if not node:
             return None
@@ -43,6 +40,7 @@ class DepthFirstSearch(object):
         :param root: Root node of binary tree
         :return: List of averages for each level
         """
+
         def preorder_dfs(node, level=0):
             if not node:
                 return None
@@ -71,7 +69,6 @@ class DepthFirstSearch(object):
 
 
 class PracticeDepthFirstSearch(object):
-
     def preorder_dfs(self, node, data):
         raise NotImplementedError
 

@@ -53,8 +53,12 @@ class UndirectedGraph:
             result &= self.add_vertex(vertex)
         return result
 
-    def add_edge(self, vertex_from: UndirectedGraphVertex, vertex_to: UndirectedGraphVertex):
-        if isinstance(vertex_from, UndirectedGraphVertex) and isinstance(vertex_to, UndirectedGraphVertex):
+    def add_edge(
+        self, vertex_from: UndirectedGraphVertex, vertex_to: UndirectedGraphVertex
+    ):
+        if isinstance(vertex_from, UndirectedGraphVertex) and isinstance(
+            vertex_to, UndirectedGraphVertex
+        ):
             vertex_from.add_neighbor(vertex_to)
             self.vertices[vertex_from.value] = vertex_from.neighbors
             self.vertices[vertex_to.value] = vertex_to.neighbors
@@ -70,7 +74,9 @@ class UndirectedGraph:
 
     def build_adjacency_list(self):
         if len(self.vertices) >= 1:
-            self.adjacency_list = [str(key) + ":" + str(self.vertices[key]) for key in self.vertices.keys()]
+            self.adjacency_list = [
+                str(key) + ":" + str(self.vertices[key]) for key in self.vertices.keys()
+            ]
         return self.adjacency_list
 
     def build_adjacency_matrix(self):
@@ -87,22 +93,27 @@ class UndirectedGraph:
         return self.adjacency_matrix
 
     def get_adjacency_list(self):
-        """ Returns a graph as adjacency list and adjacency matrix. """
+        """Returns a graph as adjacency list and adjacency matrix."""
         return self.build_adjacency_list()
 
     def get_adjacency_matrix(self):
-        """ Function to print a graph as adjacency list and adjacency matrix. """
+        """Function to print a graph as adjacency list and adjacency matrix."""
         return self.build_adjacency_matrix()
 
     def __repr__(self):
-        """ Function to print a graph as adjacency list and adjacency matrix. """
-        return str(self.build_adjacency_list()) + '\n\n' + str(self.build_adjacency_matrix())
+        """Function to print a graph as adjacency list and adjacency matrix."""
+        return (
+            str(self.build_adjacency_list())
+            + "\n\n"
+            + str(self.build_adjacency_matrix())
+        )
 
 
 class UnionFind(object):
     """
     UnionFind class - Union by Rank and Path Compression Implementation
     """
+
     def __init__(self, size):
         self.root = [i for i in range(size)]
         self.rank = [1] * size
@@ -148,7 +159,6 @@ class UnionFind(object):
 
 
 class GraphProblems(object):
-
     class UnionFind(object):
         def __init__(self, size):
             self.root = [-1] * size
@@ -189,7 +199,9 @@ class GraphProblems(object):
             result = [list(x) for x in clean if not (x in seen or seen.add(x))]
             return result
 
-    def number_of_islands_2(self, m: int, n: int, positions: list[list[int]]) -> list[int]:
+    def number_of_islands_2(
+        self, m: int, n: int, positions: list[list[int]]
+    ) -> list[int]:
         """
         Given an empty 2D binary grid of size m x n, where the grid represents a map.
           - 0's represent water
@@ -281,7 +293,6 @@ class PracticeUnionFind(object):
 
 
 class PracticeGraphProblems(object):
-
     class UnionFind(object):
         def __init__(self, size):
             pass
@@ -298,7 +309,9 @@ class PracticeGraphProblems(object):
         def set_parent(self, node):
             raise NotImplementedError
 
-    def number_of_islands_2(self, m: int, n: int, positions: list[list[int]]) -> list[int]:
+    def number_of_islands_2(
+        self, m: int, n: int, positions: list[list[int]]
+    ) -> list[int]:
         """
         Given an empty 2D binary grid of size m x n, where the grid represents a map.
           - 0's represent water

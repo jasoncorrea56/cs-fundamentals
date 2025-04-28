@@ -1,10 +1,8 @@
-import pytest
 from automation.test_data_structures.test_heap import TestHeap
 from data_structures.heap import PracticeMaxHeap, PracticeMinHeap
 
 
 class TestPracticeHeap(TestHeap):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.minheap = PracticeMinHeap(4)

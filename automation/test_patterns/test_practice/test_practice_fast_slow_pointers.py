@@ -5,7 +5,6 @@ from patterns.fast_slow_pointers import PracticeFastSlowPointers
 
 
 class TestPracticeFastSlowPointers(TestFastSlowPointers):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.fs_pointers = PracticeFastSlowPointers()

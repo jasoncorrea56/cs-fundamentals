@@ -3,7 +3,6 @@ from data_structures.binary_search_tree import BinarySearchTree, BinaryTreeNode
 
 
 class TestBinarySearchTree(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.bst = BinarySearchTree()

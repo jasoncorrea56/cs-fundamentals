@@ -1,10 +1,11 @@
 import pytest
-from automation.resources.data_structures.linked_list_data import SINGLY_LINKED_LIST_OUTPUT
+from automation.resources.data_structures.linked_list_data import (
+    SINGLY_LINKED_LIST_OUTPUT,
+)
 from data_structures.linked_list_single import SinglyLinkedList
 
 
 class TestLinkedListSingle(object):
-
     @classmethod
     def setup_class(cls) -> None:
         cls.linked_list = SinglyLinkedList()

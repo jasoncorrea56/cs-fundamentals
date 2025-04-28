@@ -1,9 +1,13 @@
-import pytest
-from singleton import SingletonClass, SingletonChild, BorgSingletonClass, BorgSingletonChild, BorgSingletonResetChild
+from singleton import (
+    SingletonClass,
+    SingletonChild,
+    BorgSingletonClass,
+    BorgSingletonChild,
+    BorgSingletonResetChild,
+)
 
 
 class TestSingletonPattern(object):
-
     @classmethod
     def setup_class(cls) -> None:
         pass
