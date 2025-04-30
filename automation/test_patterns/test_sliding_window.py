@@ -14,34 +14,34 @@ from automation.resources.patterns.sliding_window_data import (
 from patterns.sliding_window import SlidingWindow
 
 
-class TestSlidingWindow(object):
+class TestSlidingWindow:
     @classmethod
     def setup_class(cls) -> None:
         cls.sliding_window = SlidingWindow()
 
     @pytest.fixture()
-    def avg_nums(self):
+    def avg_nums(self) -> list[int]:
         return SLIDING_WINDOW_AVG_NUMS
 
     @pytest.fixture()
-    def avg_k(self):
+    def avg_k(self) -> int:
         return SLIDING_WINDOW_AVG_K
 
-    def test_avg_subarray_of_size_k(self, avg_nums, avg_k):
+    def test_avg_subarray_of_size_k(self, avg_nums, avg_k) -> None:
         results = self.sliding_window.avg_subarray_of_size_k(avg_nums, avg_k)
         assert results == SLIDING_WINDOW_AVG_OUTPUT
 
     @pytest.mark.parametrize(
         "nums, k, output", SLIDING_WINDOW_MAX_SUBARRAY_OF_SIZE_K_TESTS
     )
-    def test_max_subarray_of_size_k(self, nums, k, output):
+    def test_max_subarray_of_size_k(self, nums, k, output) -> None:
         results = self.sliding_window.max_subarray_of_size_k(nums, k)
         assert results == output
 
     @pytest.mark.parametrize(
         "nums, s, output", SLIDING_WINDOW_SMALLEST_SUBARRAY_SUM_GREATER_THAN_S_TESTS
     )
-    def test_smallest_subarray_sum_greater_than_s(self, nums, s, output):
+    def test_smallest_subarray_sum_greater_than_s(self, nums, s, output) -> None:
         results = self.sliding_window.smallest_subarray_sum_greater_than_s(nums, s)
         assert results == output
 
@@ -49,14 +49,16 @@ class TestSlidingWindow(object):
         "input_string, k, output",
         SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_K_DISTINCT_CHARS_TESTS,
     )
-    def test_longest_substring_with_k_distinct_chars(self, input_string, k, output):
+    def test_longest_substring_with_k_distinct_chars(
+        self, input_string, k, output
+    ) -> None:
         results = self.sliding_window.longest_substring_with_k_distinct_chars(
             input_string, k
         )
         assert results == output
 
     @pytest.mark.parametrize("fruit, output", SLIDING_WINDOW_FRUITS_INTO_BASKETS_TESTS)
-    def test_fruits_into_baskets(self, fruit, output):
+    def test_fruits_into_baskets(self, fruit, output) -> None:
         results = self.sliding_window.fruits_into_baskets(fruit)
         assert results == output
 
@@ -64,7 +66,7 @@ class TestSlidingWindow(object):
         "input_string, output",
         SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_DISTINCT_CHARS_TESTS,
     )
-    def test_longest_substring_with_distinct_chars(self, input_string, output):
+    def test_longest_substring_with_distinct_chars(self, input_string, output) -> None:
         results = self.sliding_window.longest_substring_with_distinct_chars(
             input_string
         )
@@ -76,7 +78,7 @@ class TestSlidingWindow(object):
     )
     def test_longest_substring_with_same_letters_after_replacement(
         self, input_string, k, output
-    ):
+    ) -> None:
         results = (
             self.sliding_window.longest_substring_with_same_letters_after_replacement(
                 input_string, k
@@ -88,7 +90,9 @@ class TestSlidingWindow(object):
         "nums, k, output",
         SLIDING_WINDOW_LONGEST_SUBARRAY_WITH_ONES_AFTER_REPLACEMENT_TESTS,
     )
-    def test_longest_subarray_with_ones_after_replacement(self, nums, k, output):
+    def test_longest_subarray_with_ones_after_replacement(
+        self, nums, k, output
+    ) -> None:
         results = self.sliding_window.longest_subarray_with_ones_after_replacement(
             nums, k
         )

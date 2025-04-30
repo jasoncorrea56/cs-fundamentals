@@ -83,7 +83,7 @@ class SortingAlgorithms:
         return nums
 
     @staticmethod
-    def partition(nums, low, high):
+    def partition(nums, low, high) -> int:
         """
         This function takes last element as pivot, places the pivot element at its
         correct position in sorted array, and places all smaller (smaller than pivot)
@@ -118,7 +118,7 @@ class SortingAlgorithms:
             self.quick_sort(nums, pi + 1, high)
         return nums
 
-    def heapify(self, nums, n, i):
+    def heapify(self, nums, n, i) -> None:
         """
         Heapify function generates a max heap from the input list
         :param nums: List of integers
@@ -159,7 +159,7 @@ class SortingAlgorithms:
         return nums
 
     @staticmethod
-    def counting_sort(nums, exp1):
+    def counting_sort(nums, exp1) -> None:
         """
         A function to do counting sort of nums[] according to the exp1 represented by exp.
         :param nums: List of integers to sort
@@ -243,12 +243,14 @@ class SortingAlgorithms:
         :param nums: Out of order list of integers.
         :return: Sorted in order list of integers.
         """
-        previous = -sys.maxsize
+        previous: int = -sys.maxsize
         # Convert list to dict for O(1) element access time complexity
-        nums_dict = {nums[i]: None for i in range(0, len(nums))}  # O(n)
+        nums_dict: dict[int, None] = {
+            nums[i]: None for i in range(0, len(nums))
+        }  # O(n)
 
         # When iterating over a dict you cannot delete from it, so make a copy
-        loop_dict = nums_dict.copy()  # O(n)
+        loop_dict: dict[int, None] = nums_dict.copy()  # O(n)
 
         # Iterate over list eliminating out of order elements
         for num in loop_dict:  # O(n)
@@ -257,7 +259,7 @@ class SortingAlgorithms:
             else:
                 previous = num  # O(1)
 
-        nums = [i for i in nums_dict]  # O(n)
+        nums: list[int] = list(nums_dict)  # O(n)
         return nums
 
 
@@ -298,7 +300,7 @@ class PracticeSortingAlgorithms:
         raise NotImplementedError
 
     @staticmethod
-    def partition(nums, low, high):
+    def partition(nums, low, high) -> None:
         """
         This function takes last element as pivot, places the pivot element at its
         correct position in sorted array, and places all smaller (smaller than pivot)
@@ -322,7 +324,7 @@ class PracticeSortingAlgorithms:
         """
         raise NotImplementedError
 
-    def heapify(self, nums, n, i):
+    def heapify(self, nums, n, i) -> None:
         """
         Heapify function generates a max heap from the input list
         :param nums: List of integers
@@ -341,7 +343,7 @@ class PracticeSortingAlgorithms:
         raise NotImplementedError
 
     @staticmethod
-    def counting_sort(nums, exp1):
+    def counting_sort(nums, exp1) -> None:
         """
         A function to do counting sort of nums[] according to the exp1 represented by exp.
         :param nums: List of integers to sort

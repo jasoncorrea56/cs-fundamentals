@@ -10,20 +10,20 @@ class TestPracticeFastSlowPointers(TestFastSlowPointers):
         cls.fs_pointers = PracticeFastSlowPointers()
         cls.linked_list = SinglyLinkedList()
 
-    def test_build_linked_list_cycle(self):
+    def test_build_linked_list_cycle(self) -> None:
         try:
             super().test_build_linked_list_cycle()
         except NotImplementedError:
             assert True
 
-    def test_has_cycle_in_linked_list(self):
+    def test_has_cycle_in_linked_list(self) -> None:
         try:
             super().test_has_cycle_in_linked_list()
         except NotImplementedError:
             assert True
 
     @pytest.mark.usefixtures("cycle_first_node")
-    def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node):
+    def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node) -> None:
         try:
             super().test_get_first_node_for_cycle_in_linked_list(cycle_first_node)
         except NotImplementedError:

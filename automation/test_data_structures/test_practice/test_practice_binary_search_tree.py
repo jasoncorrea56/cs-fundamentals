@@ -9,7 +9,7 @@ class TestPracticeBinarySearchTree(TestBinarySearchTree):
         cls.bst = PracticeBinarySearchTree()
 
     @pytest.mark.usefixtures("bst_root")
-    def test_is_valid_bst(self, bst_root):
+    def test_is_valid_bst(self, bst_root) -> None:
         try:
             super().test_is_valid_bst(bst_root)
         except NotImplementedError:

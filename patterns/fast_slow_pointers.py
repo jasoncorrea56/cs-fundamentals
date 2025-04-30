@@ -1,8 +1,7 @@
-from typing import Optional
 from data_structures.linked_list_single import Node
 
 
-class FastSlowPointers(object):
+class FastSlowPointers:
     @staticmethod
     def has_cycle_in_linked_list(head: Node) -> bool:
         """
@@ -29,7 +28,7 @@ class FastSlowPointers(object):
             return True
 
     @staticmethod
-    def get_first_node_for_cycle_in_linked_list(head: Node) -> Optional[Node]:
+    def get_first_node_for_cycle_in_linked_list(head: Node) -> Node | None:
         """
         Given the head of a linked list, return the node where the cycle begins. If there is no cycle, return null
         Brute Force:
@@ -45,7 +44,7 @@ class FastSlowPointers(object):
         :return: The node where the cycle begins if a cycle exists, otherwise null
         """
 
-        def get_intersection():
+        def get_intersection() -> Node | None:
             slow = fast = head
             while fast and fast.next:
                 slow, fast = slow.next, fast.next.next
@@ -66,7 +65,7 @@ class FastSlowPointers(object):
         return head_ptr
 
 
-class PracticeFastSlowPointers(object):
+class PracticeFastSlowPointers:
     @staticmethod
     def has_cycle_in_linked_list(head: Node) -> bool:
         """
@@ -77,7 +76,7 @@ class PracticeFastSlowPointers(object):
         raise NotImplementedError
 
     @staticmethod
-    def get_first_node_for_cycle_in_linked_list(head: Node) -> Optional[Node]:
+    def get_first_node_for_cycle_in_linked_list(head: Node) -> Node | None:
         """
         Given the head of a linked list, return the node where the cycle begins. If there is no cycle, return null
         :param head: Head node of a Linked List

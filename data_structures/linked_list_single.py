@@ -1,12 +1,12 @@
 class Node:
-    def __init__(self, data, next_node=None):
-        self.value = data
+    def __init__(self, data: int, next_node=None) -> None:
+        self.value: int = data
         self.next = next_node
 
 
-class SinglyLinkedList(object):
-    def __init__(self):
-        self.head = None
+class SinglyLinkedList:
+    def __init__(self) -> None:
+        self.head: Node = None
 
     def get_node(self, index: int) -> Node:
         """
@@ -14,7 +14,7 @@ class SinglyLinkedList(object):
         :param index: Index of the node to retrieve from the LinkedList
         :return: The node at the specified index of the LinkedList
         """
-        curr = self.head
+        curr: Node = self.head
         for i in range(index):
             if curr:
                 curr = curr.next
@@ -25,7 +25,7 @@ class SinglyLinkedList(object):
         Gets the last node of the LinkedList
         :return: The last node of the LinkedList
         """
-        tail = self.head
+        tail: Node = self.head
         while tail and tail.next:
             tail = tail.next
         return tail
@@ -36,16 +36,16 @@ class SinglyLinkedList(object):
         :param index: Index of the node for which the value will be retrieved from the LinkedList
         :return: The value of the node at the specified index of the LinkedList
         """
-        node = self.get_node(index)
+        node: Node = self.get_node(index)
         return node.value if node else -1
 
-    def get_list(self) -> list:
+    def get_list(self) -> list[int]:
         """
         Gets the values of the LinkedList in an array
         :return: A list of values from the LinkedList
         """
-        linked_list = []
-        node = self.head
+        linked_list: list[int] = []
+        node: Node = self.head
         while node and node.value not in linked_list:
             linked_list.append(node.value)
             node = node.next
@@ -57,7 +57,7 @@ class SinglyLinkedList(object):
         :param val: Data to insert at the head of the LinkedList
         :return: None
         """
-        new_node = Node(val)
+        new_node: Node = Node(val)
         new_node.next = self.head
         self.head = new_node
         return
@@ -71,8 +71,8 @@ class SinglyLinkedList(object):
         if not self.head:
             self.add_at_head(val)
             return
-        new_node = Node(val)
-        prev_node = self.get_tail()
+        new_node: Node = Node(val)
+        prev_node: Node = self.get_tail()
         prev_node.next = new_node
         return
 
@@ -86,10 +86,10 @@ class SinglyLinkedList(object):
         if index == 0:
             self.add_at_head(val)
             return
-        prev_node = self.get_node(index - 1)
+        prev_node: Node = self.get_node(index - 1)
         if not prev_node:
             return
-        new_node = Node(val)
+        new_node: Node = Node(val)
         new_node.next = prev_node.next
         prev_node.next = new_node
         return
@@ -100,19 +100,19 @@ class SinglyLinkedList(object):
         :param index: Index of the node to delete from the LinkedList
         :return: None
         """
-        del_node = self.get_node(index)
+        del_node: Node = self.get_node(index)
         if not del_node:
             return
         if index == 0:
             self.head = del_node.next
         else:
-            prev_node = self.get_node(index - 1)
+            prev_node: Node = self.get_node(index - 1)
             prev_node.next = del_node.next
         return
 
 
-class PracticeSinglyLinkedList(object):
-    def __init__(self):
+class PracticeSinglyLinkedList:
+    def __init__(self) -> None:
         pass
 
     def get_node(self, index: int) -> Node:
