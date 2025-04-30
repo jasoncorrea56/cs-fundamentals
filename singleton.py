@@ -1,99 +1,99 @@
-class NormalClass(object):
+class NormalClass:
     __class_var = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__instance_var = None
 
-    def set_access(self, value):
+    def set_access(self, value) -> None:
         self.__class_var = value
         self.__instance_var = value
 
-    def get_class_access(self):
+    def get_class_access(self) -> str:
         return self.__class_var
 
-    def get_instance_access(self):
+    def get_instance_access(self) -> str:
         return self.__instance_var
 
     @staticmethod
-    def print_access():
+    def print_access() -> None:
         print("Printed NormalClass")
 
 
 class NormalChild(NormalClass):
-    def print_access(self):
-        print("Normal class_access = {}".format(self.get_class_access()))
-        print("Normal instance_access = {}".format(self.get_instance_access()))
+    def print_access(self) -> None:
+        print(f"Normal class_access = {self.get_class_access()}")
+        print(f"Normal instance_access = {self.get_instance_access()}")
 
 
-class SingletonClass(object):
+class SingletonClass:
     __class_var = None
 
-    def __new__(cls):
+    def __new__(cls) -> None:
         if not hasattr(cls, "instance"):
-            cls.instance = super(SingletonClass, cls).__new__(cls)
+            cls.instance = super().__new__(cls)
         return cls.instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__instance_var = None
 
-    def set_access(self, value):
+    def set_access(self, value) -> None:
         self.__class_var = value
         self.__instance_var = value
 
-    def get_class_access(self):
+    def get_class_access(self) -> str:
         return self.__class_var
 
-    def get_instance_access(self):
+    def get_instance_access(self) -> str:
         return self.__instance_var
 
-    # def print_access(self):
+    # def print_access(self) -> None:
     #     print("Printed SingletonClass")
 
 
 class SingletonChild(SingletonClass):
-    def print_access(self):
-        print("Singleton class_access = {}".format(self.get_class_access()))
-        print("Singleton instance_access = {}".format(self.get_instance_access()))
+    def print_access(self) -> None:
+        print(f"Singleton class_access = {self.get_class_access()}")
+        print(f"Singleton instance_access = {self.get_instance_access()}")
 
 
-class BorgSingletonClass(object):
+class BorgSingletonClass:
     _shared_borg_state = {}
     __class_var = None
 
-    def __new__(cls, *args, **kwargs):
-        obj = super(BorgSingletonClass, cls).__new__(cls, *args, **kwargs)
+    def __new__(cls, *args, **kwargs) -> None:
+        obj = super().__new__(cls, *args, **kwargs)
         obj.__dict__ = cls._shared_borg_state
         return obj
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__instance_var = None
 
-    def set_access(self, value):
+    def set_access(self, value) -> None:
         self.__class_var = value
         self.__instance_var = value
 
-    def get_class_access(self):
+    def get_class_access(self) -> str:
         return self.__class_var
 
-    def get_instance_access(self):
+    def get_instance_access(self) -> str:
         return self.__instance_var
 
-    # def print_access(self):
+    # def print_access(self) -> None:
     #     print("Printed BorgSingletonClass")
 
 
 class BorgSingletonChild(BorgSingletonClass):
-    def print_access(self):
-        print("BorgSingleton class_access = {}".format(self.get_class_access()))
-        print("BorgSingleton instance_access = {}".format(self.get_instance_access()))
+    def print_access(self) -> None:
+        print(f"BorgSingleton class_access = {self.get_class_access()}")
+        print(f"BorgSingleton instance_access = {self.get_instance_access()}")
 
 
 class BorgSingletonResetChild(BorgSingletonClass):
     _shared_borg_state = {}
 
-    def print_access(self):
-        print("BorgSingleton class_access = {}".format(self.get_class_access()))
-        print("BorgSingleton instance_access = {}".format(self.get_instance_access()))
+    def print_access(self) -> None:
+        print(f"BorgSingleton class_access = {self.get_class_access()}")
+        print(f"BorgSingleton instance_access = {self.get_instance_access()}")
 
 
 print()
@@ -130,26 +130,26 @@ borg_child.print_access()
 borg_child2.print_access()
 
 
-class PracticeSingletonClass(object):
-    def __new__(cls):
+class PracticeSingletonClass:
+    def __new__(cls) -> None:
         raise NotImplementedError
 
 
 class PracticeSingletonChild(PracticeSingletonClass):
-    def print_access(self):
+    def print_access(self) -> None:
         raise NotImplementedError
 
 
-class PracticeBorgSingletonClass(object):
-    def __new__(cls, *args, **kwargs):
+class PracticeBorgSingletonClass:
+    def __new__(cls, *args, **kwargs) -> None:
         raise NotImplementedError
 
 
 class PracticeBorgSingletonChild(PracticeBorgSingletonClass):
-    def print_access(self):
+    def print_access(self) -> None:
         raise NotImplementedError
 
 
 class PracticeBorgSingletonResetChild(PracticeBorgSingletonClass):
-    def print_access(self):
+    def print_access(self) -> None:
         raise NotImplementedError

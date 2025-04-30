@@ -1,12 +1,12 @@
 class Node:
-    def __init__(self, data, next_node=None, prev_node=None):
+    def __init__(self, data, next_node=None, prev_node=None) -> None:
         self.value = data
         self.next = next_node
         self.prev = prev_node
 
 
-class DoublyLinkedList(object):
-    def __init__(self):
+class DoublyLinkedList:
+    def __init__(self) -> None:
         self.head = None
 
     def get_node(self, index: int) -> Node:
@@ -122,8 +122,8 @@ class DoublyLinkedList(object):
         return
 
 
-class PracticeDoublyLinkedList(object):
-    def __init__(self):
+class PracticeDoublyLinkedList:
+    def __init__(self) -> None:
         pass
 
     def get_node(self, index: int) -> Node:

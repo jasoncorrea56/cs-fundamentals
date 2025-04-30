@@ -16,7 +16,7 @@ from data_structures.graph import (
 
 class TestPracticeGraph(TestGraph):
     @classmethod
-    def setup_class(cls):
+    def setup_class(cls) -> None:
         cls.search = PracticeUnionFind(10)
         cls.undirected_graph = UndirectedGraph()
         cls.problems = PracticeGraphProblems()
@@ -26,64 +26,64 @@ class TestPracticeGraph(TestGraph):
         cls.node_d = UndirectedGraphVertex("D")
         cls.node_e = UndirectedGraphVertex("E")
 
-    def test_build_undirected_graph_vertices(self):
+    def test_build_undirected_graph_vertices(self) -> None:
         try:
             # TODO revisit these tests, is it testing the practice implementation or should I be passing in params?
             super().test_build_undirected_graph_vertices()
         except NotImplementedError:
             assert True
 
-    def test_undirected_graph_add_neighbors(self):
+    def test_undirected_graph_add_neighbors(self) -> None:
         try:
             super().test_undirected_graph_add_neighbors()
         except NotImplementedError:
             assert True
 
-    def test_undirected_graph_add_vertices(self):
+    def test_undirected_graph_add_vertices(self) -> None:
         try:
             super().test_undirected_graph_add_vertices()
         except NotImplementedError:
             assert True
 
-    def test_undirected_graph_add_edge(self):
+    def test_undirected_graph_add_edge(self) -> None:
         try:
             super().test_undirected_graph_add_edge()
         except NotImplementedError:
             assert True
 
-    def test_undirected_graph_get_adjacency_list(self):
+    def test_undirected_graph_get_adjacency_list(self) -> None:
         try:
             super().test_undirected_graph_get_adjacency_list()
         except NotImplementedError:
             assert True
 
-    def test_undirected_graph_get_adjacency_matrix(self):
+    def test_undirected_graph_get_adjacency_matrix(self) -> None:
         try:
             super().test_undirected_graph_get_adjacency_matrix()
         except NotImplementedError:
             assert True
 
-    # def test_undirected_graph_repr(self):
+    # def test_undirected_graph_repr(self) -> None:
     #     print("\nUndirected Graph:")
     #     print(self.undirected_graph)
     #     assert True
 
     @pytest.mark.parametrize("x, y", GRAPH_UNION_FIND_UNION_TESTS)
-    def test_union_find_union(self, x, y):
+    def test_union_find_union(self, x, y) -> None:
         try:
             super().test_union_find_union(x, y)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("value, output", GRAPH_UNION_FIND_FIND_TESTS)
-    def test_union_find_find(self, value, output):
+    def test_union_find_find(self, value, output) -> None:
         try:
             super().test_union_find_find(value, output)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("x, y, output", GRAPH_UNION_FIND_IS_CONNECTED_TESTS)
-    def test_union_find_is_connected(self, x, y, output):
+    def test_union_find_is_connected(self, x, y, output) -> None:
         try:
             super().test_union_find_is_connected(x, y, output)
         except NotImplementedError:
@@ -92,10 +92,8 @@ class TestPracticeGraph(TestGraph):
     @pytest.mark.parametrize(
         "m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS
     )
-    def test_problem_number_of_islands_2(self, m, n, positions, output):
+    def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:
         try:
-            super(TestPracticeGraph, self).test_problem_number_of_islands_2(
-                m, n, positions, output
-            )
+            super().test_problem_number_of_islands_2(m, n, positions, output)
         except NotImplementedError:
             assert True

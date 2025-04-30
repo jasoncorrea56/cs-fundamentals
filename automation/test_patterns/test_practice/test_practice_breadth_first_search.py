@@ -9,14 +9,14 @@ class TestPracticeBreadthFirstSearch(TestBreadthFirstSearch):
         cls.bfs = PracticeBreadthFirstSearch()
 
     @pytest.mark.usefixtures("bfs_root")
-    def test_level_order_bfs(self, bfs_root):
+    def test_level_order_bfs(self, bfs_root) -> None:
         try:
             super().test_level_order_bfs(bfs_root)
         except NotImplementedError:
             assert True
 
     @pytest.mark.usefixtures("level_avg_root", "level_avg_output")
-    def test_get_avg_for_each_level(self, level_avg_root, level_avg_output):
+    def test_get_avg_for_each_level(self, level_avg_root, level_avg_output) -> None:
         try:
             super().test_get_avg_for_each_level(level_avg_root, level_avg_output)
         except NotImplementedError:

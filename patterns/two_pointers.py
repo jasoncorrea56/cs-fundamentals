@@ -2,7 +2,7 @@ import math
 from collections import deque
 
 
-class TwoPointers(object):
+class TwoPointers:
     #
     # Easy Difficulty
     #
@@ -46,7 +46,7 @@ class TwoPointers(object):
         :return: List of all unique triplets that sum to 0
         """
 
-        def find_pair(x, left):
+        def find_pair(x: int, left: int) -> None:
             right = len(nums) - 1
             while left < right:
                 y, z = nums[left], nums[right]
@@ -172,8 +172,8 @@ class TwoPointers(object):
         :return: Count of triplets with sum less than target number
         """
 
-        def search_pair(target, first):
-            count = 0
+        def search_pair(target: int, first: int) -> int:
+            count: int = 0
             left, right = first + 1, len(arr) - 1
             while left < right:
                 if arr[left] + arr[right] < target:
@@ -186,11 +186,11 @@ class TwoPointers(object):
             return count
 
         arr.sort()
-        result = 0
-        triplets = []
+        result: int = 0
+        triplets: list[list[int]] = []
         for i in range(len(arr) - 2):
             result += search_pair(target - arr[i], i)
-        print("\nTriplets = {}".format(triplets))
+        print(f"\nTriplets = {triplets}")
         return result
 
     @staticmethod
@@ -239,7 +239,7 @@ class TwoPointers(object):
         return arr
 
 
-class PracticeTwoPointers(object):
+class PracticeTwoPointers:
     #
     # Easy Difficulty
     #

@@ -1,12 +1,12 @@
-class Node(object):
-    def __init__(self, value):
+class Node:
+    def __init__(self, value) -> None:
         self.value = value
         self.left = None
         self.right = None
 
 
-class DepthFirstSearch(object):
-    def preorder_dfs(self, node, data):
+class DepthFirstSearch:
+    def preorder_dfs(self, node, data) -> None:
         if not node:
             return None
 
@@ -15,7 +15,7 @@ class DepthFirstSearch(object):
         self.preorder_dfs(node.right, data)
         return
 
-    def inorder_dfs(self, node, data):
+    def inorder_dfs(self, node, data) -> None:
         if not node:
             return None
 
@@ -24,7 +24,7 @@ class DepthFirstSearch(object):
         self.inorder_dfs(node.right, data)
         return
 
-    def postorder_dfs(self, node, data):
+    def postorder_dfs(self, node, data) -> None:
         if not node:
             return None
 
@@ -41,7 +41,7 @@ class DepthFirstSearch(object):
         :return: List of averages for each level
         """
 
-        def preorder_dfs(node, level=0):
+        def preorder_dfs(node, level=0) -> None:
             if not node:
                 return None
 
@@ -68,14 +68,14 @@ class DepthFirstSearch(object):
         return result
 
 
-class PracticeDepthFirstSearch(object):
-    def preorder_dfs(self, node, data):
+class PracticeDepthFirstSearch:
+    def preorder_dfs(self, node, data) -> None:
         raise NotImplementedError
 
-    def inorder_dfs(self, node, data):
+    def inorder_dfs(self, node, data) -> None:
         raise NotImplementedError
 
-    def postorder_dfs(self, node, data):
+    def postorder_dfs(self, node, data) -> None:
         raise NotImplementedError
 
     def get_avg_for_each_level(self, root: Node) -> list[int]:

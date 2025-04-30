@@ -1,13 +1,13 @@
 import sys
 
 
-class MinHeap(object):
-    def __init__(self, heap_size):
+class MinHeap:
+    def __init__(self, heap_size) -> None:
         self.real_size = 0
         self.heap_size = heap_size
         self.min_heap = [0] * (heap_size + 1)
 
-    def add(self, element):
+    def add(self, element) -> bool:
         """
         Add an element to the MinHeap
         Note: if we use an array to represent the complete binary tree and store the root node at index 1, then the:
@@ -38,7 +38,7 @@ class MinHeap(object):
 
         return True
 
-    def pop(self):
+    def pop(self) -> int:
         """
         Remove and return the min element from the top of the MinHeap
         :return: The minimum value from the MinHeap
@@ -82,31 +82,31 @@ class MinHeap(object):
 
             return popped_element
 
-    def peek(self):
+    def peek(self) -> int:
         """
         Get the top element of the MinHeap
         :return: Minimum value in the MinHeap
         """
         return self.min_heap[1]
 
-    def size(self):
+    def size(self) -> int:
         """
         Get the number of elements in the MinHeap
         :return: Number of elements in the MinHeap
         """
         return self.real_size
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.min_heap[1 : self.real_size + 1])
 
 
-class MaxHeap(object):
-    def __init__(self, heap_size):
+class MaxHeap:
+    def __init__(self, heap_size) -> None:
         self.real_size = 0
         self.heap_size = heap_size
         self.max_heap = [0] * (heap_size + 1)
 
-    def add(self, element):
+    def add(self, element) -> bool:
         """
         Add an element to the MaxHeap
         Note: if we use an array to represent the complete binary tree and store the root node at index 1, then the:
@@ -137,7 +137,7 @@ class MaxHeap(object):
 
         return True
 
-    def pop(self):
+    def pop(self) -> int:
         """
         Remove and return the min element from the top of the MaxHeap
         :return: The minimum value from the MaxHeap
@@ -181,29 +181,29 @@ class MaxHeap(object):
 
             return popped_element
 
-    def peek(self):
+    def peek(self) -> int:
         """
         Get the top element of the MaxHeap
         :return: Minimum value in the MaxHeap
         """
         return self.max_heap[1]
 
-    def size(self):
+    def size(self) -> int:
         """
         Get the number of elements in the MaxHeap
         :return: Number of elements in the MaxHeap
         """
         return self.real_size
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.max_heap[1 : self.real_size + 1])
 
 
-class PracticeMinHeap(object):
-    def __init__(self, heap_size):
+class PracticeMinHeap:
+    def __init__(self, heap_size) -> None:
         pass
 
-    def add(self, element):
+    def add(self, element) -> bool:
         """
         Add an element to the MinHeap
         :param element: Element to add to the MinHeap
@@ -211,36 +211,36 @@ class PracticeMinHeap(object):
         """
         raise NotImplementedError
 
-    def pop(self):
+    def pop(self) -> int:
         """
         Remove and return the min element from the top of the MinHeap
         :return: The minimum value from the MinHeap
         """
         raise NotImplementedError
 
-    def peek(self):
+    def peek(self) -> int:
         """
         Get the top element of the MinHeap
         :return: Minimum value in the MinHeap
         """
         raise NotImplementedError
 
-    def size(self):
+    def size(self) -> int:
         """
         Get the number of elements in the MinHeap
         :return: Number of elements in the MinHeap
         """
         raise NotImplementedError
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError
 
 
-class PracticeMaxHeap(object):
-    def __init__(self, heap_size):
+class PracticeMaxHeap:
+    def __init__(self, heap_size) -> None:
         pass
 
-    def add(self, element):
+    def add(self, element) -> bool:
         """
         Add an element to the MaxHeap
         :param element: Element to add to the MaxHeap
@@ -248,26 +248,26 @@ class PracticeMaxHeap(object):
         """
         raise NotImplementedError
 
-    def pop(self):
+    def pop(self) -> int:
         """
         Remove and return the min element from the top of the MaxHeap
         :return: The minimum value from the MaxHeap
         """
         raise NotImplementedError
 
-    def peek(self):
+    def peek(self) -> int:
         """
         Get the top element of the MaxHeap
         :return: Minimum value in the MaxHeap
         """
         raise NotImplementedError
 
-    def size(self):
+    def size(self) -> int:
         """
         Get the number of elements in the MaxHeap
         :return: Number of elements in the MaxHeap
         """
         raise NotImplementedError
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError

@@ -2,13 +2,13 @@ import pytest
 from data_structures.binary_search_tree import BinarySearchTree, BinaryTreeNode
 
 
-class TestBinarySearchTree(object):
+class TestBinarySearchTree:
     @classmethod
     def setup_class(cls) -> None:
         cls.bst = BinarySearchTree()
 
     @pytest.fixture()
-    def bst_root(self):
+    def bst_root(self) -> BinaryTreeNode:
         root = BinaryTreeNode(4)
         root.left = BinaryTreeNode(2)
         root.right = BinaryTreeNode(6)
@@ -18,6 +18,6 @@ class TestBinarySearchTree(object):
         root.right.right = BinaryTreeNode(7)
         return root
 
-    def test_is_valid_bst(self, bst_root):
+    def test_is_valid_bst(self, bst_root) -> None:
         result = self.bst.is_valid_bst(bst_root)
         assert result is True

@@ -13,7 +13,7 @@ class TestPracticeSingletonPattern(TestSingletonPattern):
     def setup_class(cls) -> None:
         pass
 
-    def test_singleton(self):
+    def test_singleton(self) -> None:
         try:
             singleton = PracticeSingletonClass()
             singleton2 = PracticeSingletonClass()
@@ -23,7 +23,7 @@ class TestPracticeSingletonPattern(TestSingletonPattern):
         except NotImplementedError:
             assert True
 
-    def test_singleton_inheritance(self):
+    def test_singleton_inheritance(self) -> None:
         try:
             singleton = PracticeSingletonClass()
             singleton_child = PracticeSingletonChild()
@@ -33,7 +33,7 @@ class TestPracticeSingletonPattern(TestSingletonPattern):
         except NotImplementedError:
             assert True
 
-    def test_borg_singleton(self):
+    def test_borg_singleton(self) -> None:
         try:
             borg = PracticeBorgSingletonClass()
             borg_child = PracticeBorgSingletonChild()
@@ -43,7 +43,7 @@ class TestPracticeSingletonPattern(TestSingletonPattern):
         except NotImplementedError:
             assert True
 
-    def test_borg_singleton_shared_state_reset(self):
+    def test_borg_singleton_shared_state_reset(self) -> None:
         try:
             borg = PracticeBorgSingletonClass()
             borg.shared_variable = False

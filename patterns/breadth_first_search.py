@@ -1,17 +1,17 @@
 from collections import deque
 
 
-class Node(object):
-    def __init__(self, value):
+class Node:
+    def __init__(self, value) -> None:
         self.value = value
         self.left = None
         self.right = None
 
 
-class BreadthFirstSearch(object):
+class BreadthFirstSearch:
     @staticmethod
-    def level_order_bfs(root: Node):
-        result = []
+    def level_order_bfs(root: Node) -> list[int]:
+        result: list = []
         if not root:
             return result
 
@@ -40,7 +40,7 @@ class BreadthFirstSearch(object):
         :return: List of averages for each level
         """
 
-        def bfs(node):
+        def bfs(node) -> dict | None:
             if not node:
                 return None
 
@@ -76,9 +76,9 @@ class BreadthFirstSearch(object):
         return result
 
 
-class PracticeBreadthFirstSearch(object):
+class PracticeBreadthFirstSearch:
     @staticmethod
-    def level_order_bfs(root: Node):
+    def level_order_bfs(root: Node) -> list[int]:
         raise NotImplementedError
 
     @staticmethod

@@ -7,33 +7,33 @@ from singleton import (
 )
 
 
-class TestSingletonPattern(object):
+class TestSingletonPattern:
     @classmethod
     def setup_class(cls) -> None:
         pass
 
-    def test_singleton(self):
+    def test_singleton(self) -> None:
         singleton = SingletonClass()
         singleton2 = SingletonClass()
         singleton.singleton_variable = False
         assert singleton is singleton2
         assert hasattr(singleton2, "singleton_variable")
 
-    def test_singleton_inheritance(self):
+    def test_singleton_inheritance(self) -> None:
         singleton = SingletonClass()
         singleton_child = SingletonChild()
         singleton.singleton_inheritance_variable = False
         assert singleton_child is singleton
         assert hasattr(singleton_child, "singleton_inheritance_variable")
 
-    def test_borg_singleton(self):
+    def test_borg_singleton(self) -> None:
         borg = BorgSingletonClass()
         borg_child = BorgSingletonChild()
         borg.shared_variable = False
         assert borg_child is not borg
         assert hasattr(borg_child, "shared_variable")
 
-    def test_borg_singleton_shared_state_reset(self):
+    def test_borg_singleton_shared_state_reset(self) -> None:
         borg = BorgSingletonClass()
         borg.shared_variable = False
         borg_reset_child = BorgSingletonResetChild()

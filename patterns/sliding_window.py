@@ -1,7 +1,7 @@
 import math
 
 
-class SlidingWindow(object):
+class SlidingWindow:
     @staticmethod
     def avg_subarray_of_size_k(nums: list[int], k: int) -> list[float]:
         """
@@ -229,7 +229,7 @@ class SlidingWindow(object):
         return result
 
 
-class PracticeSlidingWindow(object):
+class PracticeSlidingWindow:
     @staticmethod
     def avg_subarray_of_size_k(nums: list[int], k: int) -> list[float]:
         """

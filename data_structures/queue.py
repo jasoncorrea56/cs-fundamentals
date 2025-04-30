@@ -1,18 +1,17 @@
 from data_structures.linked_list_single import Node
 from threading import Lock
-from typing import Optional
 
 
-class QueueCircularArray(object):
-    def __init__(self, capacity: int):
+class QueueCircularArray:
+    def __init__(self, capacity: int) -> None:
         self.queue = [0] * capacity
         self.capacity = capacity
         self.size = 0
         self.head = 0
         self.queue_lock = Lock()
 
-    def __str__(self):
-        return str([x for x in self.queue])
+    def __str__(self) -> str:
+        return str(list(self.queue))
 
     def is_full(self) -> bool:
         return self.size == self.capacity
@@ -28,7 +27,7 @@ class QueueCircularArray(object):
             self.size += 1
         return True
 
-    def dequeue(self):
+    def dequeue(self) -> int | None:
         if self.is_empty():
             return None
         value = self.peek()
@@ -37,25 +36,25 @@ class QueueCircularArray(object):
         self.size -= 1
         return value
 
-    def peek(self) -> Optional[int]:
+    def peek(self) -> int | None:
         if self.is_empty():
             return None
         return self.queue[self.head]
 
-    def rear(self) -> Optional[int]:
+    def rear(self) -> int | None:
         if self.is_empty():
             return None
         return self.queue[(self.head + self.size - 1) % self.capacity]
 
 
-class QueueCircularLinkedList(object):
-    def __init__(self, capacity: int):
+class QueueCircularLinkedList:
+    def __init__(self, capacity: int) -> None:
         self.size = 0
         self.capacity = capacity
         self.head = None
         self.tail = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = []
         node = self.head
         while True:
@@ -85,7 +84,7 @@ class QueueCircularLinkedList(object):
         self.size += 1
         return True
 
-    def dequeue(self):
+    def dequeue(self) -> int | None:
         if self.is_empty():
             return None
         value = self.peek()
@@ -94,22 +93,22 @@ class QueueCircularLinkedList(object):
         self.size -= 1
         return value
 
-    def peek(self) -> Optional[int]:
+    def peek(self) -> int | None:
         if self.is_empty():
             return None
         return self.head.value
 
-    def rear(self) -> Optional[int]:
+    def rear(self) -> int | None:
         if self.is_empty():
             return None
         return self.tail.value
 
 
-class PracticeQueueCircularArray(object):
-    def __init__(self, capacity: int):
+class PracticeQueueCircularArray:
+    def __init__(self, capacity: int) -> None:
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError
 
     def is_full(self) -> bool:
@@ -121,21 +120,21 @@ class PracticeQueueCircularArray(object):
     def enqueue(self, value: int) -> bool:
         raise NotImplementedError
 
-    def dequeue(self):
+    def dequeue(self) -> int | None:
         raise NotImplementedError
 
-    def peek(self) -> Optional[int]:
+    def peek(self) -> int | None:
         raise NotImplementedError
 
-    def rear(self) -> Optional[int]:
+    def rear(self) -> int | None:
         raise NotImplementedError
 
 
-class PracticeQueueCircularLinkedList(object):
-    def __init__(self, capacity: int):
+class PracticeQueueCircularLinkedList:
+    def __init__(self, capacity: int) -> None:
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError
 
     def is_full(self) -> bool:
@@ -147,11 +146,11 @@ class PracticeQueueCircularLinkedList(object):
     def enqueue(self, value: int) -> bool:
         raise NotImplementedError
 
-    def dequeue(self):
+    def dequeue(self) -> int | None:
         raise NotImplementedError
 
-    def peek(self) -> Optional[int]:
+    def peek(self) -> int | None:
         raise NotImplementedError
 
-    def rear(self) -> Optional[int]:
+    def rear(self) -> int | None:
         raise NotImplementedError

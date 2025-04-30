@@ -13,7 +13,7 @@ class BinarySearchTree(BinaryTreeNode):
     Note: Inorder traversal is the most common traversal method of a BST.
     """
 
-    def __init__(self, value=0, left=None, right=None):
+    def __init__(self, value=0, left=None, right=None) -> None:
         super().__init__(value, left, right)
 
     @staticmethod
@@ -34,7 +34,7 @@ class BinarySearchTree(BinaryTreeNode):
 
 
 class PracticeBinarySearchTree(BinaryTreeNode):
-    def __init__(self, value=0, left=None, right=None):
+    def __init__(self, value=0, left=None, right=None) -> None:
         super().__init__(value, left, right)
 
     @staticmethod

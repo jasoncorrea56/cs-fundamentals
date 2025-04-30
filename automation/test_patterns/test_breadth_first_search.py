@@ -6,13 +6,13 @@ from automation.resources.patterns.bfs_data import (
 from patterns.breadth_first_search import BreadthFirstSearch, Node
 
 
-class TestBreadthFirstSearch(object):
+class TestBreadthFirstSearch:
     @classmethod
     def setup_class(cls) -> None:
         cls.bfs = BreadthFirstSearch()
 
     @pytest.fixture()
-    def bfs_root(self):
+    def bfs_root(self) -> Node:
         root = Node(1)
         root.left = Node(2)
         root.right = Node(3)
@@ -23,7 +23,7 @@ class TestBreadthFirstSearch(object):
         return root
 
     @pytest.fixture()
-    def level_avg_root(self):
+    def level_avg_root(self) -> Node:
         root = Node(4)
         root.left = Node(7)
         root.left.left = Node(10)
@@ -35,13 +35,13 @@ class TestBreadthFirstSearch(object):
         return root
 
     @pytest.fixture()
-    def level_avg_output(self):
+    def level_avg_output(self) -> list[int]:
         return BFS_LEVEL_AVG_OUTPUT
 
-    def test_level_order_bfs(self, bfs_root):
+    def test_level_order_bfs(self, bfs_root) -> None:
         result = self.bfs.level_order_bfs(bfs_root)
         assert result == BFS_LEVEL_ORDER_OUTPUT
 
-    def test_get_avg_for_each_level(self, level_avg_root, level_avg_output):
+    def test_get_avg_for_each_level(self, level_avg_root, level_avg_output) -> None:
         results = self.bfs.get_avg_for_each_level(level_avg_root)
         assert results == level_avg_output
