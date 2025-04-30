@@ -1,0 +1,50 @@
+# This workflow will install Python dependencies, lint/format, and run tests with a Python version matrix
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Automation - Lint/Tests
+
+on:
+  push:
+  pull_request:
+    types: [ opened, synchronize ]
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    name: pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+      - name: Install Deps
+        shell: bash
+        run: |
+          uv sync --frozen --only-dev
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  pytest:
+    name: pytest ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Deps
+        shell: bash
+        run: |
+          uv sync --frozen --all-groups
+      - name: Run Tests
+        shell: bash
+        run: |
+          uv run --frozen pytest

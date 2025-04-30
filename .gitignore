@@ -124,3 +124,6 @@ dmypy.json
 
 # ruff linter/formatter
 .ruff_cache/
+
+# macOS
+.DS_Store
