@@ -1,6 +1,6 @@
 import pytest
 from automation.test_data_structures.test_queue import TestQueue
-from data_structures.queue import (
+from cs_fundamentals.data_structures.queue import (
     PracticeQueueCircularArray,
     PracticeQueueCircularLinkedList,
 )

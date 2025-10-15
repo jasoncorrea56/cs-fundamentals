@@ -1,5 +1,5 @@
-from automation.test_singleton import TestSingletonPattern
-from singleton import (
+from automation.test_patterns.test_singleton import TestSingletonPattern
+from cs_fundamentals.patterns.singleton import (
     PracticeSingletonClass,
     PracticeSingletonChild,
     PracticeBorgSingletonClass,

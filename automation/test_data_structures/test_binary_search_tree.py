@@ -1,5 +1,8 @@
 import pytest
-from data_structures.binary_search_tree import BinarySearchTree, BinaryTreeNode
+from cs_fundamentals.data_structures.binary_search_tree import (
+    BinarySearchTree,
+    BinaryTreeNode,
+)
 
 
 class TestBinarySearchTree:

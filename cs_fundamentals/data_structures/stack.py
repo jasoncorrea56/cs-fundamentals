@@ -1,4 +1,4 @@
-from data_structures.linked_list_single import Node
+from cs_fundamentals.data_structures.linked_list_single import Node
 
 
 class StackArray:

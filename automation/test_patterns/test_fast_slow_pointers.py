@@ -2,8 +2,8 @@ import pytest
 from automation.resources.patterns.fast_slow_pointers_data import (
     FAST_SLOW_POINTERS_OUTPUT,
 )
-from data_structures.linked_list_single import Node, SinglyLinkedList
-from patterns.fast_slow_pointers import FastSlowPointers
+from cs_fundamentals.data_structures.linked_list_single import Node, SinglyLinkedList
+from cs_fundamentals.patterns.fast_slow_pointers import FastSlowPointers
 
 
 class TestFastSlowPointers:

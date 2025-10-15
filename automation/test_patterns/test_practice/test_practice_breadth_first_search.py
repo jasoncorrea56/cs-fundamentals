@@ -1,6 +1,6 @@
 import pytest
 from automation.test_patterns.test_breadth_first_search import TestBreadthFirstSearch
-from patterns.breadth_first_search import PracticeBreadthFirstSearch
+from cs_fundamentals.patterns.breadth_first_search import PracticeBreadthFirstSearch
 
 
 class TestPracticeBreadthFirstSearch(TestBreadthFirstSearch):

@@ -10,7 +10,7 @@ from automation.resources.patterns.two_pointers_data import (
     TWO_POINTERS_SUBARRAYS_WITH_PRODUCT_LESS_THAN_TARGET_TESTS,
     TWO_POINTERS_DUTCH_NATIONAL_FLAG_PROBLEM_TESTS,
 )
-from patterns.two_pointers import TwoPointers
+from cs_fundamentals.patterns.two_pointers import TwoPointers
 
 
 class TestTwoPointers:

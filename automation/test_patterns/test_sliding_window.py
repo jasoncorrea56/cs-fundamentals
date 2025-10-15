@@ -11,7 +11,7 @@ from automation.resources.patterns.sliding_window_data import (
     SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_SAME_LETTERS_AFTER_REPLACEMENT_TESTS,
     SLIDING_WINDOW_LONGEST_SUBARRAY_WITH_ONES_AFTER_REPLACEMENT_TESTS,
 )
-from patterns.sliding_window import SlidingWindow
+from cs_fundamentals.patterns.sliding_window import SlidingWindow
 
 
 class TestSlidingWindow:

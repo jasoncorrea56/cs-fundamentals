@@ -3,7 +3,7 @@ from automation.resources.patterns.bfs_data import (
     BFS_LEVEL_ORDER_OUTPUT,
     BFS_LEVEL_AVG_OUTPUT,
 )
-from patterns.breadth_first_search import BreadthFirstSearch, Node
+from cs_fundamentals.patterns.breadth_first_search import BreadthFirstSearch, Node
 
 
 class TestBreadthFirstSearch:

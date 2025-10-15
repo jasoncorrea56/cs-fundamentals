@@ -7,7 +7,7 @@ from automation.resources.data_structures.graph_data import (
     GRAPH_UNION_FIND_UNION_TESTS,
     GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS,
 )
-from data_structures.graph import (
+from cs_fundamentals.data_structures.graph import (
     UndirectedGraphVertex,
     UndirectedGraph,
     UnionFind,

@@ -11,8 +11,8 @@ from automation.resources.sorting_data import (
     SORT_RADIX_TESTS,
     SORT_STALIN_TESTS,
 )
-from automation.test_sorting import TestSortingAlgorithms
-from sorting import PracticeSortingAlgorithms
+from automation.test_patterns.test_sorting import TestSortingAlgorithms
+from cs_fundamentals.patterns.sorting import PracticeSortingAlgorithms
 
 
 class TestPracticeSortingAlgorithms(TestSortingAlgorithms):

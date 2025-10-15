@@ -1,7 +1,7 @@
 import pytest
 from automation.test_patterns.test_fast_slow_pointers import TestFastSlowPointers
-from data_structures.linked_list_single import SinglyLinkedList
-from patterns.fast_slow_pointers import PracticeFastSlowPointers
+from cs_fundamentals.data_structures.linked_list_single import SinglyLinkedList
+from cs_fundamentals.patterns.fast_slow_pointers import PracticeFastSlowPointers
 
 
 class TestPracticeFastSlowPointers(TestFastSlowPointers):

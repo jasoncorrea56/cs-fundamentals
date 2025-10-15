@@ -6,7 +6,7 @@ class Node:
 
 class SinglyLinkedList:
     def __init__(self) -> None:
-        self.head: Node = None
+        self.head: Node | None = None
 
     def get_node(self, index: int) -> Node:
         """

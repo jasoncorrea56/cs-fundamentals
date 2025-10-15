@@ -1,4 +1,4 @@
-from singleton import (
+from cs_fundamentals.patterns.singleton import (
     SingletonClass,
     SingletonChild,
     BorgSingletonClass,

@@ -1,6 +1,6 @@
 import pytest
 from automation.test_patterns.test_depth_first_search import TestDepthFirstSearch
-from patterns.depth_first_search import PracticeDepthFirstSearch
+from cs_fundamentals.patterns.depth_first_search import PracticeDepthFirstSearch
 
 
 class TestPracticeDepthFirstSearch(TestDepthFirstSearch):

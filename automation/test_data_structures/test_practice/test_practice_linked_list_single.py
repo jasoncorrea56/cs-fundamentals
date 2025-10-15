@@ -1,6 +1,6 @@
 import pytest
 from automation.test_data_structures.test_linked_list_single import TestLinkedListSingle
-from data_structures.linked_list_single import PracticeSinglyLinkedList
+from cs_fundamentals.data_structures.linked_list_single import PracticeSinglyLinkedList
 
 
 class TestPracticeLinkedListSingle(TestLinkedListSingle):

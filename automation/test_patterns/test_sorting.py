@@ -16,7 +16,7 @@ from automation.resources.sorting_data import (
     SORT_STALIN_TESTS,
 )
 
-from sorting import SortingAlgorithms
+from cs_fundamentals.patterns.sorting import SortingAlgorithms
 
 
 class TestSortingAlgorithms:

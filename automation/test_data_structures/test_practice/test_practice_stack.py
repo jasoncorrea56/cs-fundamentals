@@ -1,6 +1,9 @@
 import pytest
 from automation.test_data_structures.test_stack import TestStack
-from data_structures.stack import PracticeStackArray, PracticeStackLinkedList
+from cs_fundamentals.data_structures.stack import (
+    PracticeStackArray,
+    PracticeStackLinkedList,
+)
 
 
 class TestPracticeStack(TestStack):
