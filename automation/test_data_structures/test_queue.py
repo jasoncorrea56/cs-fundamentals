@@ -3,7 +3,10 @@ from automation.resources.data_structures.queue_data import (
     QUEUE_ARRAY_OUTPUT,
     QUEUE_LINKED_LIST_OUTPUT,
 )
-from data_structures.queue import QueueCircularArray, QueueCircularLinkedList
+from cs_fundamentals.data_structures.queue import (
+    QueueCircularArray,
+    QueueCircularLinkedList,
+)
 
 
 class TestQueue:
@@ -48,8 +51,8 @@ class TestQueue:
         assert result is False
 
     def test_array_str(self, array_output) -> None:
-        result = self.queue_array.__str__()
-        assert result == array_output
+        result = str(self.queue_array)
+        assert result == str(array_output)
 
     def test_linked_list_enqueue(self) -> None:
         result = self.queue_linked_list.enqueue(1)
@@ -79,5 +82,5 @@ class TestQueue:
         assert result is False
 
     def test_linked_list_str(self, linked_list_output) -> None:
-        result = self.queue_linked_list.__str__()
-        assert result == linked_list_output
+        result = str(self.queue_linked_list)
+        assert result == str(linked_list_output)

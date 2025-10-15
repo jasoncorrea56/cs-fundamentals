@@ -9,7 +9,7 @@ from automation.resources.patterns.sliding_window_data import (
     SLIDING_WINDOW_LONGEST_SUBARRAY_WITH_ONES_AFTER_REPLACEMENT_TESTS,
 )
 from automation.test_patterns.test_sliding_window import TestSlidingWindow
-from patterns.sliding_window import PracticeSlidingWindow
+from cs_fundamentals.patterns.sliding_window import PracticeSlidingWindow
 
 
 class TestPracticeSlidingWindow(TestSlidingWindow):

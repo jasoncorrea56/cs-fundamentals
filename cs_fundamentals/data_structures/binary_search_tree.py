@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import math
-from data_structures.binary_tree import BinaryTreeNode
+
+from cs_fundamentals.data_structures.binary_tree import BinaryTreeNode
 
 
 class BinarySearchTree(BinaryTreeNode):

@@ -6,7 +6,7 @@ from automation.resources.data_structures.graph_data import (
     GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS,
 )
 from automation.test_data_structures.test_graph import TestGraph
-from data_structures.graph import (
+from cs_fundamentals.data_structures.graph import (
     UndirectedGraphVertex,
     UndirectedGraph,
     PracticeUnionFind,
@@ -28,7 +28,6 @@ class TestPracticeGraph(TestGraph):
 
     def test_build_undirected_graph_vertices(self) -> None:
         try:
-            # TODO revisit these tests, is it testing the practice implementation or should I be passing in params?
             super().test_build_undirected_graph_vertices()
         except NotImplementedError:
             assert True

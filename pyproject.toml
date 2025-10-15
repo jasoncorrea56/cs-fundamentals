@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=2.2.5",
+    "fastapi[standard]>=0.115.12",
+    "uvicorn>=0.23.2",
 ]
 
 [build-system]
@@ -19,10 +21,23 @@ namespaces = false
 
 [dependency-groups]
 dev = [
+    "httpx",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
+    "pytest-asyncio",
     "ruff>=0.11.7",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["automation"]
+pythonpath = ["."]
+addopts = "-q -p no:warnings"
+filterwarnings = [
+  "ignore::pytest.PytestAssertRewriteWarning",
+  "ignore:The configuration option \"asyncio_default_fixture_loop_scope\" is unset.:pytest.PytestDeprecationWarning",
+]
+# Set an explicit default to silence the deprecation in pytest-asyncio:
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.ruff]
 show-fixes = true
@@ -39,11 +54,15 @@ extend-select = [
     "ANN204",  # Missing return type annotation for special method {name}
     "ANN205",  # Missing return type annotation for staticmethod {name}
     "ANN206",  # Missing return type annotation for classmethod {name}
+    "TID252",  # Disallow relative imports; prefer absolute
 ]
 ignore = [
     "E501",    # Line too long ({width} > {limit})
     "F403"     # 'from module import *' used; unable to detect undefined names
 ]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.format]
 quote-style = "double"

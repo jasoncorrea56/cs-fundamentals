@@ -236,7 +236,7 @@ class PracticeSlidingWindow:
         Given an array, find the average of all subarrays of ‘K’ contiguous elements
         :param nums: List of integers
         :param k: Length of subarray
-        :return: List of integer averages for subarrays of length K
+        :return: List of float averages for subarrays of length K
         """
         raise NotImplementedError
 

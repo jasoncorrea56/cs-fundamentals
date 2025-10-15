@@ -11,7 +11,7 @@ from automation.resources.patterns.two_pointers_data import (
     TWO_POINTERS_DUTCH_NATIONAL_FLAG_PROBLEM_TESTS,
 )
 from automation.test_patterns.test_two_pointers import TestTwoPointers
-from patterns.two_pointers import PracticeTwoPointers
+from cs_fundamentals.patterns.two_pointers import PracticeTwoPointers
 
 
 class TestPracticeTwoPointers(TestTwoPointers):

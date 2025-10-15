@@ -1,6 +1,6 @@
 import pytest
 from automation.test_data_structures.test_binary_search_tree import TestBinarySearchTree
-from data_structures.binary_search_tree import PracticeBinarySearchTree
+from cs_fundamentals.data_structures.binary_search_tree import PracticeBinarySearchTree
 
 
 class TestPracticeBinarySearchTree(TestBinarySearchTree):

@@ -1,6 +1,6 @@
 import pytest
 from automation.resources.data_structures.stack_data import STACK_EXPECTED_OUTPUT
-from data_structures.stack import StackArray, StackLinkedList
+from cs_fundamentals.data_structures.stack import StackArray, StackLinkedList
 
 
 class TestStack:

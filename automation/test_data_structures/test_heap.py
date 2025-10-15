@@ -2,7 +2,8 @@ from automation.resources.data_structures.heap_data import (
     MAXHEAP_OUTPUT,
     MINHEAP_OUTPUT,
 )
-from data_structures.heap import MaxHeap, MinHeap
+from cs_fundamentals.data_structures.maxheap import MaxHeap
+from cs_fundamentals.data_structures.minheap import MinHeap
 
 
 class TestHeap:

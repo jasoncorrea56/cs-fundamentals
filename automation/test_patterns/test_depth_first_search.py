@@ -8,7 +8,7 @@ from automation.resources.patterns.dfs_data import (
     DFS_POSTORDER_2_OUTPUT,
     DFS_LEVEL_AVG_OUTPUT,
 )
-from patterns.depth_first_search import DepthFirstSearch, Node
+from cs_fundamentals.patterns.depth_first_search import DepthFirstSearch, Node
 
 
 class TestDepthFirstSearch:
