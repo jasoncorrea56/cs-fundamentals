@@ -89,4 +89,7 @@ class PracticeBreadthFirstSearch:
 
     @staticmethod
     def get_avg_for_each_level(root: Node | None) -> list[float]:
+        """
+        Given the root node of a binary tree, return a list containing the average of each level.
+        """
         raise NotImplementedError

@@ -44,7 +44,7 @@ def _normalize_payload(payload: Any) -> dict[str, Any]:
 
 
 def _now() -> str:
-    return datetime.now().isoformat()  # + "Z"
+    return datetime.now().isoformat()
 
 
 def success_response(
@@ -60,14 +60,12 @@ def success_response(
     :param payload: Optional context (e.g., module, test stats, timing)
     :return: JSON dict containing standardized result details
     """
-    metadata: dict[str, Any] = _normalize_payload(payload)
-
     return {
         "success": True,
         "timestamp": _now(),
         "message": message,
         "data": data,
-        "metadata": metadata,
+        "metadata": _normalize_payload(payload),
     }
 
 
