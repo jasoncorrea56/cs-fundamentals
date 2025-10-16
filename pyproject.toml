@@ -10,6 +10,8 @@ dependencies = [
     "uvicorn>=0.23.2",
 ]
 
+#
+# Build config
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
@@ -21,13 +23,15 @@ namespaces = false
 
 [dependency-groups]
 dev = [
-    "httpx",
+    "httpx>=0.28.1",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
-    "pytest-asyncio",
+    "pytest-asyncio>=1.2.0",
     "ruff>=0.11.7",
 ]
 
+#
+# Test config
 [tool.pytest.ini_options]
 testpaths = ["automation"]
 pythonpath = ["."]
@@ -39,9 +43,12 @@ filterwarnings = [
 # Set an explicit default to silence the deprecation in pytest-asyncio:
 asyncio_default_fixture_loop_scope = "function"
 
+#
+# Linter/Formatter configs
 [tool.ruff]
 show-fixes = true
 target-version = "py310"
+line-length = 100
 
 [tool.ruff.lint]
 extend-select = [
