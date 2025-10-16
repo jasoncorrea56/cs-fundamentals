@@ -10,6 +10,7 @@ from cs_fundamentals.core.inject import (
     _compile_functions,
     inject_into_practice,
 )
+from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.core.practice_service import run_submission
 from cs_fundamentals.core.response import error_response, success_response
 from cs_fundamentals.core.test_matrix import TestTarget, get_target
@@ -23,6 +24,8 @@ from cs_fundamentals.core.validation import (
 MethodSplitter = Callable[
     [dict[str, str]], tuple[dict[str, str], list[tuple[str, str, dict[str, str]]]]
 ]
+
+log = get_logger(__name__)
 
 
 def _resolve_class(module_path: str, dotted_class: str) -> type:
@@ -96,9 +99,35 @@ def make_submit_handler_from_matrix(
         success_message or f"All tests for '{target.key}' executed successfully."
     )
 
+    log.debug(
+        "handler_factory.make_submit_handler_from_matrix.init",
+        extra={
+            "target_key": target.key,
+            "target_module": target.module,
+            "class_name": target.class_name,
+            "test_expr": target.test_expr,
+            "test_files": target.test_files,
+            "kind": target.kind,
+            "has_splitter": method_splitter is not None,
+        },
+    )
+
     async def _handler(payload: MethodsOnly) -> dict[str, Any]:
+        log.info(
+            "submit.start",
+            extra={
+                "target_key": target.key,
+                "target_module": target.module,
+                "class_name": target.class_name,
+                "num_methods": len(payload.methods or {}),
+            },
+        )
         try:
             if not payload.methods:
+                log.warning(
+                    "submit.no_methods",
+                    extra={"target_key": target.key},
+                )
                 return error_response(
                     status_code=400,
                     message="No methods provided in payload.",
@@ -110,9 +139,24 @@ def make_submit_handler_from_matrix(
 
             if method_splitter is not None:
                 primary_methods, extra_injections = method_splitter(payload.methods)
+                log.debug(
+                    "submit.methods.split",
+                    extra={
+                        "target_key": target.key,
+                        "primary_count": len(primary_methods),
+                        "extra_count": len(extra_injections),
+                        "extra_targets": [
+                            {
+                                "target_module": m,
+                                "class_name": c,
+                                "method_count": len(md),
+                            }
+                            for (m, c, md) in extra_injections
+                        ],
+                    },
+                )
 
-            # 1) Validate the primary target methods exist on the class (supports nested list via practice_service,
-            #    but here target.class_name is typically a single class for patterns/DS endpoints).
+            # 1) Validate primary target methods
             _validate_methods_exist_flexible(
                 target.module,
                 target.class_name
@@ -120,19 +164,60 @@ def make_submit_handler_from_matrix(
                 else target.class_name[0],
                 primary_methods.keys(),
             )
+            log.debug(
+                "submit.methods.validated",
+                extra={
+                    "target_key": target.key,
+                    "validated_methods": list(primary_methods.keys()),
+                },
+            )
 
-            # 2) Pre-inject any extra targets (e.g., nested PracticeGraphProblems.UnionFind)
-            #    with validation per extra target.
+            # 2) Pre-inject extras
             for mod, cls, methods in extra_injections:
+                log.debug(
+                    "submit.inject_extra.begin",
+                    extra={
+                        "target_key": target.key,
+                        "target_module": mod,
+                        "class_name": cls,
+                        "method_count": len(methods),
+                        "methods": list(methods.keys()),
+                    },
+                )
                 _inject_extra(mod, cls, methods)
+                log.debug(
+                    "submit.inject_extra.done",
+                    extra={
+                        "target_key": target.key,
+                        "target_module": mod,
+                        "class_name": cls,
+                    },
+                )
 
-            # 3) Run the main target
+            # 3) Run tests
+            log.info(
+                "submit.run_tests.begin",
+                extra={
+                    "target_key": target.key,
+                    "target_module": target.module,
+                    "class_name": target.class_name,
+                },
+            )
             result = run_submission(
                 module=target.module,
                 class_name=target.class_name,
                 methods=primary_methods,
                 test_files=target.test_files,
                 test_expr=target.test_expr,
+            )
+            log.info(
+                "submit.run_tests.done",
+                extra={
+                    "target_key": target.key,
+                    "summary": result.get("summary"),
+                    "success": result.get("success"),
+                    "exit_code": result.get("exit_code"),
+                },
             )
 
             meta = {
@@ -153,15 +238,28 @@ def make_submit_handler_from_matrix(
                     if k in summary:
                         parts.append(f"{k}={summary[k]}")
                 tail = f" ({', '.join(parts)})" if parts else ""
+
+                log.warning(
+                    "submit.run_tests.failed",
+                    extra={"target_key": target.key, "summary": summary},
+                )
                 return error_response(
                     status_code=400,
                     message=f"Test run failed{tail}. See stdout/stderr for details.",
                     payload={"result": result, **meta, "methods": payload.methods},
                 )
 
+            log.info(
+                "submit.success",
+                extra={"target_key": target.key, "summary": result.get("summary")},
+            )
             return success_response(data=result, message=message, payload=meta)
 
         except DisallowedImportError as diexc:
+            log.warning(
+                "submit.disallowed_import",
+                extra={"target_key": target.key, "error": str(diexc)},
+            )
             return error_response(
                 status_code=400,
                 message=str(diexc),
@@ -169,7 +267,10 @@ def make_submit_handler_from_matrix(
             )
 
         except AttributeError as aexc:
-            # Clean “unknown method(s)” or “unknown class” feedback from validation.
+            log.warning(
+                "submit.validation_error",
+                extra={"target_key": target.key, "error": str(aexc)},
+            )
             return error_response(
                 status_code=400,
                 message=str(aexc),
@@ -178,6 +279,10 @@ def make_submit_handler_from_matrix(
 
         except Exception as exc:  # noqa: BLE001
             tb = traceback.format_exc()
+            log.exception(
+                "submit.unhandled_exception",
+                extra={"target_key": target.key, "error": str(exc)},
+            )
             return error_response(
                 status_code=400,
                 message=f"{str(exc)}\n\n{str(tb)}",
