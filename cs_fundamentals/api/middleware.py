@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import Request, Response  # noqa: TC002
 from cs_fundamentals.core.logging_config import get_logger
 
-log = get_logger("api.middleware")
+log = get_logger(__name__)
 
 
 async def request_logger_mw(

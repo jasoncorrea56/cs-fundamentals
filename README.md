@@ -33,8 +33,9 @@ pre-commit run --all-files
 ### UV Setup
 
 Install UV
-- https://github.com/astral-sh/uv
-- https://docs.astral.sh/uv/
+
+- <https://github.com/astral-sh/uv>
+- <https://docs.astral.sh/uv/>
 
 Update UV:
 
@@ -137,41 +138,45 @@ pip install -r requirements.txt
 
 1. Implement the practice class of your choice.
 2. Run pytest against:
-    - Module
+    - All tests
 
     ```bash
-    pytest automation/test_sorting.py
+    uv run pytest -v
     ```
 
     - Package
 
     ```bash
-    pytest automation/test_data_structures
+    uv run pytest -v automation/test_data_structures
     ```
 
-    - All tests
+    - Module
 
     ```bash
-    pytest automation
+    uv run pytest -vv automation/test_data_structures/test_graph.py
     ```
 
-    - UV-specific syntax
+    - Test
 
     ```bash
-    uv run pytest automation
+    uv run pytest -vv automation/test_data_structures/test_graph.py -k test_problem_number_of_islands_2
     ```
 
 NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or package and select `Run <test_module or test_package>` or use hotkeys CTRL + SHIFT + F10 to execute the current test module.
 
 ## Run API locally
 
-1. Run FastAPI with auto-reload for local development
+Runtime config comes from env via `cs_fundamentals.config.Settings`.
+
+1. Copy project environment variable file `local.env` to `.env`
 
     ```bash
-    uv run fastapi dev cs_fundamentals/main.py
+    cp local.env .env
     ```
 
-2. Run FastAPI with uvicorn to more closely replicate a Production-like invocation (with auto-reload enabled for local dev).
+2. Run API from terminal
+
+    - Run FastAPI with uvicorn to more closely replicate a Production-like invocation, with auto-reload enabled for local dev.
 
     ```bash
     uv run uvicorn cs_fundamentals.main:app --reload
@@ -185,7 +190,7 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
     curl -s http://127.0.0.1:8000/api/v1/health | jq
     ```
 
-2. List Targets
+2. List Practice Targets
 
     ```bash
     curl -s http://127.0.0.1:8000/api/v1/targets | jq

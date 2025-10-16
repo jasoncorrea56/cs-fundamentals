@@ -1,8 +1,12 @@
+from logging import Logger
+
 from fastapi import FastAPI, Response
 
 
 from cs_fundamentals.api.middleware import request_logger_mw
+from cs_fundamentals.config import settings
 from cs_fundamentals.core.logging_config import configure_logging, get_logger
+from cs_fundamentals.core.utility import get_app_version
 from cs_fundamentals.routers.health import router as health_router
 from cs_fundamentals.routers.data_structures_bst_runner import (
     router as binary_search_tree_router,
@@ -63,7 +67,11 @@ from cs_fundamentals.routers.targets import router as targets_router
 
 configure_logging()
 
-app: FastAPI = FastAPI(title="CS Fundamentals API", version="0.1.0")
+app: FastAPI = FastAPI(
+    title=settings.app_name,
+    docs_url="/docs",
+    version=get_app_version(),
+)
 
 
 # Register middleware via decorator wrapper
@@ -72,7 +80,7 @@ async def _request_logger(request, call_next) -> Response:
     return await request_logger_mw(request, call_next)
 
 
-log = get_logger("cs_fundamentals.main")
+log: Logger = get_logger(__name__)
 log.info("API launched")
 
 v1_prefix: str = "/api/v1"
