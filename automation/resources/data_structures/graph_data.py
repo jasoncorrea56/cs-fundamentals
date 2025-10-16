@@ -12,11 +12,7 @@ GRAPH_ADJACENCY_LIST_OUTPUT: list[str] = [
     "E:['A', 'C']",
 ]
 GRAPH_ADJACENCY_MATRIX_OUTPUT: list[str] = (
-    "[[0. 1. 1. 0. 1.]\n"
-    " [1. 0. 1. 1. 0.]\n"
-    " [1. 1. 0. 1. 1.]\n"
-    " [0. 1. 1. 0. 0.]\n"
-    " [1. 0. 1. 0. 0.]]"
+    "[[0. 1. 1. 0. 1.]\n [1. 0. 1. 1. 0.]\n [1. 1. 0. 1. 1.]\n [0. 1. 1. 0. 0.]\n [1. 0. 1. 0. 0.]]"
 )
 GRAPH_UNION_FIND_FIND_TESTS: list[Any] = [
     (1, 1),

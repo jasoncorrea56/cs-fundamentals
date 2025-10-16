@@ -88,9 +88,7 @@ class TestPracticeGraph(TestGraph):
         except NotImplementedError:
             assert True
 
-    @pytest.mark.parametrize(
-        "m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS
-    )
+    @pytest.mark.parametrize("m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS)
     def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:
         try:
             super().test_problem_number_of_islands_2(m, n, positions, output)

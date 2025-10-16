@@ -24,9 +24,7 @@ class TestPracticeSlidingWindow(TestSlidingWindow):
         except NotImplementedError:
             assert True
 
-    @pytest.mark.parametrize(
-        "nums, k, output", SLIDING_WINDOW_MAX_SUBARRAY_OF_SIZE_K_TESTS
-    )
+    @pytest.mark.parametrize("nums, k, output", SLIDING_WINDOW_MAX_SUBARRAY_OF_SIZE_K_TESTS)
     def test_max_subarray_of_size_k(self, nums, k, output) -> None:
         try:
             super().test_max_subarray_of_size_k(nums, k, output)
@@ -46,13 +44,9 @@ class TestPracticeSlidingWindow(TestSlidingWindow):
         "input_string, k, output",
         SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_K_DISTINCT_CHARS_TESTS,
     )
-    def test_longest_substring_with_k_distinct_chars(
-        self, input_string, k, output
-    ) -> None:
+    def test_longest_substring_with_k_distinct_chars(self, input_string, k, output) -> None:
         try:
-            super().test_longest_substring_with_k_distinct_chars(
-                input_string, k, output
-            )
+            super().test_longest_substring_with_k_distinct_chars(input_string, k, output)
         except NotImplementedError:
             assert True
 
@@ -91,9 +85,7 @@ class TestPracticeSlidingWindow(TestSlidingWindow):
         "nums, k, output",
         SLIDING_WINDOW_LONGEST_SUBARRAY_WITH_ONES_AFTER_REPLACEMENT_TESTS,
     )
-    def test_longest_subarray_with_ones_after_replacement(
-        self, nums, k, output
-    ) -> None:
+    def test_longest_subarray_with_ones_after_replacement(self, nums, k, output) -> None:
         try:
             super().test_longest_subarray_with_ones_after_replacement(nums, k, output)
         except NotImplementedError:

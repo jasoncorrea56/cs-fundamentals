@@ -104,11 +104,7 @@ class UndirectedGraph:
 
     def __repr__(self) -> str:
         """Function to print a graph as adjacency list and adjacency matrix."""
-        return (
-            str(self.build_adjacency_list())
-            + "\n\n"
-            + str(self.build_adjacency_matrix())
-        )
+        return str(self.build_adjacency_list()) + "\n\n" + str(self.build_adjacency_matrix())
 
 
 class UnionFind:
@@ -201,9 +197,7 @@ class GraphProblems:
             result = [list(x) for x in clean if not (x in seen or seen.add(x))]
             return result
 
-    def number_of_islands_2(
-        self, m: int, n: int, positions: list[list[int]]
-    ) -> list[int]:
+    def number_of_islands_2(self, m: int, n: int, positions: list[list[int]]) -> list[int]:
         """
         Given an empty 2D binary grid of size m x n, where the grid represents a map.
           - 0's represent water
@@ -311,9 +305,7 @@ class PracticeGraphProblems:
         def set_parent(self, node) -> None:
             raise NotImplementedError
 
-    def number_of_islands_2(
-        self, m: int, n: int, positions: list[list[int]]
-    ) -> list[int]:
+    def number_of_islands_2(self, m: int, n: int, positions: list[list[int]]) -> list[int]:
         """
         Given an empty 2D binary grid of size m x n, where the grid represents a map.
           - 0's represent water

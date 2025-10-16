@@ -15,9 +15,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401
         payload: dict[str, Any] = {
-            "ts": datetime.utcfromtimestamp(record.created).isoformat(
-                timespec="milliseconds"
-            )
+            "ts": datetime.utcfromtimestamp(record.created).isoformat(timespec="milliseconds")
             + "Z",
             "level": record.levelname,
             "logger": record.name,
@@ -45,10 +43,7 @@ class ConsoleFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
-        ts = (
-            datetime.utcfromtimestamp(record.created).isoformat(timespec="seconds")
-            + "Z"
-        )
+        ts = datetime.utcfromtimestamp(record.created).isoformat(timespec="seconds") + "Z"
         base = f"{ts} | {record.levelname:<7} | {record.name} | {record.getMessage()}"
         if record.exc_info:
             base += "\n" + self.formatException(record.exc_info)
@@ -83,9 +78,7 @@ def configure_logging(*, force: bool = False) -> None:
 
     root.setLevel(level)
 
-    console_formatter: logging.Formatter = (
-        JsonFormatter() if fmt == "json" else ConsoleFormatter()
-    )
+    console_formatter: logging.Formatter = JsonFormatter() if fmt == "json" else ConsoleFormatter()
     root.addHandler(_build_handler(sys.stdout, console_formatter))
 
     if log_file:

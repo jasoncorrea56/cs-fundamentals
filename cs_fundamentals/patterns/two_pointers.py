@@ -151,8 +151,7 @@ class TwoPointers:
                 if target_diff == 0:
                     return target
                 if abs(target_diff) < abs(smallest_diff) or (
-                    abs(target_diff) == abs(smallest_diff)
-                    and target_diff > smallest_diff
+                    abs(target_diff) == abs(smallest_diff) and target_diff > smallest_diff
                 ):
                     smallest_diff = target_diff
                 if target_diff > 0:
@@ -194,9 +193,7 @@ class TwoPointers:
         return result
 
     @staticmethod
-    def subarrays_with_product_less_than_target(
-        arr: list[int], target: int
-    ) -> list[list]:
+    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list]:
         """
         Given an array with positive numbers and a positive target number,
         find all contiguous subarrays whose product is less than the target number.
@@ -322,9 +319,7 @@ class PracticeTwoPointers:
         raise NotImplementedError
 
     @staticmethod
-    def subarrays_with_product_less_than_target(
-        arr: list[int], target: int
-    ) -> list[list]:
+    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list]:
         """
         Given an array with positive numbers and a positive target number,
         find all contiguous subarrays whose product is less than the target number.
