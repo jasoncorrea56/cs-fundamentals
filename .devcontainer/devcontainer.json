@@ -1,0 +1,56 @@
+{
+  "name": "cs-fundamentals (dev)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "GIT_SHA": "dev",
+      "BUILD_TIME": "dev"
+    }
+  },
+  "workspaceFolder": "/workspaces/cs-fundamentals",
+    "runArgs": [
+        "--env-file",
+        ".env"
+    ],
+  "forwardPorts": [8000],
+  "postCreateCommand": "uv sync --group dev && pre-commit install",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "~/Dev/projects/cs-fundamentals/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["automation"]
+      },
+      "launch": {
+        "configurations": [
+          {
+            "name": "FastAPI (reload)",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+              "cs_fundamentals.main:app",
+              "--host", "0.0.0.0",
+              "--port", "8000",
+              "--reload",
+              "--reload-dir", "~/Dev/projects/cs-fundamentals"
+            ],
+            "jinja": true,
+            "justMyCode": true,
+            "env": {
+              "PORT": "8000",
+              "LOG_LEVEL": "INFO"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

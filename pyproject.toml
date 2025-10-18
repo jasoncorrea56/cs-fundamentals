@@ -6,28 +6,27 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi[standard]>=0.115.12",
+    "httpx>=0.28.1",
     "pydantic-settings>=2.11.0",
     "numpy>=2.2.5",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.2.0",
     "uvicorn>=0.23.2",
 ]
 
 #
 # Build config
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["cs_fundamentals"]
-include = ["cs_fundamentals.*"]
-namespaces = false
+where = ["."]
+include = ["cs_fundamentals*"]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pre-commit>=4.2.0",
-    "pytest>=8.3.5",
-    "pytest-asyncio>=1.2.0",
     "ruff>=0.11.7",
 ]
 

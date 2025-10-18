@@ -87,9 +87,9 @@ v1_prefix: str = "/api/v1"
 
 # Core
 app.include_router(health_router, prefix=v1_prefix)
-app.include_router(practice_matrix_router, prefix=v1_prefix)
-app.include_router(practice_router, prefix=v1_prefix)
 app.include_router(targets_router, prefix=v1_prefix)
+app.include_router(practice_router, prefix=v1_prefix)
+app.include_router(practice_matrix_router, prefix=v1_prefix)
 
 # Data Structures
 app.include_router(binary_search_tree_router, prefix=v1_prefix)

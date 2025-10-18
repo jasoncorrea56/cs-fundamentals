@@ -73,13 +73,7 @@ Check installed dependencies in venv:
 uv pip list
 ```
 
-Run UV to execute tests:
-
-```bash
-uv run pytest automation
-```
-
-### Conda Setup
+### Conda Setup (deprecated)
 
 Install Anaconda
 
@@ -95,43 +89,6 @@ Activate conda new environment:
 
 ```bash
 conda activate cs-fundamentals-env
-```
-
-### Pip/VirtualEnv Setup
-
-Install Pip:
-
-```bash
-python3 -m pip install --user --upgrade pip
-```
-
-For Ubuntu, install pip, venv, and git:
-
-```bash
-sudo apt-get update
-sudo apt install python3-pip
-sudo apt install python3.10-venv
-sudo apt-get install git
-```
-
-Create virtual environment:
-
-```bash
-mkdir ~/envs
-python3 -m venv envs/cs-fundamentals-env
-```
-
-Activate virtual environment:
-
-```bash
-source envs/cs-fundamentals-env/bin/activate
-```
-
-Install required packages from requirements.txt:
-
-```bash
-cd ~/Projects/cs-fundamentals
-pip install -r requirements.txt
 ```
 
 ## Run Tests
@@ -164,23 +121,61 @@ pip install -r requirements.txt
 
 NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or package and select `Run <test_module or test_package>` or use hotkeys CTRL + SHIFT + F10 to execute the current test module.
 
-## Run API locally
+## Build, Release & Run
 
-Runtime config comes from env via `cs_fundamentals.config.Settings`.
+- The build stage produces a versioned, immutable image (via Dockerfile + Git SHA)
+- The release stage ties a specific build to configuration (.env)
+- The run stage executes the container using `docker compose` profiles for dev and prod
+- Runtime config comes from env via `cs_fundamentals.config.Settings`
+- Automated builds are validated by `.github/workflows/build.yaml`
+  - Runs linting, pytest, and publishes versioned images to GHCR on `main` merges.
+- Hot reload is only active in the `dev` profile; production containers are immutable and should not mount code.
 
-1. Copy project environment variable file `local.env` to `.env`
+### Runtime Prep
+
+- Copy project environment variable file `local.env` to `.env`
 
     ```bash
     cp local.env .env
     ```
 
-2. Run API from terminal
+### Run API in uv venv
 
-    - Run FastAPI with uvicorn to more closely replicate a Production-like invocation, with auto-reload enabled for local dev.
+- Run API for development with `uvicorn` from terminal
+
+  - Run FastAPI with uvicorn with auto-reload enabled for local development
 
     ```bash
     uv run uvicorn cs_fundamentals.main:app --reload
     ```
+
+### Run API in Docker
+
+- Run API for development with `docker-compose` from terminal
+
+  - Run Docker compose configured with auto-reload enabled for local dev. Mounts source for hot reload with uvicorn --reload.
+
+    ```bash
+    docker compose --profile dev up
+    ```
+
+- Run API for production with `docker-compose` from terminal
+
+  - Run Docker compose with a runtime image built exactly as in production deployments (w/o auto-reload).
+
+    ```bash
+    docker compose --profile prod up
+    ```
+
+- Stop running API from terminal
+
+    ```bash
+    docker compose down --remove-orphans
+    ```
+
+### Environment
+
+App configuration is stored in `.env` and loaded automatically by Compose and FastAPI via `pydantic-settings`, keeping builds immutable and configuration external.
 
 ### Curls
 
