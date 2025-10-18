@@ -67,3 +67,6 @@ jobs:
     uses: ./.github/workflows/build.yaml
     # Inherit repo secrets (GITHUB_TOKEN) for GHCR login/push inside the called workflow
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write

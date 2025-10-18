@@ -2,7 +2,7 @@
 # It can still be invoked directly if you want by adding push triggers back,
 # but the DRY pattern is to call it from automation.yaml after lint/tests pass.
 
-name: build
+name: Build
 
 on:
   workflow_call:
