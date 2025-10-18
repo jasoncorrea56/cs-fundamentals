@@ -159,12 +159,6 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
     docker compose --profile dev up
     ```
 
-  - Run Docker compose overloading the default PORT.
-
-    ```bash
-    PORT=9000 docker compose --profile dev up --build
-    ```
-
 - Run API for production with `docker-compose` from terminal
 
   - Run Docker compose with a runtime image built exactly as in production deployments (w/o auto-reload).
@@ -182,6 +176,31 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
 ### Environment
 
 App configuration is stored in `.env` and loaded automatically by Compose and FastAPI via `pydantic-settings`, keeping builds immutable and configuration external.
+
+### Concurrency
+
+This service scales via the **process model**:
+
+- **In-container concurrency:** set the number of worker processes with `WEB_CONCURRENCY`.
+- **Horizontal concurrency:** run multiple containers/pods; each instance is stateless.
+
+#### Runtime knobs
+
+- Overload the default uvicorn worker count per container to scale workers.
+
+  ```bash
+  WEB_CONCURRENCY=4 docker compose --profile prod up --build
+  ```
+
+- Overload the default PORT.
+
+  ```bash
+  PORT=9000 docker compose --profile prod up --build
+  ```
+
+### Procfile
+
+A `Procfile` is included at the project root to define the web process entrypoint for platform-agnostic runners (e.g., Heroku, Dokku, Render, or Railway). It enables consistent startup behavior across environments. This allows services that support the Procfile convention to automatically detect and scale the application without additional configuration.
 
 ### Curls
 
