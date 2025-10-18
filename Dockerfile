@@ -54,5 +54,15 @@ ENV TMPDIR=/tmp
 
 # Run as non-root user
 USER appuser
+
+# Default port is configurable via $PORT; keep EXPOSE for runtime docs only (Docker cannot EXPOSE dynamically)
 EXPOSE 8000
-CMD ["uvicorn", "cs_fundamentals.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENV PORT=8000
+
+# Container-level healthcheck: hit /healthz on the bound port
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD python -c "import os,sys,urllib.request; port=os.getenv('PORT','8000'); url=f'http://127.0.0.1:{port}/healthz'; \
+__import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"
+
+# Entrypoint: use shell form so ${PORT} can be expanded at runtime
+CMD ["sh", "-c", "uvicorn cs_fundamentals.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

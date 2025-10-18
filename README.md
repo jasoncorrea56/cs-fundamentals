@@ -159,6 +159,12 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
     docker compose --profile dev up
     ```
 
+  - Run Docker compose overloading the default PORT.
+
+    ```bash
+    PORT=9000 docker compose --profile dev up --build
+    ```
+
 - Run API for production with `docker-compose` from terminal
 
   - Run Docker compose with a runtime image built exactly as in production deployments (w/o auto-reload).

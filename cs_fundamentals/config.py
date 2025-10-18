@@ -7,8 +7,9 @@ class Settings(BaseSettings):
     port: int = 8000
     log_level: str = "INFO"
     db_url: str | None = None
+    web_concurrency: int | None = None  # uvicorn consumes it; --reload ignores workers
 
-    model_config = SettingsConfigDict(env_file=(".env",), env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=(".env",), env_file_encoding="utf-8", extra="ignore")
 
 
 settings = Settings()
