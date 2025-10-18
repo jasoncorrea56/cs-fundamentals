@@ -7,13 +7,18 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
+from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.models.schemas import PracticeResult, PytestSummary
 
+log = get_logger(__name__)
 
-# Resolve TEST_ROOT to an absolute path in both environments:
-# - in container: /automation (set via Dockerfile ENV)
-# - locally: <repo>/automation
+
 def _find_repo_root(start: Path) -> Path:
+    """
+    Resolve TEST_ROOT to an absolute path in both environments:
+    - in container: /automation (set via Dockerfile ENV)
+    - locally: <repo>/automation
+    """
     for p in [start, *start.parents]:
         if (p / "pyproject.toml").exists():
             return p
@@ -23,6 +28,8 @@ def _find_repo_root(start: Path) -> Path:
 HERE = Path(__file__).resolve()
 REPO_ROOT = _find_repo_root(HERE)
 TEST_ROOT = Path(os.getenv("TEST_ROOT", REPO_ROOT / "automation")).resolve()
+# Give pytest a hard ceiling so shutdowns don’t hang
+TEST_TIMEOUT_SECONDS = int(os.getenv("TEST_TIMEOUT_SECONDS", "30"))
 
 _SUMMARY_KEYS = (
     "passed",
@@ -143,13 +150,20 @@ def run_pytest(
     # - local: fall back to repo root (where pyproject.toml lives)
     cwd = Path("/app") if Path("/app").exists() else REPO_ROOT
 
-    proc = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        cwd=str(cwd),
-        env=env,
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(cwd),
+            env=env,
+            timeout=TEST_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        log.exception(
+            "event=run_pytest.timeout_expired",
+            extra={"timeout": TEST_TIMEOUT_SECONDS, "error": str(exc)},
+        )
 
     stdout, stderr = proc.stdout, proc.stderr
     result = PracticeResult(

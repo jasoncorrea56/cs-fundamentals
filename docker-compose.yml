@@ -26,9 +26,13 @@ services:
     image: cs-fundamentals:prod
     environment:
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}   # Number of worker processes
+      GRACEFUL_TIMEOUT: ${GRACEFUL_TIMEOUT:-10}
+      TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-30}
     read_only: true  # Root FS read-only = stateless by construction
     tmpfs:
       - /tmp  # writable scratch space
+    stop_signal: SIGTERM
+    stop_grace_period: 30s  # How long Docker waits before SIGKILL (must be > GRACEFUL_TIMEOUT + buffer)
     # Run uvicorn with multiple workers (pre-fork) and short keep-alive to close idle connections quickly
     command: >
       uvicorn cs_fundamentals.main:app
@@ -50,6 +54,8 @@ services:
     image: cs-fundamentals:dev
     environment:
       PYTHONPATH: /app
+      GRACEFUL_TIMEOUT: ${GRACEFUL_TIMEOUT:-10}
+      TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-30}
     volumes:
       # Live-mount the repo so --reload sees changes immediately
       - .:/app:cached

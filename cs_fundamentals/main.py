@@ -1,4 +1,4 @@
-from logging import Logger
+import logging
 
 from fastapi import FastAPI, Response
 from collections.abc import AsyncIterator
@@ -67,17 +67,17 @@ from cs_fundamentals.routers.targets import router as targets_router
 
 
 configure_logging()
-log: Logger = get_logger(__name__)
+log: logging.Logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup: no state kept; just a clear log
     log.info("event=api.lifespan.startup")
     try:
         yield
     finally:
-        # Shutdown: ensure any background tasks are complete; nothing persistent to flush
+        # Shutdown: ensure log handlers flush before process exits
+        logging.shutdown()
         log.info("event=api.lifespan.shutdown")
 
 
