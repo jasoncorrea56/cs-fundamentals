@@ -1,7 +1,8 @@
 from logging import Logger
 
 from fastapi import FastAPI, Response
-
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from cs_fundamentals.api.middleware import request_logger_mw
 from cs_fundamentals.config import settings
@@ -66,11 +67,25 @@ from cs_fundamentals.routers.targets import router as targets_router
 
 
 configure_logging()
+log: Logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Startup: no state kept; just a clear log
+    log.info("event=api.lifespan.startup")
+    try:
+        yield
+    finally:
+        # Shutdown: ensure any background tasks are complete; nothing persistent to flush
+        log.info("event=api.lifespan.shutdown")
+
 
 app: FastAPI = FastAPI(
     title=settings.app_name,
     docs_url="/docs",
     version=get_app_version(),
+    lifespan=lifespan,
 )
 
 
@@ -80,8 +95,7 @@ async def _request_logger(request, call_next) -> Response:
     return await request_logger_mw(request, call_next)
 
 
-log: Logger = get_logger(__name__)
-log.info("API launched")
+log.info("event=api.launched")
 
 v1_prefix: str = "/api/v1"
 

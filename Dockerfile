@@ -49,6 +49,9 @@ COPY pyproject.toml /app/pyproject.toml
 COPY automation /automation
 ENV TEST_ROOT=/automation
 
+# Ensure temp goes to /tmp (tmpfs in prod compose)
+ENV TMPDIR=/tmp
+
 # Run as non-root user
 USER appuser
 EXPOSE 8000

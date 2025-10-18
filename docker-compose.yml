@@ -10,7 +10,6 @@
 #   - The base image/config is defined once under x-app-common
 #   - In prod, tests are bundled in the image (Dockerfile copies /automation, sets TEST_ROOT)
 #   - In dev, tests come from the bind-mounted repo (TEST_ROOT defaults to /app/automation)
-#   - If VSCode Dev Containers keeps taking port 8000, disable the extension or rename .devcontainer/
 
 x-app-common: &app-common
   build: .            # Build from root Dockerfile (multi-stage; small runtime)
@@ -25,18 +24,25 @@ services:
     <<: *app-common
     profiles: ["prod"]
     image: cs-fundamentals:prod
+    environment:
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}   # Number of worker processes
+    read_only: true  # Root FS read-only = stateless by construction
+    tmpfs:
+      - /tmp  # writable scratch space
+    # Run uvicorn with multiple workers (pre-fork) and short keep-alive to close idle connections quickly
     command: >
       uvicorn cs_fundamentals.main:app
       --host 0.0.0.0
       --port ${PORT:-8000}
+      --workers ${WEB_CONCURRENCY:-2}
+      --timeout-keep-alive 5
 
   # Dev service (bind-mount source; hot-reload on save)
   api-dev:
     <<: *app-common
     profiles: ["dev"]
-    image: cs-fundamentals:dev         # local dev tag (optional)
+    image: cs-fundamentals:dev
     environment:
-      # Ensure the live-mounted code is importable ahead of site-packages
       PYTHONPATH: /app
     volumes:
       # Live-mount the repo so --reload sees changes immediately
