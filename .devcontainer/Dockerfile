@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python:3.11
+FROM mcr.microsoft.com/devcontainers/python:3.11.13
 
 # Dev tools
 RUN pipx install uv && pip install --no-cache-dir pre-commit

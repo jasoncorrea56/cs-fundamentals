@@ -1,5 +1,6 @@
 # ---- Builder: resolve deps & build app wheel ----
-FROM python:3.11-slim AS builder
+ARG PYTHON_VERSION=3.11.13
+FROM python:${PYTHON_VERSION}-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 
@@ -29,7 +30,7 @@ RUN python -m build --wheel --outdir /dist
 
 
 # ---- Runtime: minimize runtime image size by installing wheels only ----
-FROM python:3.11-slim
+FROM python:${PYTHON_VERSION}-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 
@@ -65,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"
 
 # Entrypoint: use shell form so ${PORT} and ${WEB_CONCURRENCY} can be expanded at runtime
-CMD ["sh", "-c", "uvicorn cs_fundamentals.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --timeout-keep-alive 5 --timeout-graceful ${GRACEFUL_TIMEOUT:-10}"]
+CMD ["sh", "-c", "uvicorn cs_fundamentals.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --timeout-keep-alive 5 --timeout-graceful-shutdown ${GRACEFUL_TIMEOUT:-10}"]
