@@ -202,6 +202,35 @@ This service scales via the **process model**:
 
 A `Procfile` is included at the project root to define the web process entrypoint for platform-agnostic runners (e.g., Heroku, Dokku, Render, or Railway). It enables consistent startup behavior across environments. This allows services that support the Procfile convention to automatically detect and scale the application without additional configuration.
 
+### Logs
+
+Application logs are emitted as structured event streams rather than raw text. Each request receives a unique X-Request-ID header (propagated or generated) that is included in all related log lines for correlation.
+
+#### Logging Config Environment Variables
+
+- LOG_LEVEL - Minimum log level
+  - DEBUG
+  - INFO
+  - WARNING
+  - ERROR
+- LOG_FORMAT - Output format
+  - json
+  - console
+
+#### Examples
+
+- Human-readable logs during development
+
+  ```bash
+  LOG_FORMAT=console LOG_LEVEL=DEBUG docker compose --profile dev up
+  ```
+
+- Structured JSON logs for production aggregation
+
+  ```bash
+  LOG_FORMAT=json LOG_LEVEL=INFO docker compose --profile prod up
+  ```
+
 ### Curls
 
 1. Healthcheck

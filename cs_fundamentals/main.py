@@ -1,10 +1,10 @@
 import logging
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from cs_fundamentals.api.middleware import request_logger_mw
+from cs_fundamentals.api.middleware import RequestLoggerMiddleware, XRequestIDMiddleware
 from cs_fundamentals.config import settings
 from cs_fundamentals.core.logging_config import configure_logging, get_logger
 from cs_fundamentals.core.utility import get_app_version
@@ -88,12 +88,10 @@ app: FastAPI = FastAPI(
     lifespan=lifespan,
 )
 
-
-# Register middleware via decorator wrapper
-@app.middleware("http")
-async def _request_logger(request, call_next) -> Response:
-    return await request_logger_mw(request, call_next)
-
+# With Starlette's BaseHTTPMiddleware, the last middleware added runs first for requests
+# on the way in, and last on the way out (i.e., the first added is the outermost wrapper).
+app.add_middleware(RequestLoggerMiddleware)  # Outer first (added last by Starlette)
+app.add_middleware(XRequestIDMiddleware)  # Runs first-in/last-out
 
 log.info("event=api.launched")
 
