@@ -37,9 +37,7 @@ class TestGraph:
     def test_undirected_graph_add_neighbors(self) -> None:
         result = self.node_a.add_neighbors([self.node_b, self.node_c, self.node_e])
         result &= self.node_b.add_neighbors([self.node_a, self.node_c])
-        result &= self.node_c.add_neighbors(
-            [self.node_b, self.node_d, self.node_a, self.node_e]
-        )
+        result &= self.node_c.add_neighbors([self.node_b, self.node_d, self.node_a, self.node_e])
         result &= self.node_d.add_neighbor(self.node_c)
         result &= self.node_e.add_neighbors([self.node_a, self.node_c])
         assert result is True
@@ -83,9 +81,7 @@ class TestGraph:
         result = self.search.is_connected(x, y)
         assert result is output
 
-    @pytest.mark.parametrize(
-        "m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS
-    )
+    @pytest.mark.parametrize("m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS)
     def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:
         result = self.problems.number_of_islands_2(m, n, positions)
         assert result == output

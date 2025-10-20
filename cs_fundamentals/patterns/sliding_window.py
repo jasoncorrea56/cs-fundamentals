@@ -178,9 +178,7 @@ class SlidingWindow:
         return result
 
     @staticmethod
-    def longest_substring_with_same_letters_after_replacement(
-        input_string: str, k: int
-    ) -> int:
+    def longest_substring_with_same_letters_after_replacement(input_string: str, k: int) -> int:
         """
         Given a string of lowercase letters, if you are allowed to replace no more than ‘k’ letters
         with any letter, find the length of the longest substring having the same letters after replacement.
@@ -299,9 +297,7 @@ class PracticeSlidingWindow:
         raise NotImplementedError
 
     @staticmethod
-    def longest_substring_with_same_letters_after_replacement(
-        input_string: str, k: int
-    ) -> int:
+    def longest_substring_with_same_letters_after_replacement(input_string: str, k: int) -> int:
         """
         Given a string of lowercase letters, if you are allowed to replace no more than ‘k’ letters
         with any letter, find the length of the longest substring having the same letters after replacement.

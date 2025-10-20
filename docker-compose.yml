@@ -1,0 +1,82 @@
+# Runtime modes:
+#   Dev:  hot-reload via bind-mount + uvicorn --reload
+#   Prod: runs the built image exactly like production (no mounts, no reload)
+#
+# Usage:
+#   Dev:  docker compose --profile dev up --build
+#   Prod: docker compose --profile prod up --build
+#
+# Notes:
+#   - The base image/config is defined once under x-app-common
+#   - In prod, tests are bundled in the image (Dockerfile copies /automation, sets TEST_ROOT)
+#   - In dev, tests come from the bind-mounted repo (TEST_ROOT defaults to /app/automation)
+
+x-app-common: &app-common
+  build: .            # Build from root Dockerfile (multi-stage; small runtime)
+  env_file: .env      # Config stays in env, not baked into image
+  ports:
+    - "8000:8000"
+  pull_policy: build  # Prefer local build; avoids GHCR pulls during iteration
+
+services:
+  # Admin service for running administrative tasks
+  admin:
+    <<: *app-common
+    entrypoint: ["python", "-m", "cs_fundamentals.admin"]
+    profiles: ["admin"]
+    stdin_open: true
+    tty: true
+
+  # Prod-like service (no code mounts, no reload)
+  api:
+    <<: *app-common
+    profiles: ["prod"]
+    image: cs-fundamentals:prod
+    environment:
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}   # Number of worker processes
+      GRACEFUL_TIMEOUT: ${GRACEFUL_TIMEOUT:-10}
+      TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-30}
+    read_only: true  # Root FS read-only = stateless by construction
+    tmpfs:
+      - /tmp  # writable scratch space
+    stop_signal: SIGTERM
+    stop_grace_period: 30s  # How long Docker waits before SIGKILL (must be > GRACEFUL_TIMEOUT + buffer)
+    # Run uvicorn with multiple workers (pre-fork) and short keep-alive to close idle connections quickly
+    command: >
+      uvicorn cs_fundamentals.main:app
+      --host 0.0.0.0
+      --port ${PORT:-8000}
+      --workers ${WEB_CONCURRENCY:-2}
+      --timeout-keep-alive 5
+      --timeout-graceful-shutdown ${GRACEFUL_TIMEOUT:-10}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,urllib.request; port=os.getenv('PORT','8000'); url=f'http://127.0.0.1:{port}/readyz'; __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Dev service (bind-mount source; hot-reload on save)
+  api-dev:
+    <<: *app-common
+    profiles: ["dev"]
+    image: cs-fundamentals:dev
+    environment:
+      PYTHONPATH: /app
+      GRACEFUL_TIMEOUT: ${GRACEFUL_TIMEOUT:-10}
+      TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-30}
+    volumes:
+      # Live-mount the repo so --reload sees changes immediately
+      - .:/app:cached
+    command: >
+      uvicorn cs_fundamentals.main:app
+      --host 0.0.0.0
+      --port ${PORT:-8000}
+      --reload
+      --reload-dir /app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,urllib.request; port=os.getenv('PORT','8000'); url=f'http://127.0.0.1:{port}/readyz'; __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

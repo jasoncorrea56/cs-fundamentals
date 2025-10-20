@@ -95,9 +95,7 @@ def make_submit_handler_from_matrix(
     Optional method_splitter to support multi-/nested-class injections before running tests.
     """
     target: TestTarget = get_target(key)
-    message: str = (
-        success_message or f"All tests for '{target.key}' executed successfully."
-    )
+    message: str = success_message or f"All tests for '{target.key}' executed successfully."
 
     log.debug(
         "handler_factory.make_submit_handler_from_matrix.init",
@@ -159,9 +157,7 @@ def make_submit_handler_from_matrix(
             # 1) Validate primary target methods
             _validate_methods_exist_flexible(
                 target.module,
-                target.class_name
-                if isinstance(target.class_name, str)
-                else target.class_name[0],
+                target.class_name if isinstance(target.class_name, str) else target.class_name[0],
                 primary_methods.keys(),
             )
             log.debug(

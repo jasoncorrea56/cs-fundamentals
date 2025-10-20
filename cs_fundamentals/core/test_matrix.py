@@ -230,9 +230,7 @@ def get_target(key: str) -> TestTarget:
     try:
         return MATRIX[key]
     except KeyError as exc:  # noqa: PERF203
-        raise KeyError(
-            f"Unknown target '{key}'. Use one of: {', '.join(sorted(MATRIX))}"
-        ) from exc
+        raise KeyError(f"Unknown target '{key}'. Use one of: {', '.join(sorted(MATRIX))}") from exc
 
 
 def list_targets(kind: str | None = None) -> list[TestTarget]:

@@ -4,8 +4,23 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime
+from contextvars import ContextVar
+from datetime import datetime, timezone
 from typing import Any
+
+# Request-scoped id (set by middleware)
+request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
+
+
+class RequestIdFilter(logging.Filter):
+    """Inject request_id (if set) into log records."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Attach request_id even if None so formatters can rely on the attribute existing
+        """
+        record.request_id = request_id_var.get()
+        return True
 
 
 class JsonFormatter(logging.Formatter):
@@ -15,10 +30,9 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401
         payload: dict[str, Any] = {
-            "ts": datetime.utcfromtimestamp(record.created).isoformat(
+            "ts": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
                 timespec="milliseconds"
-            )
-            + "Z",
+            ),
             "level": record.levelname,
             "logger": record.name,
             "msg": record.getMessage(),
@@ -33,6 +47,9 @@ class JsonFormatter(logging.Formatter):
                 "func": record.funcName,
             }
         )
+        # Include request_id when available
+        if getattr(record, "request_id", None):
+            payload["request_id"] = record.request_id
         # If exception info is present, include it
         if record.exc_info:
             payload["exc_info"] = self.formatException(record.exc_info)
@@ -45,11 +62,12 @@ class ConsoleFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
-        ts = (
-            datetime.utcfromtimestamp(record.created).isoformat(timespec="seconds")
-            + "Z"
+        ts = datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
+            timespec="milliseconds"
         )
-        base = f"{ts} | {record.levelname:<7} | {record.name} | {record.getMessage()}"
+        rid = getattr(record, "request_id", None)
+        rid_part = f" | rid={rid}" if rid else ""
+        base = f"{ts} | {record.levelname:<7} | {record.name}{rid_part} | {record.getMessage()}"
         if record.exc_info:
             base += "\n" + self.formatException(record.exc_info)
         return base
@@ -83,14 +101,18 @@ def configure_logging(*, force: bool = False) -> None:
 
     root.setLevel(level)
 
-    console_formatter: logging.Formatter = (
-        JsonFormatter() if fmt == "json" else ConsoleFormatter()
-    )
-    root.addHandler(_build_handler(sys.stdout, console_formatter))
+    console_formatter: logging.Formatter = JsonFormatter() if fmt == "json" else ConsoleFormatter()
 
+    # Build console handler and attach request-id filter
+    console_handler = _build_handler(sys.stdout, console_formatter)
+    console_handler.addFilter(RequestIdFilter())  # Ensure every log has request_id, if present
+    root.addHandler(console_handler)
+
+    # If a log file is configured (not recommended in prod), also attach the filter there
     if log_file:
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
         file_handler.setFormatter(JsonFormatter())
+        file_handler.addFilter(RequestIdFilter())
         root.addHandler(file_handler)
 
 

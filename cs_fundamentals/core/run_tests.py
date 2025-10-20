@@ -1,16 +1,35 @@
 from __future__ import annotations
 
-import io
 import os
-import pytest
 import re
-import sys
-from contextlib import redirect_stderr, redirect_stdout, suppress
+import subprocess
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
+from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.models.schemas import PracticeResult, PytestSummary
 
+log = get_logger(__name__)
+
+
+def _find_repo_root(start: Path) -> Path:
+    """
+    Resolve TEST_ROOT to an absolute path in both environments:
+    - in container: /automation (set via Dockerfile ENV)
+    - locally: <repo>/automation
+    """
+    for p in [start, *start.parents]:
+        if (p / "pyproject.toml").exists():
+            return p
+    return start.anchor and Path(start.anchor) or start  # fallback
+
+
+HERE = Path(__file__).resolve()
+REPO_ROOT = _find_repo_root(HERE)
+TEST_ROOT = Path(os.getenv("TEST_ROOT", REPO_ROOT / "automation")).resolve()
+# Give pytest a hard ceiling so shutdowns don’t hang
+TEST_TIMEOUT_SECONDS = int(os.getenv("TEST_TIMEOUT_SECONDS", "30"))
 
 _SUMMARY_KEYS = (
     "passed",
@@ -40,8 +59,8 @@ def _parse_pytest_summary(stdout: str) -> dict[str, Any]:
     summary["raw"] = stdout.strip()
 
     # Try to find the last line with counts ("... in 0.xx s")
-    tail = stdout.strip().splitlines()[-10:]  # look at last ~10 lines, just in case
-    tail_text = " ".join(tail)
+    lines = stdout.strip().splitlines()
+    tail_text = " ".join(lines[-10:]) if lines else ""
 
     # Duration: "in 0.23s"
     m_dur = re.search(r"\bin\s+([\d.]+)s\b", tail_text)
@@ -64,9 +83,35 @@ def _parse_pytest_summary(stdout: str) -> dict[str, Any]:
 
     # Best-effort collected estimate (sum of outcomes we know about)
     counted = sum(int(summary[k]) for k in _SUMMARY_KEYS if isinstance(summary[k], int))
-    summary["collected"] = counted if counted > 0 else summary["collected"]
-
+    if counted > 0:
+        summary["collected"] = counted
     return PytestSummary(**summary)
+
+
+def _resolve_targets(test_files: list[str] | None) -> list[str]:
+    """
+    Normalize provided test paths for both container and local runs:
+    - Absolute paths: keep as-is
+    - Relative paths starting with 'automation/': anchor to '/automation/...'
+    - Other relative: resolve under TEST_ROOT
+    - None: run entire TEST_ROOT
+    """
+    if not test_files:
+        return [str(TEST_ROOT)]
+
+    targets: list[str] = []
+    for raw in test_files:
+        p = Path(raw)
+        if p.is_absolute():
+            targets.append(str(p))
+            continue
+        s = str(p).lstrip("./")
+        if s.startswith("automation/"):
+            rel = s[len("automation/") :]  # strip leading 'automation/'
+            targets.append(str(TEST_ROOT / rel))
+        else:
+            targets.append(str(TEST_ROOT / s))
+    return targets
 
 
 def run_pytest(
@@ -74,46 +119,58 @@ def run_pytest(
     test_expr: str | None = None,
 ) -> dict[str, Any]:
     """
-    Run pytest against automation/ or a given file list and capture output.
+    Run pytest against TEST_ROOT (or specific files) in an isolated subprocess.
     Returns a serialized PracticeResult (dict) with a parsed `summary`.
     """
-    repo_root = Path(__file__).resolve().parents[2]
-    automation_dir = repo_root / "automation"
+    targets = _resolve_targets(test_files)
 
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
-
-    args: list[str] = []
-
-    # args.append("-v")
-
-    if test_files:
-        args.extend(test_files)
-    else:
-        args.append(str(automation_dir))
-
+    cmd = [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:warnings",
+        "--basetemp=/tmp/pytest",
+        "-o",
+        "cache_dir=/tmp/.pytest_cache",
+        "-o",
+        "asyncio_default_fixture_loop_scope=function",
+        *targets,
+    ]
     if test_expr:
-        args.extend(["-k", test_expr])
+        cmd += ["-k", test_expr]
 
-    out_buf, err_buf = io.StringIO(), io.StringIO()
-    cwd = os.getcwd()
+    # Scrub env so nothing pytest-related bleeds into other processes
+    env = os.environ.copy()
+    env.pop("PYTEST_ADDOPTS", None)
+    env.pop("PYTEST_PLUGINS", None)
+
+    # Portable working dir:
+    # - container: /app exists → use it
+    # - local: fall back to repo root (where pyproject.toml lives)
+    cwd = Path("/app") if Path("/app").exists() else REPO_ROOT
 
     try:
-        os.chdir(repo_root)
-        with redirect_stdout(out_buf), redirect_stderr(err_buf):
-            exit_code = pytest.main(args)
-    finally:
-        os.chdir(cwd)
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(cwd),
+            env=env,
+            timeout=TEST_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        log.exception(
+            "event=run_pytest.timeout_expired",
+            extra={"timeout": TEST_TIMEOUT_SECONDS, "error": str(exc)},
+        )
 
-    stdout = out_buf.getvalue()
-    stderr = err_buf.getvalue()
-
+    stdout, stderr = proc.stdout, proc.stderr
     result = PracticeResult(
-        success=exit_code == 0,
-        exit_code=exit_code,
+        success=proc.returncode == 0,
+        exit_code=proc.returncode,
         stdout=stdout,
         stderr=stderr,
         summary=_parse_pytest_summary(stdout),
     )
-
     return result.model_dump()

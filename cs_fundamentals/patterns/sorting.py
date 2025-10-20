@@ -245,9 +245,7 @@ class SortingAlgorithms:
         """
         previous: int = -sys.maxsize
         # Convert list to dict for O(1) element access time complexity
-        nums_dict: dict[int, None] = {
-            nums[i]: None for i in range(0, len(nums))
-        }  # O(n)
+        nums_dict: dict[int, None] = {nums[i]: None for i in range(0, len(nums))}  # O(n)
 
         # When iterating over a dict you cannot delete from it, so make a copy
         loop_dict: dict[int, None] = nums_dict.copy()  # O(n)

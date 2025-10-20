@@ -33,8 +33,9 @@ pre-commit run --all-files
 ### UV Setup
 
 Install UV
-- https://github.com/astral-sh/uv
-- https://docs.astral.sh/uv/
+
+- <https://github.com/astral-sh/uv>
+- <https://docs.astral.sh/uv/>
 
 Update UV:
 
@@ -72,13 +73,7 @@ Check installed dependencies in venv:
 uv pip list
 ```
 
-Run UV to execute tests:
-
-```bash
-uv run pytest automation
-```
-
-### Conda Setup
+### Conda Setup (deprecated)
 
 Install Anaconda
 
@@ -96,86 +91,154 @@ Activate conda new environment:
 conda activate cs-fundamentals-env
 ```
 
-### Pip/VirtualEnv Setup
-
-Install Pip:
-
-```bash
-python3 -m pip install --user --upgrade pip
-```
-
-For Ubuntu, install pip, venv, and git:
-
-```bash
-sudo apt-get update
-sudo apt install python3-pip
-sudo apt install python3.10-venv
-sudo apt-get install git
-```
-
-Create virtual environment:
-
-```bash
-mkdir ~/envs
-python3 -m venv envs/cs-fundamentals-env
-```
-
-Activate virtual environment:
-
-```bash
-source envs/cs-fundamentals-env/bin/activate
-```
-
-Install required packages from requirements.txt:
-
-```bash
-cd ~/Projects/cs-fundamentals
-pip install -r requirements.txt
-```
-
 ## Run Tests
 
 1. Implement the practice class of your choice.
 2. Run pytest against:
-    - Module
+    - All tests
 
     ```bash
-    pytest automation/test_sorting.py
+    uv run pytest -v
     ```
 
     - Package
 
     ```bash
-    pytest automation/test_data_structures
+    uv run pytest -v automation/test_data_structures
     ```
 
-    - All tests
+    - Module
 
     ```bash
-    pytest automation
+    uv run pytest -vv automation/test_data_structures/test_graph.py
     ```
 
-    - UV-specific syntax
+    - Test
 
     ```bash
-    uv run pytest automation
+    uv run pytest -vv automation/test_data_structures/test_graph.py -k test_problem_number_of_islands_2
     ```
 
 NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or package and select `Run <test_module or test_package>` or use hotkeys CTRL + SHIFT + F10 to execute the current test module.
 
-## Run API locally
+## Build, Release & Run
 
-1. Run FastAPI with auto-reload for local development
+- The build stage produces a versioned, immutable image (via Dockerfile + Git SHA)
+- The release stage ties a specific build to configuration (.env)
+- The run stage executes the container using `docker compose` profiles for dev and prod
+- Runtime config comes from env via `cs_fundamentals.config.Settings`
+- Automated builds are validated by `.github/workflows/build.yaml`
+  - Runs linting, pytest, and publishes versioned images to GHCR on `main` merges.
+- Hot reload is only active in the `dev` profile; production containers are immutable and should not mount code.
+
+### Runtime Prep
+
+- Copy project environment variable file `local.env` to `.env`
 
     ```bash
-    uv run fastapi dev cs_fundamentals/main.py
+    cp local.env .env
     ```
 
-2. Run FastAPI with uvicorn to more closely replicate a Production-like invocation (with auto-reload enabled for local dev).
+### Run API in uv venv
+
+- Run API for development with `uvicorn` from terminal
+
+  - Run FastAPI with uvicorn with auto-reload enabled for local development
 
     ```bash
     uv run uvicorn cs_fundamentals.main:app --reload
     ```
+
+### Run API in Docker
+
+- Run API for development with `docker-compose` from terminal
+
+  - Run Docker compose configured with auto-reload enabled for local dev. Mounts source for hot reload with uvicorn --reload.
+
+    ```bash
+    docker compose --profile dev up
+    ```
+
+- Run API for production with `docker-compose` from terminal
+
+  - Run Docker compose with a runtime image built exactly as in production deployments (w/o auto-reload).
+
+    ```bash
+    docker compose --profile prod up
+    ```
+
+- Stop running API from terminal
+
+    ```bash
+    docker compose down --remove-orphans
+    ```
+
+### Environment
+
+App configuration is stored in `.env` and loaded automatically by Compose and FastAPI via `pydantic-settings`, keeping builds immutable and configuration external.
+
+### Concurrency
+
+This service scales via the **process model**:
+
+- **In-container concurrency:** set the number of worker processes with `WEB_CONCURRENCY`.
+- **Horizontal concurrency:** run multiple containers/pods; each instance is stateless.
+
+#### Runtime knobs
+
+- Overload the default uvicorn worker count per container to scale workers.
+
+  ```bash
+  WEB_CONCURRENCY=4 docker compose --profile prod up --build
+  ```
+
+- Overload the default PORT.
+
+  ```bash
+  PORT=9000 docker compose --profile prod up --build
+  ```
+
+### Procfile
+
+A `Procfile` is included at the project root to define the web process entrypoint for platform-agnostic runners (e.g., Heroku, Dokku, Render, or Railway). It enables consistent startup behavior across environments. This allows services that support the Procfile convention to automatically detect and scale the application without additional configuration.
+
+### Logs
+
+Application logs are emitted as structured event streams rather than raw text. Each request receives a unique X-Request-ID header (propagated or generated) that is included in all related log lines for correlation.
+
+### Administrative Processes
+
+Run one-off administrative tasks inside the same containerized environment:
+
+```bash
+docker compose run --rm admin <command>
+docker compose run --rm admin health
+```
+
+#### Logging Config Environment Variables
+
+- LOG_LEVEL - Minimum log level
+  - DEBUG
+  - INFO
+  - WARNING
+  - ERROR
+- LOG_FORMAT - Output format
+  - json
+  - console
+
+#### Examples
+
+- Human-readable logs during development
+
+  ```bash
+  LOG_FORMAT=console LOG_LEVEL=DEBUG docker compose --profile dev up
+  ```
+
+- Structured JSON logs for production aggregation
+
+  ```bash
+  LOG_FORMAT=json LOG_LEVEL=INFO docker compose --profile prod up
+  ```
 
 ### Curls
 
@@ -185,7 +248,7 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
     curl -s http://127.0.0.1:8000/api/v1/health | jq
     ```
 
-2. List Targets
+2. List Practice Targets
 
     ```bash
     curl -s http://127.0.0.1:8000/api/v1/targets | jq
