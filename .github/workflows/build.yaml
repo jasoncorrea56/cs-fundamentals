@@ -77,11 +77,17 @@ jobs:
           IMAGE="${{ needs.build-and-push.outputs.image_name }}"
           TAG="${{ needs.build-and-push.outputs.sha }}"
           docker run -d --rm -p 18080:8000 --name app "${IMAGE}:${TAG}"
+
           for i in {1..30}; do
-            if curl -sSf --max-time 2 http://127.0.0.1:18080/api/v1/healthz >/dev/null 2>&1;  then exit 0; fi
+            if curl -sSf --max-time 2 http://127.0.0.1:18080/api/v1/healthz >/dev/null 2>&1; then
+              echo "Smoke-Test PASSED - /api/v1/healthz ready on attempt ${i}"
+              exit 0
+            fi
+            echo "Waiting for /api/v1/healthz... attempt ${i}/30"
             sleep 1
           done
-          echo "Smoke-Test FAILED - api/v1/healthz NOT ready!"
+
+          echo "Smoke-Test FAILED - /api/v1/healthz NOT ready after 30s!"
           docker logs app || true
           exit 1
       - name: Stop container
