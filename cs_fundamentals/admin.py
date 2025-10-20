@@ -5,7 +5,6 @@ Run via `docker compose run --rm admin <command>`.
 
 import sys
 
-# import logging
 from cs_fundamentals.core.logging_config import configure_logging, get_logger
 
 configure_logging()
