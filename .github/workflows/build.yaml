@@ -78,7 +78,7 @@ jobs:
           TAG="${{ needs.build-and-push.outputs.sha }}"
           docker run -d --rm -p 18080:8000 --name app "${IMAGE}:${TAG}"
           for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:18080/healthz >/dev/null; then exit 0; fi
+            if curl -fsS http://127.0.0.1:18080/api/v1/healthz >/dev/null; then exit 0; fi
             sleep 1
           done
           echo "healthz not ready"
@@ -88,7 +88,7 @@ jobs:
         if: always()
         run: docker stop app || true
 
-  admin-task:
+  admin-test:
     runs-on: ubuntu-latest
     needs: smoke-test
     steps:
