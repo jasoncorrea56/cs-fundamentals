@@ -19,6 +19,14 @@ x-app-common: &app-common
   pull_policy: build  # Prefer local build; avoids GHCR pulls during iteration
 
 services:
+  # Admin service for running administrative tasks
+  admin:
+    <<: *app-common
+    entrypoint: ["python", "-m", "cs_fundamentals.admin"]
+    profiles: ["admin"]
+    stdin_open: true
+    tty: true
+
   # Prod-like service (no code mounts, no reload)
   api:
     <<: *app-common

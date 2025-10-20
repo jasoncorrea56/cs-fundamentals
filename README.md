@@ -206,6 +206,15 @@ A `Procfile` is included at the project root to define the web process entrypoin
 
 Application logs are emitted as structured event streams rather than raw text. Each request receives a unique X-Request-ID header (propagated or generated) that is included in all related log lines for correlation.
 
+### Administrative Processes
+
+Run one-off administrative tasks inside the same containerized environment:
+
+```bash
+docker compose run --rm admin <command>
+docker compose run --rm admin health
+```
+
 #### Logging Config Environment Variables
 
 - LOG_LEVEL - Minimum log level
