@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import re
-import subprocess
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -119,15 +118,15 @@ def run_pytest(
     test_expr: str | None = None,
 ) -> dict[str, Any]:
     """
-    Run pytest against TEST_ROOT (or specific files) in an isolated subprocess.
-    Returns a serialized PracticeResult (dict) with a parsed `summary`.
+    Run pytest against TEST_ROOT (or specific files) in-process so injected
+    functions are visible to the tests.
     """
+    # Resolve targets (absolute paths under TEST_ROOT)
     targets = _resolve_targets(test_files)
 
-    cmd = [
-        "python",
-        "-m",
-        "pytest",
+    # Build pytest CLI args explicitly (no env var bleed)
+    args: list[str] = [
+        "-q",
         "-p",
         "no:warnings",
         "--basetemp=/tmp/pytest",
@@ -138,37 +137,35 @@ def run_pytest(
         *targets,
     ]
     if test_expr:
-        cmd += ["-k", test_expr]
+        args += ["-k", test_expr]
 
-    # Scrub env so nothing pytest-related bleeds into other processes
-    env = os.environ.copy()
-    env.pop("PYTEST_ADDOPTS", None)
-    env.pop("PYTEST_PLUGINS", None)
+    # Scrub pytest-related env so it doesn't affect other parts (i.e. uvicorn)
+    os.environ.pop("PYTEST_ADDOPTS", None)
+    os.environ.pop("PYTEST_PLUGINS", None)
 
     # Portable working dir:
     # - container: /app exists → use it
     # - local: fall back to repo root (where pyproject.toml lives)
     cwd = Path("/app") if Path("/app").exists() else REPO_ROOT
 
-    try:
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=str(cwd),
-            env=env,
-            timeout=TEST_TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired as exc:
-        log.exception(
-            "event=run_pytest.timeout_expired",
-            extra={"timeout": TEST_TIMEOUT_SECONDS, "error": str(exc)},
-        )
+    # Import pytest lazily to avoid importing it in non-test code paths
+    import io
+    import pytest
+    from contextlib import redirect_stdout, redirect_stderr
 
-    stdout, stderr = proc.stdout, proc.stderr
+    out_buf, err_buf = io.StringIO(), io.StringIO()
+    prev_cwd = os.getcwd()
+    try:
+        os.chdir(str(cwd))
+        with redirect_stdout(out_buf), redirect_stderr(err_buf):
+            exit_code = pytest.main(args)
+    finally:
+        os.chdir(prev_cwd)
+
+    stdout, stderr = out_buf.getvalue(), err_buf.getvalue()
     result = PracticeResult(
-        success=proc.returncode == 0,
-        exit_code=proc.returncode,
+        success=exit_code == 0,
+        exit_code=exit_code,
         stdout=stdout,
         stderr=stderr,
         summary=_parse_pytest_summary(stdout),
