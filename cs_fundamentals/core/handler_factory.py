@@ -12,7 +12,12 @@ from cs_fundamentals.core.inject import (
 )
 from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.core.practice_service import run_submission
-from cs_fundamentals.core.response import error_response, success_response
+from cs_fundamentals.core.response import (
+    error_response,
+    success_response,
+    format_pytest_summary_tail,
+    is_pytest_ok,
+)
 from cs_fundamentals.core.test_matrix import TestTarget, get_target
 from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
 from cs_fundamentals.core.validation import (
@@ -226,18 +231,15 @@ def make_submit_handler_from_matrix(
             }
 
             # Reflect pytest outcome in HTTP body
-            if not result.get("success", False):
-                # Build a helpful message from the parsed summary if available
-                summary = result.get("summary") or {}
-                parts = []
-                for k in ("failed", "errors", "skipped", "collected", "deselected"):
-                    if k in summary:
-                        parts.append(f"{k}={summary[k]}")
-                tail = f" ({', '.join(parts)})" if parts else ""
-
+            if not is_pytest_ok(result):
+                tail = format_pytest_summary_tail(result.get("summary"))
                 log.warning(
                     "submit.run_tests.failed",
-                    extra={"target_key": target.key, "summary": summary},
+                    extra={
+                        "target_key": target.key,
+                        "summary": result.get("summary"),
+                        "exit_code": result.get("exit_code"),
+                    },
                 )
                 return error_response(
                     status_code=400,
