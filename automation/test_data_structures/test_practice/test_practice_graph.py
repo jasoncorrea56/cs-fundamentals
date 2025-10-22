@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from automation.resources.data_structures.graph_data import (
     GRAPH_UNION_FIND_FIND_TESTS,
@@ -15,6 +17,11 @@ from cs_fundamentals.data_structures.graph import (
 
 
 class TestPracticeGraph(TestGraph):
+    """
+    Reuse the full base graph suite against practice stubs, but tolerate
+    NotImplementedError anywhere by wrapping super() calls.
+    """
+
     @classmethod
     def setup_class(cls) -> None:
         cls.search = PracticeUnionFind(10)
@@ -25,6 +32,8 @@ class TestPracticeGraph(TestGraph):
         cls.node_c = UndirectedGraphVertex("C")
         cls.node_d = UndirectedGraphVertex("D")
         cls.node_e = UndirectedGraphVertex("E")
+
+    # ---------- Graph structure / adjacency tests ----------
 
     def test_build_undirected_graph_vertices(self) -> None:
         try:
@@ -62,34 +71,75 @@ class TestPracticeGraph(TestGraph):
         except NotImplementedError:
             assert True
 
-    # def test_undirected_graph_repr(self) -> None:
-    #     print("\nUndirected Graph:")
-    #     print(self.undirected_graph)
-    #     assert True
+    # ---------- Edge-case tests (still wrapped for consistency) ----------
+
+    def test_vertex_add_neighbor_invalid_type_returns_false_no_change(self) -> None:
+        try:
+            super().test_vertex_add_neighbor_invalid_type_returns_false_no_change()
+        except NotImplementedError:
+            assert True
+
+    def test_graph_add_vertex_invalid_type_returns_false(self) -> None:
+        try:
+            super().test_graph_add_vertex_invalid_type_returns_false()
+        except NotImplementedError:
+            assert True
+
+    def test_graph_add_edge_invalid_types_returns_false(self) -> None:
+        try:
+            super().test_graph_add_edge_invalid_types_returns_false()
+        except NotImplementedError:
+            assert True
+
+    def test_graph_add_edges_with_invalid_entry_returns_false(self) -> None:
+        try:
+            super().test_graph_add_edges_with_invalid_entry_returns_false()
+        except NotImplementedError:
+            assert True
+
+    def test_empty_graph_adjacency_list_and_matrix_are_empty(self) -> None:
+        try:
+            super().test_empty_graph_adjacency_list_and_matrix_are_empty()
+        except NotImplementedError:
+            assert True
+
+    def test_empty_graph_repr_contains_empty_structures(self) -> None:
+        try:
+            super().test_empty_graph_repr_contains_empty_structures()
+        except NotImplementedError:
+            assert True
+
+    def test_remove_duplicates_staticmethod_dedupes_positions(self) -> None:
+        try:
+            super().test_remove_duplicates_staticmethod_dedupes_positions()
+        except NotImplementedError:
+            assert True
+
+    # ---------- Practice stubs (UF + Problems) ----------
 
     @pytest.mark.parametrize("x, y", GRAPH_UNION_FIND_UNION_TESTS)
-    def test_union_find_union(self, x, y) -> None:
+    def test_union_find_union(self, x, y) -> None:  # type: ignore[override]
         try:
             super().test_union_find_union(x, y)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("value, output", GRAPH_UNION_FIND_FIND_TESTS)
-    def test_union_find_find(self, value, output) -> None:
+    def test_union_find_find(self, value, output) -> None:  # type: ignore[override]
         try:
             super().test_union_find_find(value, output)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("x, y, output", GRAPH_UNION_FIND_IS_CONNECTED_TESTS)
-    def test_union_find_is_connected(self, x, y, output) -> None:
+    def test_union_find_is_connected(self, x, y, output) -> None:  # type: ignore[override]
         try:
             super().test_union_find_is_connected(x, y, output)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS)
-    def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:
+    def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:  # type: ignore[override]
         try:
             super().test_problem_number_of_islands_2(m, n, positions, output)
         except NotImplementedError:

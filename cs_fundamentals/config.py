@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "cs-fundamentals"
+    app_name: str = "CS Fundamentals API"
     env: str = "prod"
     port: int = 8000
     log_level: str = "INFO"

@@ -101,6 +101,24 @@ conda activate cs-fundamentals-env
     uv run pytest -v
     ```
 
+    - All tests after clearing cache
+
+    ```bash
+    uv run pytest -v --cache-clear
+    ```
+
+    - All tests - suppress warnings
+
+    ```bash
+    uv run pytest -p no:warnings
+    ```
+
+    - All tests - with code coverage
+
+    ```bash
+    uv run pytest -q
+    ```
+
     - Package
 
     ```bash
@@ -113,10 +131,16 @@ conda activate cs-fundamentals-env
     uv run pytest -vv automation/test_data_structures/test_graph.py
     ```
 
-    - Test
+    - Single Test Method from Class
 
     ```bash
     uv run pytest -vv automation/test_data_structures/test_graph.py -k test_problem_number_of_islands_2
+    ```
+
+    - Single Test Function from Module
+
+    ```bash
+    uv run pytest -vv automation/core/test_inject.py::test_compile_functions_single_and_multiple_with_recursion_and_crosscalls
     ```
 
 NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or package and select `Run <test_module or test_package>` or use hotkeys CTRL + SHIFT + F10 to execute the current test module.

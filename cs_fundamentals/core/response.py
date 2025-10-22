@@ -22,22 +22,34 @@ _INCLUDE_TRACEBACK = os.getenv("PRACTICE_INCLUDE_TRACEBACK", "1") not in {
 
 def _normalize_payload(payload: Any) -> dict[str, Any]:
     """
-    Accepts a pydantic BaseModel, dict, or anything else
-    Returns a JSON-serializable dict
+    Accepts a pydantic BaseModel, dict, or anything else.
+    Returns a JSON-serializable dict. Recursively normalizes nested BaseModels.
     """
     if payload is None:
         return {}
 
-    # Pydantic v2 models
-    if isinstance(payload, BaseModel) and hasattr(payload, "model_dump"):
-        return payload.model_dump()  # type: ignore[attr-defined]
+    # Helper to recursively convert nested structures
+    def _coerce(obj: Any) -> Any:
+        # Pydantic v2 model
+        if isinstance(obj, BaseModel) and hasattr(obj, "model_dump"):
+            return obj.model_dump()  # type: ignore[attr-defined]
+        # Pydantic v1 model (defensive)
+        if isinstance(obj, BaseModel) and hasattr(obj, "dict"):
+            return obj.dict()
+        # dict: normalize values
+        if isinstance(obj, dict):
+            return {k: _coerce(v) for k, v in obj.items()}
+        # Sequence types
+        if isinstance(obj, (list, tuple, set)):
+            return [_coerce(v) for v in obj]
+        # Passthrough for JSON-serializable primitives
+        return obj
 
-    # Pydantic v1 models (just in case)
-    if isinstance(payload, BaseModel) and hasattr(payload, "dict"):
-        return payload.dict()
-
+    # Top-level cases
+    if isinstance(payload, BaseModel):
+        return _coerce(payload)  # returns a dict
     if isinstance(payload, dict):
-        return payload
+        return _coerce(payload)
 
     # Last resort: represent minimally
     return {"context": str(payload)}

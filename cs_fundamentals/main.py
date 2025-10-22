@@ -8,62 +8,62 @@ from cs_fundamentals.api.middleware import RequestLoggerMiddleware, XRequestIDMi
 from cs_fundamentals.config import settings
 from cs_fundamentals.core.logging_config import configure_logging, get_logger
 from cs_fundamentals.core.utility import get_app_version
-from cs_fundamentals.routers.health import router as health_router
-from cs_fundamentals.routers.data_structures_bst_runner import (
+from cs_fundamentals.routers.health_router import router as health_router
+from cs_fundamentals.routers.data_structures_bst_router import (
     router as binary_search_tree_router,
 )
-from cs_fundamentals.routers.data_structures_graph_union_find_runner import (
+from cs_fundamentals.routers.data_structures_graph_union_find_router import (
     router as graph_union_find_router,
 )
-from cs_fundamentals.routers.data_structures_graph_islands_runner import (
+from cs_fundamentals.routers.data_structures_graph_islands_router import (
     router as graph_islands_router,
 )
-from cs_fundamentals.routers.data_structures_linked_list_double_runner import (
+from cs_fundamentals.routers.data_structures_linked_list_double_router import (
     router as linked_list_double_router,
 )
-from cs_fundamentals.routers.data_structures_linked_list_single_runner import (
+from cs_fundamentals.routers.data_structures_linked_list_single_router import (
     router as linked_list_single_router,
 )
-from cs_fundamentals.routers.data_structures_max_heap_runner import (
+from cs_fundamentals.routers.data_structures_max_heap_router import (
     router as max_heap_router,
 )
-from cs_fundamentals.routers.data_structures_min_heap_runner import (
+from cs_fundamentals.routers.data_structures_min_heap_router import (
     router as min_heap_router,
 )
-from cs_fundamentals.routers.data_structures_queue_array_runner import (
+from cs_fundamentals.routers.data_structures_queue_array_router import (
     router as queue_array_router,
 )
-from cs_fundamentals.routers.data_structures_queue_linked_list_runner import (
+from cs_fundamentals.routers.data_structures_queue_linked_list_router import (
     router as queue_linked_list_router,
 )
-from cs_fundamentals.routers.data_structures_stack_array_runner import (
+from cs_fundamentals.routers.data_structures_stack_array_router import (
     router as stack_array_router,
 )
-from cs_fundamentals.routers.data_structures_stack_linked_list_runner import (
+from cs_fundamentals.routers.data_structures_stack_linked_list_router import (
     router as stack_linked_list_router,
 )
-from cs_fundamentals.routers.patterns_bfs_runner import (
+from cs_fundamentals.routers.patterns_bfs_router import (
     router as breadth_first_search_router,
 )
-from cs_fundamentals.routers.patterns_dfs_runner import (
+from cs_fundamentals.routers.patterns_dfs_router import (
     router as depth_first_search_router,
 )
-from cs_fundamentals.routers.patterns_singleton import router as singleton_router
-from cs_fundamentals.routers.patterns_fast_slow_pointers_runner import (
+from cs_fundamentals.routers.patterns_singleton_router import router as singleton_router
+from cs_fundamentals.routers.patterns_fast_slow_pointers_router import (
     router as fast_slow_pointers_router,
 )
-from cs_fundamentals.routers.patterns_sliding_window_runner import (
+from cs_fundamentals.routers.patterns_sliding_window_router import (
     router as sliding_window_router,
 )
-from cs_fundamentals.routers.patterns_sorting import router as sorting_router
-from cs_fundamentals.routers.patterns_two_pointers_runner import (
+from cs_fundamentals.routers.patterns_sorting_router import router as sorting_router
+from cs_fundamentals.routers.patterns_two_pointers_router import (
     router as two_pointers_router,
 )
-from cs_fundamentals.routers.practice_runner import router as practice_router
-from cs_fundamentals.routers.practice_matrix_runner import (
+from cs_fundamentals.routers.practice_router import router as practice_router
+from cs_fundamentals.routers.practice_matrix_router import (
     router as practice_matrix_router,
 )
-from cs_fundamentals.routers.targets import router as targets_router
+from cs_fundamentals.routers.targets_router import router as targets_router
 
 
 configure_logging()

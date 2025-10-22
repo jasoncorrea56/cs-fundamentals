@@ -79,24 +79,24 @@ MATRIX: dict[str, TestTarget] = {
         test_expr="linked_list_single",
         kind="data-structure",
     ),
-    "ds.maxheap": TestTarget(
-        key="ds.maxheap",
-        module="cs_fundamentals.data_structures.maxheap",
+    "ds.max_heap": TestTarget(
+        key="ds.max_heap",
+        module="cs_fundamentals.data_structures.max_heap",
         class_name="PracticeMaxHeap",
         test_files=[
-            "automation/test_data_structures/test_heap.py",
-            "automation/test_data_structures/test_practice/test_practice_heap.py",
+            "automation/test_data_structures/test_max_heap.py",
+            "automation/test_data_structures/test_practice/test_practice_max_heap.py",
         ],
         test_expr="MaxHeap or PracticeMaxHeap",
         kind="data-structure",
     ),
-    "ds.minheap": TestTarget(
-        key="ds.minheap",
-        module="cs_fundamentals.data_structures.minheap",
+    "ds.min_heap": TestTarget(
+        key="ds.min_heap",
+        module="cs_fundamentals.data_structures.min_heap",
         class_name="PracticeMinHeap",
         test_files=[
-            "automation/test_data_structures/test_heap.py",
-            "automation/test_data_structures/test_practice/test_practice_heap.py",
+            "automation/test_data_structures/test_min_heap.py",
+            "automation/test_data_structures/test_practice/test_practice_min_heap.py",
         ],
         test_expr="MinHeap or PracticeMinHeap",
         kind="data-structure",

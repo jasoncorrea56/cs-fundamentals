@@ -1,13 +1,15 @@
-from automation.test_data_structures.test_heap import TestHeap
-from cs_fundamentals.data_structures.maxheap import PracticeMaxHeap
-from cs_fundamentals.data_structures.minheap import PracticeMinHeap
+from __future__ import annotations
+
+from automation.test_data_structures.test_min_heap import TestHeap
+from cs_fundamentals.data_structures.min_heap import PracticeMinHeap
 
 
 class TestPracticeHeap(TestHeap):
     @classmethod
     def setup_class(cls) -> None:
         cls.minheap = PracticeMinHeap(4)
-        cls.maxheap = PracticeMaxHeap(4)
+
+    # ---------- MinHeap core tests (wrapped) ----------
 
     def test_minheap_add(self) -> None:
         try:
@@ -39,32 +41,40 @@ class TestPracticeHeap(TestHeap):
         except NotImplementedError:
             assert True
 
-    def test_maxheap_add(self) -> None:
+    # ---------- MinHeap extra tests (wrapped) ----------
+
+    def test_min_add_overflow_returns_false_and_does_not_grow(self) -> None:
         try:
-            super().test_maxheap_add()
+            super().test_min_add_overflow_returns_false_and_does_not_grow()
         except NotImplementedError:
             assert True
 
-    def test_maxheap_pop(self) -> None:
+    def test_min_add_smaller_bubbles_up(self) -> None:
         try:
-            super().test_maxheap_pop()
+            super().test_min_add_smaller_bubbles_up()
         except NotImplementedError:
             assert True
 
-    def test_maxheap_peek(self) -> None:
+    def test_min_pop_from_empty_returns_sys_maxsize(self) -> None:
         try:
-            super().test_maxheap_peek()
+            super().test_min_pop_from_empty_returns_sys_maxsize()
         except NotImplementedError:
             assert True
 
-    def test_maxheap_size(self) -> None:
+    def test_min_pop_with_only_left_child_exercises_no_right_branch(self) -> None:
         try:
-            super().test_maxheap_size()
+            super().test_min_pop_with_only_left_child_exercises_no_right_branch()
         except NotImplementedError:
             assert True
 
-    def test_maxheap_str(self) -> None:
+    def test_min_peek_on_empty_returns_sys_maxsize(self) -> None:
         try:
-            super().test_maxheap_str()
+            super().test_min_peek_on_empty_returns_sys_maxsize()
+        except NotImplementedError:
+            assert True
+
+    def test_min_str_representation_slices_active_region_only(self) -> None:
+        try:
+            super().test_min_str_representation_slices_active_region_only()
         except NotImplementedError:
             assert True
