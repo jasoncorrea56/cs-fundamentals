@@ -8,7 +8,7 @@ from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
 router = APIRouter(prefix="/data-structures/min-heap", tags=["Data Structures - MinHeap Practice"])
 
 _submit = make_submit_handler_from_matrix(
-    key="ds.minheap",
+    key="ds.min_heap",
     success_message="All MinHeap data structure tests executed successfully.",
 )
 

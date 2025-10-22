@@ -38,11 +38,11 @@ def test_get_targets_returns_mapped_dicts(monkeypatch: pytest.MonkeyPatch) -> No
             test_expr="breadth_first_search or PracticeBreadthFirstSearch",
         ),
         SimpleNamespace(
-            key="ds.maxheap",
+            key="ds.max_heap",
             kind="data-structure",
-            module="cs_fundamentals.data_structures.maxheap",
+            module="cs_fundamentals.data_structures.max_heap",
             class_name="PracticeMaxHeap",
-            test_files=["automation/test_data_structures/test_heap.py"],
+            test_files=["automation/test_data_structures/test_max_heap.py"],
             test_expr="MaxHeap or PracticeMaxHeap",
         ),
     ]
