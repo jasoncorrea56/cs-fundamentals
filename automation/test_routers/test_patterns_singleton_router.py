@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import patterns_singleton as sg
+from cs_fundamentals.routers import patterns_singleton_router as sg
 
 
 @pytest.fixture()

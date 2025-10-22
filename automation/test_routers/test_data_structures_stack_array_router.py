@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import data_structures_stack_array_runner as sa
+from cs_fundamentals.routers import data_structures_stack_array_router as sa
 
 
 @pytest.fixture()

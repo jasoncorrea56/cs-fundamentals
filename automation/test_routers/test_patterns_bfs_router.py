@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import patterns_bfs_runner as bfs
+from cs_fundamentals.routers import patterns_bfs_router as bfs
 
 
 @pytest.fixture()

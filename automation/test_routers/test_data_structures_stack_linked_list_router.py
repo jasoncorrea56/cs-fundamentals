@@ -4,27 +4,27 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import patterns_sorting as sort
+from cs_fundamentals.routers import data_structures_stack_linked_list_router as sll
 
 
 @pytest.fixture()
 def app() -> FastAPI:
     """Mount the router into a minimal FastAPI app."""
     app: FastAPI = FastAPI()
-    app.include_router(sort.router)
+    app.include_router(sll.router)
     return app
 
 
 def test_router_registration(app: FastAPI) -> None:
     """Router should expose the expected prefix, tags, and path."""
     routes: set[str] = {r.path for r in app.router.routes}
-    assert "/patterns/sorting/submit" in routes
-    assert sort.router.prefix == "/patterns/sorting"
-    assert any("Patterns - Sorting Practice" in t for t in sort.router.tags)
+    assert "/data-structures/stack/linked-list/submit" in routes
+    assert sll.router.prefix == "/data-structures/stack/linked-list"
+    assert any("Data Structures - Stack (Linked List) Practice" in t for t in sll.router.tags)
 
 
 @pytest.mark.asyncio
-async def test_submit_sorting_practice_invokes_factory(
+async def test_submit_stack_linked_list_practice_invokes_factory(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The route function should await the generated handler and return its result."""
@@ -32,18 +32,18 @@ async def test_submit_sorting_practice_invokes_factory(
 
     async def fake_submit(payload: object) -> dict:
         called["payload"] = payload
-        return {"ok": True, "pattern": "sorting"}
+        return {"ok": True, "kind": "stack-linked-list"}
 
-    monkeypatch.setattr(sort, "_submit", fake_submit)
+    monkeypatch.setattr(sll, "_submit", fake_submit)
 
-    payload: object = type("Dummy", (), {"methods": {"quick_sort": "def quick_sort(a): pass"}})()
-    result: dict = await sort.submit_sorting_practice(payload)  # type: ignore[arg-type]
+    payload: object = type("Dummy", (), {"methods": {"push": "def push(x): pass"}})()
+    result: dict = await sll.submit_stack_linked_list_practice(payload)  # type: ignore[arg-type]
 
     assert called["payload"] is payload
-    assert result == {"ok": True, "pattern": "sorting"}
+    assert result == {"ok": True, "kind": "stack-linked-list"}
 
 
-def test_submit_sorting_practice_through_http(
+def test_submit_stack_linked_list_practice_through_http(
     app: FastAPI, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """End-to-end HTTP check to ensure route wiring works."""
@@ -52,11 +52,11 @@ def test_submit_sorting_practice_through_http(
     async def fake_submit(payload: object) -> dict:
         return {"ok": True}
 
-    monkeypatch.setattr(sort, "_submit", fake_submit)
+    monkeypatch.setattr(sll, "_submit", fake_submit)
 
     resp = client.post(
-        "/patterns/sorting/submit",
-        json={"methods": {"quick_sort": "def quick_sort(a): pass"}},
+        "/data-structures/stack/linked-list/submit",
+        json={"methods": {"push": "def push(x): pass"}},
     )
     assert resp.status_code == 200
     assert resp.json() == {"ok": True}

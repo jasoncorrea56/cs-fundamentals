@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import data_structures_graph_islands_runner as gi
+from cs_fundamentals.routers import data_structures_graph_islands_router as gi
 
 
 @pytest.fixture()

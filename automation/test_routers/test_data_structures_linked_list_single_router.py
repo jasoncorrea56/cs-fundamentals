@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import data_structures_linked_list_single_runner as lls
+from cs_fundamentals.routers import data_structures_linked_list_single_router as lls
 
 
 @pytest.fixture()

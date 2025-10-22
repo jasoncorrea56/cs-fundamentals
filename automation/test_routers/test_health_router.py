@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import health as hl
+from cs_fundamentals.routers import health_router as hl
 
 
 @pytest.fixture()

@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import practice_matrix_runner as pm
+from cs_fundamentals.routers import practice_matrix_router as pm
 
 
 @pytest.fixture()

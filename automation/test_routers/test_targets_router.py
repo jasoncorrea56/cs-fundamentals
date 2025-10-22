@@ -7,7 +7,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import targets as tg
+from cs_fundamentals.routers import targets_router as tg
 
 
 @pytest.fixture()

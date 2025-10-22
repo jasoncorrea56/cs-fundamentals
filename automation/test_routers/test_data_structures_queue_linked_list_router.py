@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import data_structures_queue_linked_list_runner as qll
+from cs_fundamentals.routers import data_structures_queue_linked_list_router as qll
 
 
 @pytest.fixture()

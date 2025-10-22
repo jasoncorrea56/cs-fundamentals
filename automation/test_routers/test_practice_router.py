@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cs_fundamentals.models.schemas import PracticeSubmission
-from cs_fundamentals.routers import practice_runner as pr
+from cs_fundamentals.routers import practice_router as pr
 
 
 # ---------- App fixture --------------------------------------------------------

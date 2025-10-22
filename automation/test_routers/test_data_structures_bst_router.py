@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import data_structures_bst_runner as bst
+from cs_fundamentals.routers import data_structures_bst_router as bst
 
 
 @pytest.fixture()

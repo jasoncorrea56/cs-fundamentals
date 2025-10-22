@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cs_fundamentals.routers import patterns_fast_slow_pointers_runner as fsp
+from cs_fundamentals.routers import patterns_fast_slow_pointers_router as fsp
 
 
 @pytest.fixture()
