@@ -26,7 +26,9 @@ include = ["cs_fundamentals*"]
 
 [dependency-groups]
 dev = [
+    "coverage[toml]>=7.11.0",
     "pre-commit>=4.2.0",
+    "pytest-cov>=7.0.0",
     "ruff>=0.11.7",
 ]
 
@@ -35,13 +37,43 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["automation"]
 pythonpath = ["."]
-addopts = "-q -p no:warnings"
+addopts = """
+  --strict-config
+  --strict-markers
+  --maxfail=1
+  --cov=cs_fundamentals
+  --cov-branch
+  --cov-report=term-missing:skip-covered
+  --cov-report=xml
+  --cov-report=html
+"""
 filterwarnings = [
+  "error::DeprecationWarning",
+  "ignore::UserWarning:pydantic.*:",
+  "ignore::pydantic.warnings.PydanticDeprecatedSince20",
   "ignore::pytest.PytestAssertRewriteWarning",
   "ignore:The configuration option \"asyncio_default_fixture_loop_scope\" is unset.:pytest.PytestDeprecationWarning",
 ]
+log_cli = true
+log_cli_level = "INFO"
 # Set an explicit default to silence the deprecation in pytest-asyncio:
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+branch = true
+source = ["cs_fundamentals"]
+omit = [
+  "*/__init__.py",
+  "cs_fundamentals/__main__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 95
+
+[tool.coverage.html]
+directory = "htmlcov"
 
 #
 # Linter/Formatter configs

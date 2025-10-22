@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
+from itertools import zip_longest
 
 
 class Node:
@@ -24,7 +25,7 @@ def build_tree_level_order(values: list[int | None]) -> Node | None:
     root = Node(root_val)
     q: deque[Node] = deque([root])
 
-    for left_val, right_val in zip(it, it):
+    for left_val, right_val in zip_longest(it, it, fillvalue=None):
         parent = q.popleft()
         if left_val is not None:
             parent.left = Node(left_val)
@@ -33,13 +34,6 @@ def build_tree_level_order(values: list[int | None]) -> Node | None:
             parent.right = Node(right_val)
             q.append(parent.right)
 
-    # If odd number of remaining values, attach a last left child
-    remaining = list(it)
-    if remaining:
-        parent = q.popleft()
-        left_val = remaining[0]
-        if left_val is not None:
-            parent.left = Node(left_val)
     return root
 
 

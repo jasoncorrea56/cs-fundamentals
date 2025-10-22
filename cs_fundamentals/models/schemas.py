@@ -1,16 +1,28 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
 
 
 class PracticeSubmission(BaseModel):
-    module: str = Field(..., example="cs_fundamentals.patterns.breadth_first_search")
-    class_name: str = Field(..., example="PracticeBreadthFirstSearch")
+    module: str = Field(
+        ...,
+        json_schema_extra={"example": "cs_fundamentals.patterns.breadth_first_search"},
+    )
+    class_name: str = Field(
+        ...,
+        json_schema_extra={"example": "PracticeBreadthFirstSearch"},
+    )
 
     # Mapping of method name to full function source (must be a complete `def ...` body)
     methods: dict[str, str]
 
     # Pytest targeting (Optional)
-    test_files: list[str] | None = Field(None, example=["tests/test_bfs.py"])
-    test_expr: str | None = Field(None, example="PracticeBreadthFirstSearch and bfs")
+    test_files: list[str] | None = Field(
+        default=None, json_schema_extra={"example": ["tests/test_bfs.py"]}
+    )
+    test_expr: str | None = Field(
+        default=None, json_schema_extra={"example": "PracticeBreadthFirstSearch and bfs"}
+    )
 
 
 class PytestSummary(BaseModel):

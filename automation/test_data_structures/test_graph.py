@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import numpy as np
 import pytest
 from automation.resources.data_structures.graph_data import (
     GRAPH_ADJACENCY_LIST_OUTPUT,
@@ -16,6 +19,11 @@ from cs_fundamentals.data_structures.graph import (
 
 
 class TestGraph:
+    """
+    Canonical/positive-path tests that match the resource fixtures, plus
+    a set of edge-case tests that exercise early returns and type checks.
+    """
+
     @classmethod
     def setup_class(cls) -> None:
         cls.search = UnionFind(10)
@@ -26,6 +34,8 @@ class TestGraph:
         cls.node_c = UndirectedGraphVertex("C")
         cls.node_d = UndirectedGraphVertex("D")
         cls.node_e = UndirectedGraphVertex("E")
+
+    # ---------- Base positive-path tests ----------
 
     def test_build_undirected_graph_vertices(self) -> None:
         assert self.node_a is not None
@@ -60,11 +70,6 @@ class TestGraph:
         result = self.undirected_graph.get_adjacency_matrix()
         assert str(result) == GRAPH_ADJACENCY_MATRIX_OUTPUT
 
-    # def test_undirected_graph_repr(self):
-    #     print("\nUndirected Graph:")
-    #     print(self.undirected_graph)
-    #     assert True
-
     @pytest.mark.parametrize("x, y", GRAPH_UNION_FIND_UNION_TESTS)
     def test_union_find_union(self, x, y) -> None:
         # 1-2-5-6-7 3-8-9 4
@@ -85,3 +90,70 @@ class TestGraph:
     def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:
         result = self.problems.number_of_islands_2(m, n, positions)
         assert result == output
+
+    # ---------- Additional edge-case tests merged from “extra” ----------
+
+    def test_vertex_add_neighbor_invalid_type_returns_false_no_change(self) -> None:
+        v = UndirectedGraphVertex("X")
+        before = list(v.neighbors)
+        assert v.add_neighbor("not-a-vertex") is False
+        assert v.neighbors == before  # Unchanged
+
+        # add_neighbors aggregates results (bitwise-AND), so a bad entry yields False
+        v2 = UndirectedGraphVertex("Y")
+        assert v.add_neighbors([v2, "oops"]) is False
+        assert v.neighbors == ["Y"]  # Only valid neighbor added, sorted
+
+    def test_graph_add_vertex_invalid_type_returns_false(self) -> None:
+        g = UndirectedGraph()
+        assert g.add_vertex("not-a-vertex") is False  # type: ignore[arg-type]
+        assert g.vertices == {}
+
+    def test_graph_add_edge_invalid_types_returns_false(self) -> None:
+        g = UndirectedGraph()
+        a = UndirectedGraphVertex("A")
+        # One bad, one good
+        assert g.add_edge(a, "bad") is False  # type: ignore[arg-type]
+        # Both bad
+        assert g.add_edge("bad", "worse") is False  # type: ignore[arg-type,call-arg]
+        # Still empty graph
+        assert g.vertices == {}
+
+    def test_graph_add_edges_with_invalid_entry_returns_false(self) -> None:
+        g = UndirectedGraph()
+        a = UndirectedGraphVertex("A")
+        b = UndirectedGraphVertex("B")
+        # Include a bad edge tuple; aggregate result becomes False
+        assert g.add_edges([(a, b), (a, "nope")]) is False  # type: ignore[list-item]
+        # Only the valid edge should have registered in vertices mapping
+        assert "A" in g.vertices or "B" in g.vertices
+
+    def test_empty_graph_adjacency_list_and_matrix_are_empty(self) -> None:
+        g = UndirectedGraph()
+        # build_* should gracefully return empty structures when no vertices
+        adj_list = g.get_adjacency_list()
+        assert adj_list == []
+        adj_matrix = g.get_adjacency_matrix()
+        # Code returns [] when empty; normalize to ndarray for assertion
+        if isinstance(adj_matrix, list):
+            assert adj_matrix == []
+        else:
+            assert isinstance(adj_matrix, np.ndarray)
+            assert adj_matrix.size == 0
+
+    def test_empty_graph_repr_contains_empty_structures(self) -> None:
+        g = UndirectedGraph()
+        s = repr(g)
+        # Should look like "[]\n\n[]"
+        assert "[]" in s
+        assert s.strip().startswith("[") and s.strip().endswith("]")
+
+    def test_remove_duplicates_staticmethod_dedupes_positions(self) -> None:
+        """
+        The staticmethod is defined with a stray 'self' parameter; call with None.
+        Ensure duplicates/order collapse to unique rows.
+        """
+        positions = [[1, 2], [1, 2], [2, 3], [2, 3], [3, 4]]
+        deduped = GraphProblems.UnionFind.remove_duplicates(None, positions)
+        # Order after dict.fromkeys over tuples == insertion order of the first occurrence
+        assert deduped == [[1, 2], [2, 3], [3, 4]]
