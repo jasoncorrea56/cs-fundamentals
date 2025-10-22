@@ -28,7 +28,7 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     """Defaults should match class-level definitions (with env isolated)."""
     _clear_env(monkeypatch)
     s = cfg.Settings(_env_file=None)  # do not read any .env here
-    assert s.app_name == "cs-fundamentals"
+    assert s.app_name == "CS Fundamentals API"
     assert s.env == "prod"
     assert s.port == 8000
     assert s.log_level == "INFO"
