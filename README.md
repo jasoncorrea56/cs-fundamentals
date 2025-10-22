@@ -30,6 +30,38 @@ Manually run pre-commit hooks:
 pre-commit run --all-files
 ```
 
+#### Individual Linting, Formatting, & Type-Checking
+
+- `ruff` Lint to see results w/o making fixes
+
+```bash
+uv run ruff check .
+```
+
+- `ruff` Lint w/ auto-fix
+
+```bash
+uv run ruff check . --fix
+```
+
+- `ruff` Format to see results w/o making fixes
+
+```bash
+uv run ruff format . --check
+```
+
+- `ruff` Format w/ auto-fix
+
+```bash
+uv run ruff format .
+```
+
+- `mypy` Type-Checking
+
+```bash
+uv run mypy .
+```
+
 ### UV Setup
 
 Install UV

@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from contextvars import ContextVar
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 # Request-scoped id (set by middleware)
@@ -30,9 +30,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401
         payload: dict[str, Any] = {
-            "ts": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
-                timespec="milliseconds"
-            ),
+            "ts": datetime.fromtimestamp(record.created, tz=UTC).isoformat(timespec="milliseconds"),
             "level": record.levelname,
             "logger": record.name,
             "msg": record.getMessage(),
@@ -62,9 +60,7 @@ class ConsoleFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
-        ts = datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
-            timespec="milliseconds"
-        )
+        ts = datetime.fromtimestamp(record.created, tz=UTC).isoformat(timespec="milliseconds")
         rid = getattr(record, "request_id", None)
         rid_part = f" | rid={rid}" if rid else ""
         base = f"{ts} | {record.levelname:<7} | {record.name}{rid_part} | {record.getMessage()}"

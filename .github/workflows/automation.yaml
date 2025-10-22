@@ -31,6 +31,29 @@ jobs:
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
 
+  mypy:
+    name: mypy (3.11)
+    continue-on-error: true   # TODO - Remove when mypy issues have been addressed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Deps (including dev)
+        shell: bash
+        run: |
+          uv sync --frozen --all-groups
+
+      - name: Type check
+        shell: bash
+        run: |
+          uv run --frozen mypy .
+
   pytest:
     name: pytest ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -61,7 +84,7 @@ jobs:
   # After lint and tests pass, call the reusable build workflow.
   build-and-push:
     name: build (reusable)
-    needs: [pre-commit, pytest]
+    needs: [pre-commit, mypy, pytest]
     if: >
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))

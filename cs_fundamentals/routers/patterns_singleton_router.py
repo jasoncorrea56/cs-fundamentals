@@ -68,7 +68,7 @@ def _singleton_splitter(
 
     # If anything is left un-routed (e.g., unknown namespaced target), keep them with primary
     # so validation can raise an informative error later.
-    primary |= remaining  # noqa: PIE787
+    primary |= remaining
 
     return primary, extras
 
