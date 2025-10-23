@@ -152,10 +152,9 @@ class TestGraph:
 
     def test_remove_duplicates_staticmethod_dedupes_positions(self) -> None:
         """
-        The staticmethod is defined with a stray 'self' parameter; call with None.
         Ensure duplicates/order collapse to unique rows.
         """
         positions = [[1, 2], [1, 2], [2, 3], [2, 3], [3, 4]]
-        deduped = GraphProblems.UnionFind.remove_duplicates(None, positions)
-        # Order after dict.fromkeys over tuples == insertion order of the first occurrence
-        assert deduped == [[1, 2], [2, 3], [3, 4]]
+        deduped = GraphProblems.UnionFind.remove_duplicates(positions)
+        # Order after set/dedup may vary; compare as sets of tuples or sort deterministically.
+        assert sorted(deduped) == [[1, 2], [2, 3], [3, 4]]

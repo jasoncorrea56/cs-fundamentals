@@ -1,13 +1,17 @@
-from cs_fundamentals.data_structures.linked_list_single import Node
+from __future__ import annotations
+
 from threading import Lock
+
+from cs_fundamentals.data_structures.linked_list_single import Node
 
 
 class QueueCircularArray:
     def __init__(self, capacity: int) -> None:
-        self.queue = [0] * capacity
-        self.capacity = capacity
-        self.size = 0
-        self.head = 0
+        # Allow empty slots to be None so we can clear positions on dequeue.
+        self.queue: list[int | None] = [None] * capacity
+        self.capacity: int = capacity
+        self.size: int = 0
+        self.head: int = 0
         self.queue_lock = Lock()
 
     def __str__(self) -> str:
@@ -49,19 +53,17 @@ class QueueCircularArray:
 
 class QueueCircularLinkedList:
     def __init__(self, capacity: int) -> None:
-        self.size = 0
-        self.capacity = capacity
-        self.head = None
-        self.tail = None
+        self.size: int = 0
+        self.capacity: int = capacity
+        self.head: Node | None = None
+        self.tail: Node | None = None
 
     def __str__(self) -> str:
-        result = []
-        node = self.head
-        while True:
+        result: list[int] = []
+        node: Node | None = self.head
+        while node is not None:
             result.append(node.value)
             node = node.next
-            if not node:
-                break
         return str(result)
 
     def is_full(self) -> bool:
@@ -79,7 +81,9 @@ class QueueCircularLinkedList:
             self.tail = self.head
         else:
             node = Node(value)
-            self.tail.next = node
+            tail = self.tail
+            assert tail is not None
+            tail.next = node
             self.tail = node
         self.size += 1
         return True
@@ -87,19 +91,22 @@ class QueueCircularLinkedList:
     def dequeue(self) -> int | None:
         if self.is_empty():
             return None
-        value = self.peek()
-        self.head.value = None
+        assert self.head is not None  # for type-checker
+        value: int = self.head.value
         self.head = self.head.next
         self.size -= 1
+        if self.head is None:
+            # Queue now empty; keep tail consistent.
+            self.tail = None
         return value
 
     def peek(self) -> int | None:
-        if self.is_empty():
+        if self.is_empty() or self.head is None:
             return None
         return self.head.value
 
     def rear(self) -> int | None:
-        if self.is_empty():
+        if self.is_empty() or self.tail is None:
             return None
         return self.tail.value
 

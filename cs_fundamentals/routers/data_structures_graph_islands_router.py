@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter
 
 from cs_fundamentals.core.handler_factory import make_submit_handler_from_matrix
 from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+    from typing import Any
 
 router = APIRouter(
     prefix="/data-structures/graph/islands",
@@ -13,7 +19,7 @@ router = APIRouter(
 
 def _split_union_find(
     methods: dict[str, str],
-) -> tuple[dict[str, str], list[tuple[str | dict[str, str]]]]:
+) -> tuple[dict[str, str], list[tuple[str, str, dict[str, str]]]]:
     """
     Split payload methods into:
       - primary methods for PracticeGraphProblems (no dot in name)
@@ -30,7 +36,7 @@ def _split_union_find(
         else:
             primary[name] = src
 
-    extra: list[tuple[str | dict[str, str]]] = []
+    extra: list[tuple[str, str, dict[str, str]]] = []
     if inner:
         extra.append(
             (
@@ -42,7 +48,7 @@ def _split_union_find(
     return primary, extra
 
 
-_submit = make_submit_handler_from_matrix(
+_submit: Callable[[MethodsOnly], Awaitable[dict[str, Any]]] = make_submit_handler_from_matrix(
     key="ds.graph.islands",
     success_message="All Graph Islands II data structure tests executed successfully.",
     method_splitter=_split_union_find,
@@ -50,5 +56,5 @@ _submit = make_submit_handler_from_matrix(
 
 
 @router.post("/submit")
-async def submit_graph_islands_practice(payload: MethodsOnly) -> dict:
+async def submit_graph_islands_practice(payload: MethodsOnly) -> dict[str, Any]:
     return await _submit(payload)

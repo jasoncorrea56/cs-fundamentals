@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, ClassVar, TypeVar
 
-if TYPE_CHECKING:
-    from typing import Any, ClassVar, Self
+
+# ---------- Normal class (non-singleton) ----------
 
 
 class NormalClass:
@@ -13,7 +13,8 @@ class NormalClass:
         self.__instance_var: str | None = None
 
     def set_access(self, value: str) -> None:
-        self.__class_var = value
+        # Assign class variable via the class (not the instance)
+        type(self).__class_var = value
         self.__instance_var = value
 
     def get_class_access(self) -> str | None:
@@ -32,19 +33,26 @@ class NormalChild(NormalClass):
         print(f"Normal instance_access = {self.get_instance_access()}")
 
 
+# ---------- Classic Singleton ----------
+
+_SelfSingleton = TypeVar("_SelfSingleton", bound="SingletonClass")
+
+
 class SingletonClass:
     __class_var: ClassVar[str | None] = None
+    _instance: ClassVar[SingletonClass | None] = None
 
-    def __new__(cls: Self) -> Self:
-        if not hasattr(cls, "instance"):
-            cls.instance = super().__new__(cls)
-        return cls.instance
+    def __new__(cls: type[_SelfSingleton]) -> _SelfSingleton:
+        if cls._instance is None:
+            # super().__new__ returns an instance of 'cls'
+            cls._instance = super().__new__(cls)
+        return cls._instance  # type: ignore[return-value]
 
     def __init__(self) -> None:
         self.__instance_var: str | None = None
 
     def set_access(self, value: str) -> None:
-        self.__class_var = value
+        type(self).__class_var = value
         self.__instance_var = value
 
     def get_class_access(self) -> str | None:
@@ -63,12 +71,18 @@ class SingletonChild(SingletonClass):
         print(f"Singleton instance_access = {self.get_instance_access()}")
 
 
+# ---------- Borg (Monostate) Singleton ----------
+
+_SelfBorg = TypeVar("_SelfBorg", bound="BorgSingletonClass")
+
+
 class BorgSingletonClass:
-    _shared_borg_state: dict[str, Any] = {}
+    _shared_borg_state: ClassVar[dict[str, Any]] = {}
     __class_var: ClassVar[str | None] = None
 
-    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:
+    def __new__(cls: type[_SelfBorg], *args: Any, **kwargs: Any) -> _SelfBorg:
         obj = super().__new__(cls)
+        # Share state among *all* instances of this class hierarchy
         obj.__dict__ = cls._shared_borg_state
         return obj
 
@@ -76,7 +90,7 @@ class BorgSingletonClass:
         self.__instance_var: str | None = None
 
     def set_access(self, value: str) -> None:
-        self.__class_var = value
+        type(self).__class_var = value
         self.__instance_var = value
 
     def get_class_access(self) -> str | None:
@@ -96,15 +110,19 @@ class BorgSingletonChild(BorgSingletonClass):
 
 
 class BorgSingletonResetChild(BorgSingletonClass):
-    _shared_borg_state: dict[str, Any] = {}
+    # Fresh shared state for this subclass
+    _shared_borg_state: ClassVar[dict[str, Any]] = {}
 
     def print_access(self) -> None:
         print(f"BorgSingleton class_access = {self.get_class_access()}")
         print(f"BorgSingleton instance_access = {self.get_instance_access()}")
 
 
+# ---------- Practice stubs ----------
+
+
 class PracticeSingletonClass:
-    def __new__(cls: type[Self]) -> Self:
+    def __new__(cls: type[PracticeSingletonClass]) -> PracticeSingletonClass:
         raise NotImplementedError
 
 
@@ -114,7 +132,9 @@ class PracticeSingletonChild(PracticeSingletonClass):
 
 
 class PracticeBorgSingletonClass:
-    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:
+    def __new__(
+        cls: type[PracticeBorgSingletonClass], *args: Any, **kwargs: Any
+    ) -> PracticeBorgSingletonClass:
         raise NotImplementedError
 
 

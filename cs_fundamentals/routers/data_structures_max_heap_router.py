@@ -1,18 +1,27 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter
 
 from cs_fundamentals.core.handler_factory import make_submit_handler_from_matrix
 from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
 
-router = APIRouter(prefix="/data-structures/max-heap", tags=["Data Structures - MaxHeap Practice"])
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+    from typing import Any
 
-_submit = make_submit_handler_from_matrix(
+router = APIRouter(
+    prefix="/data-structures/max-heap",
+    tags=["Data Structures - MaxHeap Practice"],
+)
+
+_submit: Callable[[MethodsOnly], Awaitable[dict[str, Any]]] = make_submit_handler_from_matrix(
     key="ds.max_heap",
     success_message="All MaxHeap data structure tests executed successfully.",
 )
 
 
 @router.post("/submit")
-async def submit_max_heap_practice(payload: MethodsOnly) -> dict:
+async def submit_max_heap_practice(payload: MethodsOnly) -> dict[str, Any]:
     return await _submit(payload)

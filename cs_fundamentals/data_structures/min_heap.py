@@ -1,16 +1,11 @@
 import sys
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any
-
 
 class MinHeap:
     def __init__(self, heap_size: int) -> None:
         self.real_size: int = 0
         self.heap_size: int = heap_size
-        self.min_heap: list[Any] = [0] * (heap_size + 1)
+        self.min_heap: list[int] = [0] * (heap_size + 1)
 
     def add(self, element: int) -> bool:
         """
@@ -51,7 +46,7 @@ class MinHeap:
             print("Pop() failed: The MinHeap is empty.")
             return sys.maxsize
 
-        popped_element = self.min_heap[1]
+        popped_element: int = self.min_heap[1]
         # Move last element to root and shrink
         self.min_heap[1] = self.min_heap[self.real_size]
         self.real_size -= 1

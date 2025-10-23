@@ -63,7 +63,7 @@ async def submit_practice(payload: PracticeSubmission) -> Response:
         return error_response(
             status_code=400,
             message=str(diexc),
-            payload=payload,
+            payload=payload.model_dump(),
         )
 
     except Exception as exc:  # noqa: BLE001
@@ -72,5 +72,5 @@ async def submit_practice(payload: PracticeSubmission) -> Response:
         return error_response(
             status_code=400,
             message=f"{str(exc)}\n\n{str(tb)}",
-            payload=payload,
+            payload=payload.model_dump(),
         )

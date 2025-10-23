@@ -3,43 +3,59 @@ from __future__ import annotations
 import os
 import traceback
 from datetime import datetime
+from typing import Any, Protocol, runtime_checkable
+
 from fastapi.responses import JSONResponse
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from typing import Any
 
-try:
-    # If Pydantic is available, use its typing to detect models
-    from pydantic import BaseModel  # type: ignore
-except Exception:  # pragma: no cover
-    BaseModel = object
+# Back-compat: expose a module-level `BaseModel` symbol for tests to monkeypatch.
+# We don't rely on this for normalization; protocols below handle v1/v2 models.
+class BaseModel:  # minimal stand-in; tests may monkeypatch this
+    pass
 
-# Toggle tracebacks via env var; default ON for local dev.
+
+# Enable traceback in error responses unless explicitly disabled.
 _INCLUDE_TRACEBACK = os.getenv("PRACTICE_INCLUDE_TRACEBACK", "1") not in {
     "0",
     "false",
     "False",
 }
 
+# ---- Pydantic-compat detection (v1/v2) via Protocols ----
+
+
+@runtime_checkable
+class _SupportsModelDump(Protocol):
+    def model_dump(self) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class _SupportsDict(Protocol):
+    def dict(self) -> dict[str, Any]: ...
+
 
 def _normalize_payload(payload: Any) -> dict[str, Any]:
     """
-    Accepts a pydantic BaseModel, dict, or anything else.
-    Returns a JSON-serializable dict. Recursively normalizes nested BaseModels.
+    Accepts a Pydantic-like model (v1 or v2), dict, or other JSON-serializable payload.
+    Returns a JSON-serializable dict. Recursively normalizes nested models/containers.
     """
     if payload is None:
         return {}
 
-    # Helper to recursively convert nested structures
     def _coerce(obj: Any) -> Any:
-        # Pydantic v2 model
-        if isinstance(obj, BaseModel) and hasattr(obj, "model_dump"):
-            return obj.model_dump()  # type: ignore[attr-defined]
-        # Pydantic v1 model (defensive)
-        if isinstance(obj, BaseModel) and hasattr(obj, "dict"):
-            return obj.dict()
-        # dict: normalize values
+        # Pydantic v2
+        if isinstance(obj, _SupportsModelDump):
+            try:
+                return obj.model_dump()
+            except Exception:
+                pass
+        # Pydantic v1
+        if isinstance(obj, _SupportsDict):
+            try:
+                return obj.dict()
+            except Exception:
+                pass
+        # Dict: normalize values
         if isinstance(obj, dict):
             return {k: _coerce(v) for k, v in obj.items()}
         # Sequence types
@@ -48,13 +64,11 @@ def _normalize_payload(payload: Any) -> dict[str, Any]:
         # Passthrough for JSON-serializable primitives
         return obj
 
-    # Top-level cases
-    if isinstance(payload, BaseModel):
-        return _coerce(payload)  # returns a dict
-    if isinstance(payload, dict):
-        return _coerce(payload)
+    # Top-level cases: ensure we always return a dict
+    if isinstance(payload, (dict, _SupportsModelDump, _SupportsDict)):
+        data = _coerce(payload)
+        return data if isinstance(data, dict) else {"context": data}
 
-    # Last resort: represent minimally
     return {"context": str(payload)}
 
 
@@ -68,14 +82,7 @@ def success_response(
     message: str = "Operation completed successfully.",
     payload: Any | None = None,
 ) -> JSONResponse:
-    """
-    Standardize successful API responses
-
-    :param data: Primary payload (pytest results, summaries, etc.)
-    :param message: Success message
-    :param payload: Optional context (e.g., module, test stats, timing)
-    :return: JSONResponse object containing standardized result details
-    """
+    """Standardize successful API responses."""
     content = {
         "success": True,
         "timestamp": _now(),
@@ -93,13 +100,8 @@ def error_response(
     payload: dict[str, Any] | None = None,
 ) -> JSONResponse:
     """
-    Standardized error envelope. Accepts an exception string.
+    Standardized error envelope.
     Includes traceback when PRACTICE_INCLUDE_TRACEBACK is truthy.
-
-    :param status_code: HTTP status code
-    :param message: Error message.
-    :param payload: Optional context (e.g., module, test stats, timing).
-    :return: JSONResponse object containing standardized error details
     """
     content: dict[str, Any] = {
         "success": False,
@@ -129,8 +131,8 @@ def format_pytest_summary_tail(
     parts: list[str] = []
     for k in keys:
         v = summary.get(k)
-        # Include ints/floats; skip None/missing. Keep 0 for context on totals like 'collected'.
-        if isinstance(v, int | float) or v == 0:
+        # Include numeric values; keep 0 to show totals like 'collected'.
+        if isinstance(v, (int, float)) or v == 0:
             parts.append(f"{k}={v}")
     return f" ({', '.join(parts)})" if parts else ""
 

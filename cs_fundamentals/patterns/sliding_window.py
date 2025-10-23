@@ -1,4 +1,4 @@
-import math
+import sys
 
 
 class SlidingWindow:
@@ -18,7 +18,7 @@ class SlidingWindow:
         :param k: Length of subarray
         :return: List of integer averages for subarrays of length K
         """
-        result = []
+        result: list[float] = []
         window_sum = 0
         for end in range(len(nums)):
             window_sum += nums[end]
@@ -76,15 +76,16 @@ class SlidingWindow:
         :param s: Positive integer
         :return: Length of smallest subarray
         """
-        min_len = math.inf
-        start = window_sum = 0
+        min_len: int = sys.maxsize
+        start: int = 0
+        window_sum: int = 0
         for end in range(len(nums)):
             window_sum += nums[end]
             while window_sum >= s:
                 min_len = min(min_len, end - start + 1)
                 window_sum -= nums[start]
                 start += 1
-        return 0 if min_len == math.inf else min_len
+        return 0 if min_len == sys.maxsize else min_len
 
     @staticmethod
     def longest_substring_with_k_distinct_chars(input_string: str, k: int) -> int:
@@ -96,7 +97,7 @@ class SlidingWindow:
         :return: Length of longest substring with no more than k distinct chars
         """
         sub_len = start = 0
-        char_freq = {}
+        char_freq: dict[str, int] = {}
         for end in range(len(input_string)):
             right = input_string[end]
             if right not in char_freq:
@@ -126,7 +127,7 @@ class SlidingWindow:
         :return: Maximum number of fruits in both baskets
         """
         max_fruit = start = 0
-        fruit_freq = {}
+        fruit_freq: dict[str, int] = {}
         for end in range(len(fruit)):
             right = fruit[end]
             if right not in fruit_freq:
@@ -168,7 +169,7 @@ class SlidingWindow:
         :return: Length of longest substring with distinct chars
         """
         start = result = 0
-        char_map = {}
+        char_map: dict[str, int] = {}
         for end in range(len(input_string)):
             end_char = input_string[end]
             if end_char in char_map:
@@ -187,7 +188,7 @@ class SlidingWindow:
         :return: Length of the longest substring having the same letters after replacement
         """
         start = result = max_repeat = 0
-        char_map = {}
+        char_map: dict[str, int] = {}
         for end in range(len(input_string)):
             end_char = input_string[end]
             if end_char not in char_map:

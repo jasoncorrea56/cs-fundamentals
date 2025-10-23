@@ -1,32 +1,37 @@
+from __future__ import annotations
+
+
 class Node:
-    def __init__(self, data: int, next_node: None = None, prev_node: None = None) -> None:
-        self.value = data
-        self.next = next_node
-        self.prev = prev_node
+    def __init__(
+        self, data: int, next_node: Node | None = None, prev_node: Node | None = None
+    ) -> None:
+        self.value: int = data
+        self.next: Node | None = next_node
+        self.prev: Node | None = prev_node
 
 
 class DoublyLinkedList:
     def __init__(self) -> None:
-        self.head = None
+        self.head: Node | None = None
 
-    def get_node(self, index: int) -> Node:
+    def get_node(self, index: int) -> Node | None:
         """
         Gets the node at the specified index of the LinkedList
         :param index: Index of the node to retrieve from the LinkedList
         :return: The node at the specified index of the LinkedList
         """
-        curr = self.head
+        curr: Node | None = self.head
         for i in range(index):
             if curr:
                 curr = curr.next
         return curr
 
-    def get_tail(self) -> Node:
+    def get_tail(self) -> Node | None:
         """
         Gets the last node of the LinkedList
         :return: The last node of the LinkedList
         """
-        tail = self.head
+        tail: Node | None = self.head
         while tail and tail.next:
             tail = tail.next
         return tail
@@ -40,13 +45,13 @@ class DoublyLinkedList:
         node = self.get_node(index)
         return node.value if node else -1
 
-    def get_list(self) -> list:
+    def get_list(self) -> list[int]:
         """
         Gets the values of the LinkedList in an array
         :return: A list of values from the LinkedList
         """
-        linked_list = []
-        node = self.head
+        linked_list: list[int] = []
+        node: Node | None = self.head
         while node and node.value not in linked_list:
             linked_list.append(node.value)
             node = node.next
@@ -60,8 +65,8 @@ class DoublyLinkedList:
         """
         new_node = Node(val)
         new_node.next = self.head
-        if self.head:  #
-            self.head.prev = new_node  #
+        if self.head:
+            self.head.prev = new_node
         self.head = new_node
         return
 
@@ -76,8 +81,9 @@ class DoublyLinkedList:
             return
         new_node = Node(val)
         prev_node = self.get_tail()
+        assert prev_node is not None
         prev_node.next = new_node
-        new_node.prev = prev_node  #
+        new_node.prev = prev_node
         return
 
     def add_at_index(self, index: int, val: int) -> None:
@@ -94,12 +100,12 @@ class DoublyLinkedList:
         if not prev_node:
             return
         new_node = Node(val)
-        next_node = prev_node.next  #
-        new_node.prev = prev_node  #
+        next_node = prev_node.next
+        new_node.prev = prev_node
         new_node.next = prev_node.next
         prev_node.next = new_node
-        if next_node:  #
-            next_node.prev = new_node  #
+        if next_node:
+            next_node.prev = new_node
         return
 
     def delete_at_index(self, index: int) -> None:
@@ -111,10 +117,10 @@ class DoublyLinkedList:
         del_node = self.get_node(index)
         if not del_node:
             return
-        next_node = del_node.next  #
-        prev_node = del_node.prev  #
-        if prev_node:  #
-            prev_node.next = next_node  #
+        next_node = del_node.next
+        prev_node = del_node.prev
+        if prev_node:
+            prev_node.next = next_node
         else:
             self.head = next_node
         if next_node:
@@ -126,7 +132,7 @@ class PracticeDoublyLinkedList:
     def __init__(self) -> None:
         pass
 
-    def get_node(self, index: int) -> Node:
+    def get_node(self, index: int) -> Node | None:
         """
         Gets the node at the specified index of the LinkedList
         :param index: Index of the node to retrieve from the LinkedList
@@ -134,7 +140,7 @@ class PracticeDoublyLinkedList:
         """
         raise NotImplementedError
 
-    def get_tail(self) -> Node:
+    def get_tail(self) -> Node | None:
         """
         Gets the last node of the LinkedList
         :return: The last node of the LinkedList
@@ -149,7 +155,7 @@ class PracticeDoublyLinkedList:
         """
         raise NotImplementedError
 
-    def get_list(self) -> list:
+    def get_list(self) -> list[int]:
         """
         Gets the values of the LinkedList in an array
         :return: A list of values from the LinkedList

@@ -234,7 +234,7 @@ def get_target(key: str) -> TestTarget:
 
 
 def list_targets(kind: str | None = None) -> list[TestTarget]:
-    items: dict[str, TestTarget] = MATRIX.values()
+    items: list[TestTarget] = list(MATRIX.values())
     if kind:
         items = [t for t in items if t.kind == kind]
     return sorted(items, key=lambda t: t.key)

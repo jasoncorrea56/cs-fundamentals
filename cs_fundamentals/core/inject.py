@@ -107,7 +107,7 @@ def _compile_functions(src_by_name: Mapping[str, str]) -> dict[str, FunctionType
         if not isinstance(fn, FunctionType):
             raise ValueError(f"Object '{name}' defined but is not a function.")
 
-        compiled[name] = fn  # type: ignore[assignment]
+        compiled[name] = fn
 
     # 2) Enable recursion and cross-calls:
     #    - bind each function name into its own globals so recursion by name works
