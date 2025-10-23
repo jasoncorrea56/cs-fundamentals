@@ -49,7 +49,7 @@ class TestPracticeQueue(TestQueue):
             assert True
 
     @pytest.mark.usefixtures("array_output")
-    def test_array_str(self, array_output) -> None:
+    def test_array_str(self, array_output: str) -> None:
         try:
             super().test_array_str(array_output)
         except NotImplementedError:
@@ -92,7 +92,7 @@ class TestPracticeQueue(TestQueue):
             assert True
 
     @pytest.mark.usefixtures("linked_list_output")
-    def test_linked_list_str(self, linked_list_output) -> None:
+    def test_linked_list_str(self, linked_list_output: str) -> None:
         try:
             super().test_linked_list_str(linked_list_output)
         except NotImplementedError:

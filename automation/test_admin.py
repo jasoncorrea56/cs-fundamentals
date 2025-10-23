@@ -4,8 +4,13 @@ import sys
 import runpy
 import pytest
 import warnings
+from typing import TYPE_CHECKING
 
 import cs_fundamentals.admin as admin
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
+    from _pytest.logging import LogCaptureFixture
 
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -42,7 +47,7 @@ def test_main_unknown_task_exits(
     assert any("Unknown admin task" in m for m in caplog.text.splitlines())
 
 
-def test_main_entrypoint_block(monkeypatch, caplog) -> None:
+def test_main_entrypoint_block(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture) -> None:
     """Covers the __main__ block without duplicate import warning."""
     monkeypatch.setattr(sys, "argv", ["cs_fundamentals/admin.py", "health"])
     sys.modules.pop("cs_fundamentals.admin", None)  # remove cached import

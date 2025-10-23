@@ -28,7 +28,7 @@ class TestStack:
         result = self.stack_array.pop()
         assert result == 4
 
-    def test_array_str(self, expected_output) -> None:
+    def test_array_str(self, expected_output: str) -> None:
         result = self.stack_array.__str__()
         assert result == expected_output
 
@@ -47,6 +47,6 @@ class TestStack:
         result = self.stack_linked_list.pop()
         assert result == 4
 
-    def test_linked_list_str(self, expected_output) -> None:
+    def test_linked_list_str(self, expected_output: str) -> None:
         result = self.stack_linked_list.__str__()
         assert result == expected_output

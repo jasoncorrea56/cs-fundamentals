@@ -27,19 +27,21 @@ class TestSlidingWindow:
     def avg_k(self) -> int:
         return SLIDING_WINDOW_AVG_K
 
-    def test_avg_subarray_of_size_k(self, avg_nums, avg_k) -> None:
+    def test_avg_subarray_of_size_k(self, avg_nums: list[int], avg_k: int) -> None:
         results = self.sliding_window.avg_subarray_of_size_k(avg_nums, avg_k)
         assert results == SLIDING_WINDOW_AVG_OUTPUT
 
     @pytest.mark.parametrize("nums, k, output", SLIDING_WINDOW_MAX_SUBARRAY_OF_SIZE_K_TESTS)
-    def test_max_subarray_of_size_k(self, nums, k, output) -> None:
+    def test_max_subarray_of_size_k(self, nums: list[int], k: int, output: int) -> None:
         results = self.sliding_window.max_subarray_of_size_k(nums, k)
         assert results == output
 
     @pytest.mark.parametrize(
         "nums, s, output", SLIDING_WINDOW_SMALLEST_SUBARRAY_SUM_GREATER_THAN_S_TESTS
     )
-    def test_smallest_subarray_sum_greater_than_s(self, nums, s, output) -> None:
+    def test_smallest_subarray_sum_greater_than_s(
+        self, nums: list[int], s: int, output: int
+    ) -> None:
         results = self.sliding_window.smallest_subarray_sum_greater_than_s(nums, s)
         assert results == output
 
@@ -47,12 +49,14 @@ class TestSlidingWindow:
         "input_string, k, output",
         SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_K_DISTINCT_CHARS_TESTS,
     )
-    def test_longest_substring_with_k_distinct_chars(self, input_string, k, output) -> None:
+    def test_longest_substring_with_k_distinct_chars(
+        self, input_string: str, k: int, output: int
+    ) -> None:
         results = self.sliding_window.longest_substring_with_k_distinct_chars(input_string, k)
         assert results == output
 
     @pytest.mark.parametrize("fruit, output", SLIDING_WINDOW_FRUITS_INTO_BASKETS_TESTS)
-    def test_fruits_into_baskets(self, fruit, output) -> None:
+    def test_fruits_into_baskets(self, fruit: list[str], output: int) -> None:
         results = self.sliding_window.fruits_into_baskets(fruit)
         assert results == output
 
@@ -60,7 +64,7 @@ class TestSlidingWindow:
         "input_string, output",
         SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_DISTINCT_CHARS_TESTS,
     )
-    def test_longest_substring_with_distinct_chars(self, input_string, output) -> None:
+    def test_longest_substring_with_distinct_chars(self, input_string: str, output: int) -> None:
         results = self.sliding_window.longest_substring_with_distinct_chars(input_string)
         assert results == output
 
@@ -69,7 +73,7 @@ class TestSlidingWindow:
         SLIDING_WINDOW_LONGEST_SUBSTRING_WITH_SAME_LETTERS_AFTER_REPLACEMENT_TESTS,
     )
     def test_longest_substring_with_same_letters_after_replacement(
-        self, input_string, k, output
+        self, input_string: str, k: int, output: int
     ) -> None:
         results = self.sliding_window.longest_substring_with_same_letters_after_replacement(
             input_string, k
@@ -80,6 +84,8 @@ class TestSlidingWindow:
         "nums, k, output",
         SLIDING_WINDOW_LONGEST_SUBARRAY_WITH_ONES_AFTER_REPLACEMENT_TESTS,
     )
-    def test_longest_subarray_with_ones_after_replacement(self, nums, k, output) -> None:
+    def test_longest_subarray_with_ones_after_replacement(
+        self, nums: list[int], k: int, output: int
+    ) -> None:
         results = self.sliding_window.longest_subarray_with_ones_after_replacement(nums, k)
         assert results == output

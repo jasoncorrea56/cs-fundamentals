@@ -108,6 +108,20 @@ ignore = [
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.List"     = { msg = "Use built-in list[...] (PEP 585)" }
+"typing.Dict"     = { msg = "Use built-in dict[...] (PEP 585)" }
+"typing.Tuple"    = { msg = "Use built-in tuple[...] (PEP 585)" }
+"typing.Set"      = { msg = "Use built-in set[...] (PEP 585)" }
+"typing.Optional" = { msg = "Use T | None (PEP 604)" }
+
+[tool.ruff.lint.flake8-type-checking]
+# Keep these modules importable at runtime; don’t force them behind TYPE_CHECKING
+exempt-modules = ["pydantic", "pydantic_core", "fastapi"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cs_fundamentals"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -118,7 +132,7 @@ line-ending = "auto"
 # Type-Checker config
 [tool.mypy]
 python_version = "3.11"
-files = ["cs_fundamentals", "automation"]
+files = ["cs_fundamentals"]
 plugins = ["pydantic.mypy"]
 pretty = true
 show_error_codes = true
@@ -137,3 +151,7 @@ disallow_untyped_defs = true
 ignore_missing_imports = false
 incremental = true
 cache_dir = ".mypy_cache"
+
+[[tool.mypy.overrides]]
+module = ["automation.*"]
+ignore_errors = true

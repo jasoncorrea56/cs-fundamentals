@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cs_fundamentals.routers import practice_matrix_router as pm
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.fixture()

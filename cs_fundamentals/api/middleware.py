@@ -4,12 +4,15 @@ import anyio
 import re
 import time
 import uuid
-from typing import Any
 
 from fastapi import Request, Response  # noqa: TC002
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from cs_fundamentals.core.logging_config import get_logger, request_id_var
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 log = get_logger(__name__)
 

@@ -83,7 +83,7 @@ class SortingAlgorithms:
         return nums
 
     @staticmethod
-    def partition(nums, low, high) -> int:
+    def partition(nums: list[int], low: int, high: int) -> int:
         """
         This function takes last element as pivot, places the pivot element at its
         correct position in sorted array, and places all smaller (smaller than pivot)
@@ -118,7 +118,7 @@ class SortingAlgorithms:
             self.quick_sort(nums, pi + 1, high)
         return nums
 
-    def heapify(self, nums, n, i) -> None:
+    def heapify(self, nums: list[int], n: int, i: int) -> None:
         """
         Heapify function generates a max heap from the input list
         :param nums: List of integers
@@ -159,7 +159,7 @@ class SortingAlgorithms:
         return nums
 
     @staticmethod
-    def counting_sort(nums, exp1) -> None:
+    def counting_sort(nums: list[int], exp1: int) -> None:
         """
         A function to do counting sort of nums[] according to the exp1 represented by exp.
         :param nums: List of integers to sort

@@ -13,7 +13,7 @@ class StackArray:
     def is_empty(self) -> bool:
         return len(self.stack) == 0
 
-    def push(self, item) -> bool:
+    def push(self, item: int) -> bool:
         try:
             self.stack.append(item)
         except Exception:
@@ -48,7 +48,7 @@ class StackLinkedList:
     def is_empty(self) -> bool:
         return not self.top
 
-    def push(self, data) -> bool:
+    def push(self, data: int) -> bool:
         node = Node(data)
         node.next = self.top
         self.top = node
@@ -77,7 +77,7 @@ class PracticeStackArray:
     def is_empty(self) -> bool:
         raise NotImplementedError
 
-    def push(self, item) -> bool:
+    def push(self, item: int) -> bool:
         raise NotImplementedError
 
     def pop(self) -> int | None:
@@ -97,7 +97,7 @@ class PracticeStackLinkedList:
     def is_empty(self) -> bool:
         raise NotImplementedError
 
-    def push(self, data) -> bool:
+    def push(self, data: int) -> bool:
         raise NotImplementedError
 
     def pop(self) -> int | None:

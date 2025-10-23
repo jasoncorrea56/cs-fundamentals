@@ -7,10 +7,11 @@ from pydantic import BaseModel
 from cs_fundamentals.core import response as resp
 
 if TYPE_CHECKING:
+    from starlette.responses import JSONResponse
     import pytest
 
 
-def _json_of(r) -> dict[str, Any]:
+def _json_of(r: JSONResponse) -> dict[str, Any]:
     return json.loads(r.body.decode("utf-8"))
 
 

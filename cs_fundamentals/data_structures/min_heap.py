@@ -1,6 +1,9 @@
 import sys
 
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class MinHeap:
@@ -9,7 +12,7 @@ class MinHeap:
         self.heap_size: int = heap_size
         self.min_heap: list[Any] = [0] * (heap_size + 1)
 
-    def add(self, element) -> bool:
+    def add(self, element: int) -> bool:
         """
         Add an element to the MinHeap
         Note: if we use an array to represent the complete binary tree and store the root node at index 1, then the:
@@ -98,10 +101,10 @@ class MinHeap:
 
 
 class PracticeMinHeap:
-    def __init__(self, heap_size) -> None:
+    def __init__(self, heap_size: int) -> None:
         pass
 
-    def add(self, element) -> bool:
+    def add(self, element: int) -> bool:
         """
         Add an element to the MinHeap
         :param element: Element to add to the MinHeap

@@ -116,7 +116,7 @@ class UnionFind:
         self.root: list[int] = list(range(size))
         self.rank: list[int] = [1] * size
 
-    def find(self, x) -> int:
+    def find(self, x) -> Any:
         """
         Searches for the root of x
         :param x: Node on which to find the root

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cs_fundamentals.routers import data_structures_bst_router as bst
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.fixture()
@@ -30,7 +32,7 @@ async def test_submit_bst_practice_invokes_factory(monkeypatch: pytest.MonkeyPat
     """submit_bst_practice should await the generated handler and return its result."""
     called: dict[str, object] = {}
 
-    async def fake_submit(payload) -> dict[str, Any]:
+    async def fake_submit(payload: Any) -> dict[str, Any]:
         called["payload"] = payload
         return {"ok": True, "echo": payload.methods}
 
@@ -48,7 +50,7 @@ def test_submit_bst_practice_through_http(app: FastAPI, monkeypatch: pytest.Monk
     """End-to-end check via TestClient to ensure route wiring works."""
     client: TestClient = TestClient(app)
 
-    async def fake_submit(payload: object) -> dict:
+    async def fake_submit(payload: object) -> dict[str, bool]:
         return {"ok": True}
 
     monkeypatch.setattr(bst, "_submit", fake_submit)

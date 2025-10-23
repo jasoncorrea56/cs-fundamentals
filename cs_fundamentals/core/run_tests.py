@@ -4,10 +4,13 @@ import os
 import re
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
 
 from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.models.schemas import PracticeResult, PytestSummary
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 log = get_logger(__name__)
 

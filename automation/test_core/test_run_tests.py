@@ -3,11 +3,14 @@ from __future__ import annotations
 import types
 import sys
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from cs_fundamentals.core import run_tests as rt
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 # ---------------------------- _find_repo_root() ----------------------------

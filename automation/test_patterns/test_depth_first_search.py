@@ -50,36 +50,36 @@ class TestDepthFirstSearch:
         root.right.right = Node(6)
         return root
 
-    def test_preorder_dfs(self, dfs_root) -> None:
+    def test_preorder_dfs(self, dfs_root: Node) -> None:
         result = []
         self.dfs.preorder_dfs(dfs_root, result)
         assert result == DFS_PREORDER_OUTPUT
 
-    def test_preorder_dfs_2(self, dfs_root2) -> None:
+    def test_preorder_dfs_2(self, dfs_root2: Node) -> None:
         result = []
         self.dfs.preorder_dfs(dfs_root2, result)
         assert result == DFS_PREORDER_2_OUTPUT
 
-    def test_inorder_dfs(self, dfs_root) -> None:
+    def test_inorder_dfs(self, dfs_root: Node) -> None:
         result = []
         self.dfs.inorder_dfs(dfs_root, result)
         assert result == DFS_INORDER_OUTPUT
 
-    def test_inorder_dfs_2(self, dfs_root2) -> None:
+    def test_inorder_dfs_2(self, dfs_root2: Node) -> None:
         result = []
         self.dfs.inorder_dfs(dfs_root2, result)
         assert result == DFS_INORDER_2_OUTPUT
 
-    def test_postorder_dfs(self, dfs_root) -> None:
+    def test_postorder_dfs(self, dfs_root: Node) -> None:
         result = []
         self.dfs.postorder_dfs(dfs_root, result)
         assert result == DFS_POSTORDER_OUTPUT
 
-    def test_postorder_dfs_2(self, dfs_root2) -> None:
+    def test_postorder_dfs_2(self, dfs_root2: Node) -> None:
         result = []
         self.dfs.postorder_dfs(dfs_root2, result)
         assert result == DFS_POSTORDER_2_OUTPUT
 
-    def test_get_avg_for_each_level(self, level_avg_root) -> None:
+    def test_get_avg_for_each_level(self, level_avg_root: Node) -> None:
         results = self.dfs.get_avg_for_each_level(level_avg_root)
         assert results == DFS_LEVEL_AVG_OUTPUT

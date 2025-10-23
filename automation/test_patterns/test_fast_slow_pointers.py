@@ -31,6 +31,6 @@ class TestFastSlowPointers:
         results = self.fs_pointers.has_cycle_in_linked_list(self.linked_list.head)
         assert results is True
 
-    def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node) -> None:
+    def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node: Node) -> None:
         results = self.fs_pointers.get_first_node_for_cycle_in_linked_list(self.linked_list.head)
         assert results == cycle_first_node

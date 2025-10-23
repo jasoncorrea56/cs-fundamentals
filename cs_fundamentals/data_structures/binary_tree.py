@@ -1,12 +1,17 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(slots=True)
 class BinaryTreeNode:
-    def __init__(self, value, left=None, right=None) -> None:
-        self.value = value
-        self.left = left
-        self.right = right
+    value: int
+    left: BinaryTreeNode | None = None
+    right: BinaryTreeNode | None = None
 
 
+@dataclass(slots=True)
 class PracticeBinaryTreeNode:
-    def __init__(self, value, left=None, right=None) -> None:
-        self.value = value
-        self.left = left
-        self.right = right
+    value: str
+    left: PracticeBinaryTreeNode | None = None
+    right: PracticeBinaryTreeNode | None = None

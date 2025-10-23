@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from time import perf_counter
 from collections.abc import Iterable  # noqa: TC003
-from typing import Any
 
 from cs_fundamentals.core.inject import _compile_functions, inject_into_practice
 from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.core.run_tests import run_pytest
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 log = get_logger(__name__)
 

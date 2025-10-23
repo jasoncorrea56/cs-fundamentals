@@ -23,62 +23,62 @@ class TestPracticeSortingAlgorithms(TestSortingAlgorithms):
         cls.max_expected_output = SORT_MAX_EXPECTED_OUTPUT
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_SELECTION_TESTS)
-    def test_selection_sort(self, nums, sorted_nums) -> None:
+    def test_selection_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_selection_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_BUBBLE_TESTS)
-    def test_bubble_sort(self, nums, sorted_nums) -> None:
+    def test_bubble_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_bubble_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_INSERTION_TESTS)
-    def test_insertion_sort(self, nums, sorted_nums) -> None:
+    def test_insertion_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_insertion_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_MERGE_TESTS)
-    def test_merge_sort(self, nums, sorted_nums) -> None:
+    def test_merge_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_merge_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_QUICK_TESTS)
-    def test_quick_sort(self, nums, sorted_nums) -> None:
+    def test_quick_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_quick_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_HEAP_TESTS)
-    def test_heap_sort(self, nums, sorted_nums) -> None:
+    def test_heap_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_heap_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, sorted_nums", SORT_RADIX_TESTS)
-    def test_radix_sort(self, nums, sorted_nums) -> None:
+    def test_radix_sort(self, nums: list[int], sorted_nums: list[int]) -> None:
         try:
             super().test_radix_sort(nums, sorted_nums)
         except NotImplementedError:
             assert True
 
-    def test_bucket_sort(self, bucket_nums, sorted_bucket_nums) -> None:
+    def test_bucket_sort(self, bucket_nums: list[float], sorted_bucket_nums: list[float]) -> None:
         try:
             super().test_bucket_sort(bucket_nums, sorted_bucket_nums)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("nums, inorder_nums", SORT_STALIN_TESTS)
-    def test_stalin_sort(self, nums, inorder_nums) -> None:
+    def test_stalin_sort(self, nums: list[int], inorder_nums: list[int]) -> None:
         try:
             super().test_stalin_sort(nums, inorder_nums)
         except NotImplementedError:

@@ -118,28 +118,30 @@ class TestPracticeGraph(TestGraph):
     # ---------- Practice stubs (UF + Problems) ----------
 
     @pytest.mark.parametrize("x, y", GRAPH_UNION_FIND_UNION_TESTS)
-    def test_union_find_union(self, x, y) -> None:  # type: ignore[override]
+    def test_union_find_union(self, x: int, y: int) -> None:  # type: ignore[override]
         try:
             super().test_union_find_union(x, y)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("value, output", GRAPH_UNION_FIND_FIND_TESTS)
-    def test_union_find_find(self, value, output) -> None:  # type: ignore[override]
+    def test_union_find_find(self, value: int, output: int) -> None:  # type: ignore[override]
         try:
             super().test_union_find_find(value, output)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("x, y, output", GRAPH_UNION_FIND_IS_CONNECTED_TESTS)
-    def test_union_find_is_connected(self, x, y, output) -> None:  # type: ignore[override]
+    def test_union_find_is_connected(self, x: int, y: int, output: bool) -> None:  # type: ignore[override]
         try:
             super().test_union_find_is_connected(x, y, output)
         except NotImplementedError:
             assert True
 
     @pytest.mark.parametrize("m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS)
-    def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:  # type: ignore[override]
+    def test_problem_number_of_islands_2(
+        self, m: int, n: int, positions: list[list[int]], output: list[int]
+    ) -> None:  # type: ignore[override]
         try:
             super().test_problem_number_of_islands_2(m, n, positions, output)
         except NotImplementedError:

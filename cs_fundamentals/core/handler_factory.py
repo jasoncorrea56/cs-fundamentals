@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib
 import traceback
 from collections.abc import Callable, Iterable  # noqa: TC003
-from typing import Any
 
 from cs_fundamentals.core.inject import (
     DisallowedImportError,
@@ -23,6 +22,10 @@ from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
 from cs_fundamentals.core.validation import (
     validate_methods_exist as _base_validate_methods_exist,
 )
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 # method_splitter: (methods) -> (primary_methods, extra_injections)
 # extra_injections: list of tuples (module, class_name, methods_dict)

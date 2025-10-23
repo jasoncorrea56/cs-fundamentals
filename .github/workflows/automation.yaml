@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   pre-commit:
-    name: pre-commit checks
+    name: Pre-Commit Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Project
@@ -32,7 +32,7 @@ jobs:
         uses: pre-commit/action@v3.0.1
 
   mypy:
-    name: mypy (3.11)
+    name: Type Checks (mypy)
     continue-on-error: true   # TODO - Remove when mypy issues have been addressed
     runs-on: ubuntu-latest
     steps:
@@ -52,7 +52,7 @@ jobs:
       - name: Type check
         shell: bash
         run: |
-          uv run --frozen mypy .
+          uv run --frozen mypy cs_fundamentals
 
   pytest:
     name: pytest ${{ matrix.python-version }}

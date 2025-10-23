@@ -4,7 +4,10 @@ import os
 import traceback
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 try:
     # If Pydantic is available, use its typing to detect models

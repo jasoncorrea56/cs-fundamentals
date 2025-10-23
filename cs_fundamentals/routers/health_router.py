@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter
 
 from cs_fundamentals.config import settings
 from cs_fundamentals.core.utility import get_app_version
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 router = APIRouter(tags=["Health"])
 

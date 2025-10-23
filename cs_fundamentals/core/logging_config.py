@@ -6,7 +6,12 @@ import os
 import sys
 from contextvars import ContextVar
 from datetime import datetime, UTC
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from io import StringIO
+    from _pytest.capture import CaptureIO
+    from typing import Any
 
 # Request-scoped id (set by middleware)
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
@@ -69,7 +74,7 @@ class ConsoleFormatter(logging.Formatter):
         return base
 
 
-def _build_handler(stream, formatter: logging.Formatter) -> logging.Handler:
+def _build_handler(stream: CaptureIO | StringIO, formatter: logging.Formatter) -> logging.Handler:
     handler = logging.StreamHandler(stream)
     handler.setFormatter(formatter)
     return handler

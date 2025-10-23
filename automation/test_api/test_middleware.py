@@ -115,9 +115,9 @@ def patch_logger(monkeypatch: pytest.MonkeyPatch, sink: CallSink) -> logging.Log
         return _inner
 
     # Patch bound methods (keep type: ignore for mypy on bound patching)
-    monkeypatch.setattr(logger, "info", wrap(orig_info, logging.INFO))  # type: ignore[arg-type]
-    monkeypatch.setattr(logger, "warning", wrap(orig_warning, logging.WARNING))  # type: ignore[arg-type]
-    monkeypatch.setattr(logger, "exception", wrap(orig_exception, logging.ERROR))  # type: ignore[arg-type]
+    monkeypatch.setattr(logger, "info", wrap(orig_info, logging.INFO))
+    monkeypatch.setattr(logger, "warning", wrap(orig_warning, logging.WARNING))
+    monkeypatch.setattr(logger, "exception", wrap(orig_exception, logging.ERROR))
 
     return logger
 
