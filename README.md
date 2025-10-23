@@ -229,6 +229,8 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
     docker compose down --remove-orphans
     ```
 
+## Service Details
+
 ### Environment
 
 App configuration is stored in `.env` and loaded automatically by Compose and FastAPI via `pydantic-settings`, keeping builds immutable and configuration external.
@@ -296,21 +298,94 @@ docker compose run --rm admin health
   LOG_FORMAT=json LOG_LEVEL=INFO docker compose --profile prod up
   ```
 
-### Curls
+## Type Inference with MonkeyType
 
-1. Healthcheck
+MonkeyType infers and applies type hints from **runtime traces** collected during test runs. It complements `mypy` by filling in missing annotations to speed up strict typing adoption.
+
+### Reset Traces (recommended before fresh runs)
+
+```bash
+rm -rf .monkeytype
+rm -f monkeytype.sqlite3
+```
+
+### Collect Traces
+
+Use pytest’s importlib mode so tests are imported as packages (fully qualified names):
+
+```bash
+PYTEST_ADDOPTS="--import-mode=importlib -q" uv run monkeytype run -m pytest
+```
+
+List captured modules:
+
+```bash
+uv run monkeytype list-modules
+```
+
+You should see fully qualified names, e.g.:
+
+```bash
+automation.test_core.test_validation
+cs_fundamentals.core.validation
+cs_fundamentals.data_structures.stack
+```
+
+### Apply Inferred Types
+
+Preview a stub for a module:
+
+```bash
+uv run monkeytype stub cs_fundamentals.core.validation
+```
+
+Apply types directly:
+
+```bash
+uv run monkeytype apply cs_fundamentals.core.validation
+```
+
+Apply to everything captured:
+
+```bash
+uv run monkeytype list-modules | xargs -n1 uv run monkeytype apply
+```
+
+### Tidy & Verify
+
+```bash
+uv run ruff check . --fix
+uv run ruff format .
+uv run mypy .
+```
+
+## Sample Curls
+
+1. HealthZ
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/health | jq
+    curl -s http://127.0.0.1:8000/api/v1/healthz | jq
     ```
 
-2. List Practice Targets
+2. ConfigZ
+
+    ```bash
+    curl -s http://127.0.0.1:8000/api/v1/configz | jq
+    ```
+
+3. Version
+
+    ```bash
+    curl -s http://127.0.0.1:8000/api/v1/version | jq
+    ```
+
+4. List Practice Targets
 
     ```bash
     curl -s http://127.0.0.1:8000/api/v1/targets | jq
     ```
 
-3. Submit Practice via Matrix
+5. Submit Practice via Matrix
 
 <!-- markdownlint-disable MD029 MD031 MD032 MD034 MD037 MD046 -->
     ```bash
@@ -326,7 +401,7 @@ curl -s http://127.0.0.1:8000/api/v1/practice-matrix/submit \
 JSON
     ```
 
-4. Submit Practice
+6. Submit Practice
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/practice/submit \
@@ -347,7 +422,7 @@ curl -s http://127.0.0.1:8000/api/v1/practice/submit \
 JSON
     ```
 
-5. Submit Practice for Data-Structure: Binary Search Tree
+7. Submit Practice for Data-Structure: Binary Search Tree
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/bst/submit \
@@ -361,7 +436,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/bst/submit \
 JSON
     ```
 
-6. Submit Practice for Data-Structure: Graph (Islands II)
+8. Submit Practice for Data-Structure: Graph (Islands II)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/graph/islands/submit \
@@ -380,7 +455,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/graph/islands/submit \
 JSON
     ```
 
-7. Submit Practice for Data-Structure: Graph (Union-Find)
+9. Submit Practice for Data-Structure: Graph (Union-Find)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/graph/union-find/submit \
@@ -397,7 +472,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/graph/union-find/submit \
 JSON
     ```
 
-8. Submit Practice for Data-Structure: Linked List (Double)
+10. Submit Practice for Data-Structure: Linked List (Double)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-double/submit \
@@ -409,7 +484,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-double/submit \
     "get_node": "def get_node(self, index: int):\n    curr = self.head\n    i = 0\n    while curr and i < index:\n        curr = curr.next\n        i += 1\n    return curr",
     "get_tail": "def get_tail(self):\n    curr = self.head\n    while curr and curr.next:\n        curr = curr.next\n    return curr",
     "get": "def get(self, index: int) -> int:\n    node = self.get_node(index)\n    return node.value if node else -1",
-    "get_list": "def get_list(self) -> list:\n    vals = []\n    curr = self.head\n    while curr:\n        vals.append(curr.value)\n        curr = curr.next\n    return vals",
+    "get_list": "def get_list(self) -> list:\n    result = []\n    node = self.head\n    while node and node.value not in result:\n        result.append(node.value)\n        node = node.next\n    return result",
     "add_at_head": "def add_at_head(self, val: int) -> None:\n    new_node = Node(val, next_node=self.head, prev_node=None)\n    if self.head:\n        self.head.prev = new_node\n    self.head = new_node",
     "add_at_tail": "def add_at_tail(self, val: int) -> None:\n    if not self.head:\n        self.add_at_head(val)\n        return\n    tail = self.get_tail()\n    new_node = Node(val, next_node=None, prev_node=tail)\n    tail.next = new_node",
     "add_at_index": "def add_at_index(self, index: int, val: int) -> None:\n    if index == 0:\n        self.add_at_head(val)\n        return\n    prev = self.get_node(index - 1)\n    if not prev:\n        return\n    nxt = prev.next\n    new_node = Node(val, next_node=nxt, prev_node=prev)\n    prev.next = new_node\n    if nxt:\n        nxt.prev = new_node",
@@ -419,7 +494,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-double/submit \
 JSON
     ```
 
-9. Submit Practice for Data-Structure: Linked List (Single)
+11. Submit Practice for Data-Structure: Linked List (Single)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-single/submit \
@@ -441,7 +516,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-single/submit \
 JSON
     ```
 
-10. Submit Practice for Data-Structure: Max Heap
+12. Submit Practice for Data-Structure: Max Heap
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/max-heap/submit \
@@ -457,7 +532,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/max-heap/submit \
 JSON
     ```
 
-11. Submit Practice for Data-Structure: Min Heap
+13. Submit Practice for Data-Structure: Min Heap
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/min-heap/submit \
@@ -473,7 +548,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/min-heap/submit \
 JSON
     ```
 
-12. Submit Practice for Data-Structure: Queue (Array)
+14. Submit Practice for Data-Structure: Queue (Array)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/queue/array/submit \
@@ -494,7 +569,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/queue/array/submit \
 JSON
     ```
 
-13. Submit Practice for Data-Structure: Queue (Linked List)
+15. Submit Practice for Data-Structure: Queue (Linked List)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/queue/linked-list/submit \
@@ -515,7 +590,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/queue/linked-list/submit \
 JSON
     ```
 
-14. Submit Practice for Data-Structure: Stack (Array)
+16. Submit Practice for Data-Structure: Stack (Array)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/stack/array/submit \
@@ -534,7 +609,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/stack/array/submit \
 JSON
     ```
 
-15. Submit Practice for Data-Structure: Stack (Linked List)
+17. Submit Practice for Data-Structure: Stack (Linked List)
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/data-structures/stack/linked-list/submit \
@@ -553,7 +628,7 @@ curl -s http://127.0.0.1:8000/api/v1/data-structures/stack/linked-list/submit \
 JSON
     ```
 
-16. Submit Practice for Pattern: Breadth First Search
+18. Submit Practice for Pattern: Breadth First Search
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/bfs/submit \
@@ -567,7 +642,7 @@ curl -s http://127.0.0.1:8000/api/v1/patterns/bfs/submit \
 JSON
     ```
 
-17. Submit Practice for Pattern: Depth First Search
+19. Submit Practice for Pattern: Depth First Search
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/dfs/submit \
@@ -584,7 +659,7 @@ curl -s http://127.0.0.1:8000/api/v1/patterns/dfs/submit \
 JSON
     ```
 
-18. Submit Practice for Pattern: Fast/Slow Pointers
+20. Submit Practice for Pattern: Fast/Slow Pointers
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/fast-slow-pointers/submit \
@@ -599,7 +674,7 @@ curl -s http://127.0.0.1:8000/api/v1/patterns/fast-slow-pointers/submit \
 JSON
     ```
 
-19. Submit Practice for Pattern: Sliding Windows
+21. Submit Practice for Pattern: Sliding Windows
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/sliding-window/submit \
@@ -620,7 +695,7 @@ curl -s http://127.0.0.1:8000/api/v1/patterns/sliding-window/submit \
 JSON
     ```
 
-20. Submit Practice for Pattern: Two Pointers
+22. Submit Practice for Pattern: Two Pointers
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/two-pointers/submit \
@@ -642,7 +717,7 @@ curl -s http://127.0.0.1:8000/api/v1/patterns/two-pointers/submit \
 JSON
     ```
 
-21. Submit Practice for Pattern: Singleton
+23. Submit Practice for Pattern: Singleton
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/singleton/submit \
@@ -661,7 +736,7 @@ curl -s http://127.0.0.1:8000/api/v1/patterns/singleton/submit \
 JSON
     ```
 
-22. Submit Practice for Pattern: Sorting
+24. Submit Practice for Pattern: Sorting
 
     ```bash
 curl -s http://127.0.0.1:8000/api/v1/patterns/sorting/submit \

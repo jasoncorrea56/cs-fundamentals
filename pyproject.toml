@@ -27,6 +27,7 @@ include = ["cs_fundamentals*"]
 [dependency-groups]
 dev = [
     "coverage[toml]>=7.11.0",
+    "monkeytype>=23.3.0",
     "mypy>=1.13.0",
     "pre-commit>=4.2.0",
     "pytest-cov>=7.0.0",
@@ -44,6 +45,7 @@ addopts = """
   --strict-config
   --strict-markers
   --maxfail=1
+  --import-mode=importlib
   --cov=cs_fundamentals
   --cov-branch
   --cov-report=term-missing:skip-covered
