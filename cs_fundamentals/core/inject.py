@@ -1,3 +1,4 @@
+import ast
 from collections.abc import Mapping
 from importlib import import_module
 from types import FunctionType
@@ -15,9 +16,135 @@ SAFE_MODULES: set[str] = {
     "threading",
 }
 
+# Deny-list of callable names inside submitted code
+_DENIED_CALLS = {
+    "eval",
+    "exec",
+    "open",
+    "__import__",
+    "compile",
+    "input",
+    "globals",
+    "locals",
+    "vars",
+    "dir",
+    "getattr",
+    "setattr",
+    "delattr",
+}
+
 
 class DisallowedImportError(ImportError):
     """Custom import error for sandboxed submission code."""
+
+
+class _SafeSubmissionValidator(ast.NodeVisitor):
+    """
+    Rejects modules that contain anything other than def statements at top level,
+    and forbids calls to dangerous builtins and dunder access inside functions.
+    """
+
+    def visit_Module(self, node: ast.Module) -> None:
+        # Allow: module docstring, function defs, and SAFE simple assignments.
+        for n in node.body:
+            if (
+                isinstance(n, ast.Expr)
+                and isinstance(n.value, ast.Constant)
+                and isinstance(n.value.value, str)
+            ):
+                continue  # Module docstring
+
+            if isinstance(n, ast.FunctionDef):
+                continue
+
+            # Allow simple top-level assignments of literal data OR safe builtin refs
+            if isinstance(n, ast.Assign):
+                # Targets must be plain names; value must be a safe literal expr
+                if all(isinstance(t, ast.Name) for t in n.targets) and _is_safe_toplevel_value(
+                    n.value
+                ):
+                    continue
+                raise SyntaxError(
+                    "Only function definitions or simple literal/builtin assignments allowed at top level."
+                )
+
+            if isinstance(n, ast.AnnAssign):
+                # Single name target, simple literal value (i.e. x: int = 3)
+                if isinstance(n.target, ast.Name) and (
+                    n.value is None or _is_safe_toplevel_value(n.value)
+                ):
+                    continue
+                raise SyntaxError(
+                    "Only function definitions or simple literal/builtin assignments allowed at top level."
+                )
+
+            raise SyntaxError(f"Only function definitions are allowed (found {type(n).__name__}).")
+
+        self.generic_visit(node)
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        # Allow exactly:
+        #   1) object.__new__   (for classic singleton)
+        #   2) <name>.__dict__ = ... (STORE context only; for Borg state sharing)
+        if isinstance(node.attr, str) and node.attr.startswith("__") and node.attr.endswith("__"):
+            base_is_object_new = (
+                node.attr == "__new__"
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "object"
+            )
+            dict_store = node.attr == "__dict__" and isinstance(node.ctx, ast.Store)
+            if not (base_is_object_new or dict_store):
+                raise SyntaxError("Dunder attribute access is not allowed.")
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        # Block denied call names: eval(...), exec(...), open(...), etc.
+        if isinstance(node.func, ast.Name) and node.func.id in _DENIED_CALLS:
+            raise SyntaxError(f"Call to '{node.func.id}' is not allowed.")
+        self.generic_visit(node)
+
+
+def _is_safe_literal_expr(node: ast.AST | None) -> bool:
+    """
+    Allow only literals and literal containers.
+    Note: Dict keys can be None in the AST for '**' unpack; treat as unsafe.
+    """
+    if node is None:
+        return False
+    if isinstance(node, ast.Constant):
+        return True
+    if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+        return all(_is_safe_literal_expr(elt) for elt in node.elts)
+    if isinstance(node, ast.Dict):
+        return all(
+            _is_safe_literal_expr(k) and _is_safe_literal_expr(v)
+            for k, v in zip(node.keys, node.values)
+        )
+    if (
+        isinstance(node, ast.UnaryOp)
+        and isinstance(node.op, (ast.UAdd, ast.USub))
+        and isinstance(node.operand, ast.Constant)
+    ):
+        return isinstance(node.operand.value, (int, float, complex))
+    return False
+
+
+def _is_safe_toplevel_value(node: ast.AST) -> bool:
+    """
+    Top-level assignment can also reference a safe builtin by name (i.e. x = print)
+    """
+    if _is_safe_literal_expr(node):
+        return True
+    return bool(isinstance(node, ast.Name) and node.id in SAFE_BUILTINS)
+
+
+def _validate_source_is_safe(src: str) -> ast.Module:
+    """
+    Validate source safety before injection
+    """
+    tree = ast.parse(src, filename="<submission>", mode="exec")
+    _SafeSubmissionValidator().visit(tree)
+    return tree
 
 
 def _safe_import(
@@ -88,15 +215,20 @@ def _compile_functions(src_by_name: Mapping[str, str]) -> dict[str, FunctionType
         safe_globals: dict[str, Any] = {"__builtins__": SAFE_BUILTINS.copy()}
         local_ns: dict[str, Any] = {}
 
+        # Validate AST and execute in sandbox with restricted builtins/imports.
         try:
-            # Exec the submitted source into the sandboxed globals/local namespace.
-            exec(src, safe_globals, local_ns)  # noqa: S102 (exec intentional in sandbox)
-        except SyntaxError as syn:  # give a clear, actionable error
+            tree = _validate_source_is_safe(src)
+            code = compile(tree, "<submission>", "exec")
+
+            # nosemgrep: python.lang.security.audit.exec-detected.exec-detected
+            exec(code, safe_globals, local_ns)
+
+        except SyntaxError as syn:
             raise SyntaxError(
                 f"SyntaxError compiling method '{name}': {syn.msg} (line {syn.lineno})"
             ) from syn
+
         except Exception as exc:
-            # Generic compile-time error (NameError, TypeError while defining defaults, etc.)
             raise RuntimeError(f"Error compiling method '{name}': {exc}") from exc
 
         fn = local_ns.get(name)
@@ -113,8 +245,8 @@ def _compile_functions(src_by_name: Mapping[str, str]) -> dict[str, FunctionType
     #    - bind each function name into its own globals so recursion by name works
     #    - bind all compiled functions into each other's globals so cross-calls work
     for n, f in compiled.items():
-        # Bind the function's name to itself if missing
-        f.__globals__.setdefault(n, f)
+        f.__globals__.setdefault(n, f)  # Bind the function's name to itself if missing
+
     for n, f in compiled.items():
         for other_name, other_fn in compiled.items():
             f.__globals__.setdefault(other_name, other_fn)

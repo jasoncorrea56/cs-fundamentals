@@ -72,7 +72,7 @@ jobs:
           python-version: '3.11.13'
 
       - name: Install Semgrep
-        run: pip install "semgrep>=1.76,<2.0"
+        run: pip install "semgrep>=1.86,<2.0"
 
       # PRs: compare against the merge-base with the target branch
       - name: Run Semgrep (PR diff only)
@@ -80,6 +80,7 @@ jobs:
         # Use the PR base SHA as the baseline so only NEW findings fail the job
         run: |
           semgrep ci \
+            --verbose \
             --baseline-commit "${{ github.event.pull_request.base.sha }}" \
             --config p/ci \
             --config p/security-audit \
@@ -91,6 +92,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           semgrep ci \
+            --verbose \
             --config p/ci \
             --config p/security-audit \
             --config p/python \

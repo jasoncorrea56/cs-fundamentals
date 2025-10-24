@@ -4,17 +4,26 @@ Python project to hone computer science fundamentals of data structures, algorit
 
 ## Setup
 
-This project supports Python 3, UV, Conda, and pip/virtualenv for dependency and virtual environment management. Linting and formatting are managed with pre-commit and ruff.
+This project supports Python 3, UV for dependency and virtual environment management. Linting and formatting are managed with pre-commit and ruff, type-checking by mypy. Pytest is used for executing tests and reporting code coverage.
+
+CI maintains jobs for pre-commit, tests, static analysis for code quality, security, dependencies and licensing.
 
 ### Requirements
 
-Python 3 is required for this project
+Python 3:
 
+- <https://docs.python.org/3/>
 - <https://www.python.org/downloads/>
 
-### Pre-commit Setup
+UV:
 
-Install pre-commit hooks to automatically run linting and formatting prior to making a commit or run pre-commit manually anytime.
+- <https://docs.astral.sh/uv/>
+- <https://github.com/astral-sh/uv>
+
+Pre-commit:
+
+- <https://pre-commit.com/>
+- <https://github.com/pre-commit/pre-commit>
 
 Install pre-commit hooks:
 
@@ -24,50 +33,7 @@ uv tool install pre-commit
 pre-commit install
 ```
 
-Manually run pre-commit hooks:
-
-```bash
-pre-commit run --all-files
-```
-
-#### Individual Linting, Formatting, & Type-Checking
-
-- `ruff` Lint to see results w/o making fixes
-
-```bash
-uv run ruff check .
-```
-
-- `ruff` Lint w/ auto-fix
-
-```bash
-uv run ruff check . --fix
-```
-
-- `ruff` Format to see results w/o making fixes
-
-```bash
-uv run ruff format . --check
-```
-
-- `ruff` Format w/ auto-fix
-
-```bash
-uv run ruff format .
-```
-
-- `mypy` Type-Checking
-
-```bash
-uv run mypy .
-```
-
-### UV Setup
-
-Install UV
-
-- <https://github.com/astral-sh/uv>
-- <https://docs.astral.sh/uv/>
+### UV
 
 Update UV:
 
@@ -121,6 +87,56 @@ Activate conda new environment:
 
 ```bash
 conda activate cs-fundamentals-env
+```
+
+### Pre-commit
+
+Install pre-commit hooks to automatically run linting and formatting prior to making a commit or run pre-commit manually anytime.
+
+Manually run pre-commit hooks:
+
+```bash
+pre-commit run --all-files
+```
+
+#### Individual Linting, Formatting, & Type-Checking
+
+- `ruff` Lint to see results w/o making fixes
+
+```bash
+uv run ruff check .
+```
+
+- `ruff` Lint w/ auto-fix
+
+```bash
+uv run ruff check . --fix
+```
+
+- `ruff` Format to see results w/o making fixes
+
+```bash
+uv run ruff format . --check
+```
+
+- `ruff` Format w/ auto-fix
+
+```bash
+uv run ruff format .
+```
+
+- `mypy` Type-Checking
+
+```bash
+uv run mypy --show-error-codes --pretty .
+```
+
+### Static Analysis
+
+#### Semgrep
+
+```bash
+uv run semgrep --verbose --config p/ci --config p/security-audit --config p/python --json | jq '.results[] | {check_id, path, start: .start.line, message}'
 ```
 
 ## Run Tests
