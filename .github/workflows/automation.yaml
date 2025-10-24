@@ -58,30 +58,36 @@ jobs:
           uv run --frozen mypy cs_fundamentals
 
   semgrep:
-    name: Semgrep (SAST)
+    name: Semgrep (Static Application Security Testing - SAST)
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
+
+      - name: Set up Python 3.11.13
+        uses: actions/setup-python@v5
         with:
-          config: |
-            p/ci
-            p/security-audit
-          generateSarif: true
+          python-version: '3.11.13'
+
+      - name: Install Semgrep
+        run: pip install semgrep==1.36.0
+
+      - name: Run Semgrep scan
+        run: semgrep ci --config p/ci --config p/security-audit --sarif --output semgrep.sarif
+
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
           category: semgrep
 
   osv:
-    name: OSV Scanner (deps)
+    name: OSV Scanner (Dependency Analysis)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: google/osv-scanner-action@v1
+      - uses: google/osv-scanner-action@v2.2.3
         with:
           scan-args: >-
             --recursive
@@ -90,7 +96,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   trivy-fs:
-    name: Trivy (fs - vuln/secret/license)
+    name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -109,7 +115,7 @@ jobs:
           license-full: true
 
   pytest:
-    name: pytest ${{ matrix.python-version }}
+    name: Pytest ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -137,7 +143,7 @@ jobs:
 
   # After lint and tests pass, call the reusable build workflow.
   build-and-push:
-    name: build (reusable)
+    name: Build, Scan & Push
     needs: [pre-commit, mypy, pytest, semgrep, osv, trivy-fs]
     if: >
       github.event_name == 'push' &&
