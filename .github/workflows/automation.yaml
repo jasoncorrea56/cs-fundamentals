@@ -87,21 +87,41 @@ jobs:
           sarif_file: semgrep-python.sarif
           category: semgrep
 
+  osv-prep:
+    name: Export deps for OSV (uv -> requirements)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      # Export all groups/extras; drop hashes so OSV treats it as a lock manifest
+      - name: Export Requirements from uv.lock
+        run: |
+          uv export --format=requirements-txt --all-groups --all-extras --no-hashes -o osv-requirements.txt
+          test -s osv-requirements.txt || (echo "No deps exported" && exit 1)
+      - name: Upload OSV Deps Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-deps
+          path: osv-requirements.txt
+          retention-days: 3
+
   osv:
     name: OSV Scanner (Dependency Analysis)
-    # Reusable workflow requires these perms to upload SARIF
+    needs: [osv-prep]
     permissions:
       actions: read
       contents: read
       security-events: write
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.3
     with:
+      download-artifact: osv-deps
+      # Tell OSV what the file is (left side = lockfile type, right side = filename inside artifact)
       scan-args: |-
-        --recursive
-        --lockfile
-        .
-      upload-sarif: true     # default true; explicit for clarity
-      fail-on-vuln: true     # default true; explicit for clarity
+        --lockfile=requirements.txt:osv-requirements.txt
+        --include-git-root
+        ./
+      upload-sarif: true  # default true; explicit for clarity
+      fail-on-vuln: true  # default true; explicit for clarity
 
   trivy-fs:
     name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
