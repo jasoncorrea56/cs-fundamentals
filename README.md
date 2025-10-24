@@ -385,9 +385,10 @@ uv run mypy .
     curl -s http://127.0.0.1:8000/api/v1/targets | jq
     ```
 
+<!-- markdownlint-disable MD029 MD031 MD032 MD034 MD037 MD046 -->
+
 5. Submit Practice via Matrix
 
-<!-- markdownlint-disable MD029 MD031 MD032 MD034 MD037 MD046 -->
     ```bash
     curl -s http://127.0.0.1:8000/api/v1/practice-matrix/submit \
       -H 'Content-Type: application/json' \

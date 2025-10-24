@@ -1,0 +1,9 @@
+# Add CVE IDs or precise file paths here *after* triage.
+# Example formats:
+# CVE-2023-12345  # rationale / ticket link
+# path/to/dev-only-script.py
+
+# Leave empty until you have a concrete, documented reason to ignore.
+# Example formats:
+# **/examples/**
+# **/tests/fixtures/**

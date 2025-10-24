@@ -1,0 +1,41 @@
+# Strategy: fail on strong copyleft, warn on weak copyleft/unknown, allow permissive.
+
+policy:
+  # Licenses that are explicitly allowed (CI will not fail because of these)
+  allow:
+    - MIT
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - Apache-2.0
+    - ISC
+    - CC0-1.0
+    - Unlicense
+    - Zlib
+
+  # Licenses that should fail the job
+  deny:
+    # Strong copyleft & SSPL (block)
+    - GPL-3.0-only
+    - GPL-3.0-or-later
+    - AGPL-3.0-only
+    - AGPL-3.0-or-later
+    - LGPL-3.0-only
+    - LGPL-3.0-or-later
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1-only
+    - LGPL-2.1-or-later
+    - SSPL-1.0
+
+  severity:
+    # Weak/reciprocal copyleft → warn (MEDIUM)
+    - name: "MPL-2.0"
+      level: MEDIUM
+    - name: "EPL-2.0"
+      level: MEDIUM
+    - name: "CDDL-1.0"
+      level: MEDIUM
+
+    # Unknown classifiers → surface but don't fail
+    - name: "UNKNOWN"
+      level: LOW
