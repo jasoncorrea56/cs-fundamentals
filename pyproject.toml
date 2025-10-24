@@ -27,9 +27,13 @@ include = ["cs_fundamentals*"]
 [dependency-groups]
 dev = [
     "coverage[toml]>=7.11.0",
+    "monkeytype>=23.3.0",
+    "mypy>=1.13.0",
     "pre-commit>=4.2.0",
     "pytest-cov>=7.0.0",
     "ruff>=0.11.7",
+    "types-PyYAML>=6.0.12.20240808",
+    "types-requests>=2.32.0.20241016",
 ]
 
 #
@@ -41,6 +45,7 @@ addopts = """
   --strict-config
   --strict-markers
   --maxfail=1
+  --import-mode=importlib
   --cov=cs_fundamentals
   --cov-branch
   --cov-report=term-missing:skip-covered
@@ -79,13 +84,13 @@ directory = "htmlcov"
 # Linter/Formatter configs
 [tool.ruff]
 show-fixes = true
-target-version = "py310"
+target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]
 extend-select = [
     "C4",      # Flake8 Comprehensions
-    "SIM",     # Flake8 Simulations
+    "SIM",     # Flake8 Simplify
     "TC",      # Flake8 Type Checker
     "UP",      # PyUpgrade
     "ANN201",  # Missing return type annotation for public function {name}
@@ -103,8 +108,50 @@ ignore = [
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.List"     = { msg = "Use built-in list[...] (PEP 585)" }
+"typing.Dict"     = { msg = "Use built-in dict[...] (PEP 585)" }
+"typing.Tuple"    = { msg = "Use built-in tuple[...] (PEP 585)" }
+"typing.Set"      = { msg = "Use built-in set[...] (PEP 585)" }
+"typing.Optional" = { msg = "Use T | None (PEP 604)" }
+
+[tool.ruff.lint.flake8-type-checking]
+# Keep these modules importable at runtime; don’t force them behind TYPE_CHECKING
+exempt-modules = ["pydantic", "pydantic_core", "fastapi"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cs_fundamentals"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+#
+# Type-Checker config
+[tool.mypy]
+python_version = "3.11"
+files = ["cs_fundamentals"]
+plugins = ["pydantic.mypy"]
+pretty = true
+show_error_codes = true
+warn_unused_configs = true
+# Start strict but keep escape hatches below
+strict = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+ignore_missing_imports = false
+incremental = true
+cache_dir = ".mypy_cache"
+
+[[tool.mypy.overrides]]
+module = ["automation.*"]
+ignore_errors = true

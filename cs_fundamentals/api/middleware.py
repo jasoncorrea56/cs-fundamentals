@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-import anyio
 import re
 import time
 import uuid
-from typing import Any
 
+import anyio
 from fastapi import Request, Response  # noqa: TC002
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from cs_fundamentals.core.logging_config import get_logger, request_id_var
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+    from typing import Any
 
 log = get_logger(__name__)
 
@@ -25,7 +29,11 @@ class XRequestIDMiddleware(BaseHTTPMiddleware):
     Propagate it to logs (contextvar) and set X-Request-ID in the response.
     """
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         incoming = request.headers.get("x-request-id")
         if not incoming:
             tp = request.headers.get("traceparent")
@@ -64,7 +72,11 @@ class RequestLoggerMiddleware(BaseHTTPMiddleware):
     and fully compatible with JSON or console logging formats.
     """
 
-    async def dispatch(self, request, call_next) -> Response:
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """
         Logs every request with latency and status, and still logs cleanly when an exception occurs.
         """
@@ -93,8 +105,12 @@ class RequestLoggerMiddleware(BaseHTTPMiddleware):
                 log.exception("Request failed", extra=extra)
             raise
         finally:
+            # Only log completion if we had a response; on exceptions we logged above and re-raise.
             if response is not None:
                 extra["duration_ms"] = int((time.perf_counter() - start) * 1000)
                 extra["status_code"] = getattr(response, "status_code", 0)
                 log.info("Request", extra=extra)
-            return response
+
+        # No exception => response is set.
+        assert response is not None
+        return response

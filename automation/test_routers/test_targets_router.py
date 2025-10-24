@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cs_fundamentals.routers import targets_router as tg
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.fixture()

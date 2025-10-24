@@ -4,13 +4,16 @@ import types
 import sys
 from collections.abc import Callable  # noqa: TC003
 from types import SimpleNamespace, ModuleType
-from typing import Any
 
 import pytest
 
 from cs_fundamentals.core import handler_factory as hf
 from cs_fundamentals.core.inject import DisallowedImportError
 from cs_fundamentals.models.schemas import MethodsOnly
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 # Force anyio to use asyncio so the plugin doesn't try trio.

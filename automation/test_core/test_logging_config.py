@@ -5,11 +5,14 @@ import json
 import logging
 import os
 import re
-from typing import Any
 
 import pytest
 
 from cs_fundamentals.core import logging_config as lc
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 # ----------------------------- Helpers -----------------------------

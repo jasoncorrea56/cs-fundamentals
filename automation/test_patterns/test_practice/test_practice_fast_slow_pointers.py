@@ -1,6 +1,6 @@
 import pytest
 from automation.test_patterns.test_fast_slow_pointers import TestFastSlowPointers
-from cs_fundamentals.data_structures.linked_list_single import SinglyLinkedList
+from cs_fundamentals.data_structures.linked_list_single import Node, SinglyLinkedList
 from cs_fundamentals.patterns.fast_slow_pointers import PracticeFastSlowPointers
 
 
@@ -23,7 +23,7 @@ class TestPracticeFastSlowPointers(TestFastSlowPointers):
             assert True
 
     @pytest.mark.usefixtures("cycle_first_node")
-    def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node) -> None:
+    def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node: Node) -> None:
         try:
             super().test_get_first_node_for_cycle_in_linked_list(cycle_first_node)
         except NotImplementedError:

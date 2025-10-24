@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from cs_fundamentals.core.handler_factory import make_submit_handler_from_matrix
 
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+    from typing import Any
+
 
 class MatrixSubmission(BaseModel):
-    key: str = Field(..., example="patterns.dfs")
+    # Pydantic v2: use `examples=[...]`
+    key: str = Field(..., examples=["patterns.dfs"])
     methods: dict[str, str]
 
 
@@ -15,11 +22,15 @@ router = APIRouter(prefix="/practice-matrix", tags=["Practice Runner (Matrix)"])
 
 
 @router.post("/submit")
-async def submit_via_matrix(payload: MatrixSubmission) -> dict:
-    handler = make_submit_handler_from_matrix(key=payload.key)
+async def submit_via_matrix(payload: MatrixSubmission) -> dict[str, Any]:
+    # Loosen the param type to `object` so we can pass a local shim class without mypy fights.
+    handler = cast(
+        "Callable[[object], Awaitable[dict[str, Any]]]",
+        make_submit_handler_from_matrix(key=payload.key),
+    )
 
-    # Re-wrap just the methods for the underlying handler:
-    class _Shim(BaseModel):
+    # Local shim (tests assert the name "_Shim").
+    class _Shim(BaseModel):  # noqa: N801  (keep exact name for tests)
         methods: dict[str, str]
 
-    return await handler(_Shim(methods=payload.methods))  # type: ignore[arg-type]
+    return await handler(_Shim(methods=payload.methods))

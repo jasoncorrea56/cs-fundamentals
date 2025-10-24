@@ -31,7 +31,7 @@ class TestPracticeStack(TestStack):
             assert True
 
     @pytest.mark.usefixtures("expected_output")
-    def test_array_str(self, expected_output) -> None:
+    def test_array_str(self, expected_output: str) -> None:
         try:
             super().test_array_str(expected_output)
         except NotImplementedError:
@@ -56,7 +56,7 @@ class TestPracticeStack(TestStack):
             assert True
 
     @pytest.mark.usefixtures("expected_output")
-    def test_linked_list_str(self, expected_output) -> None:
+    def test_linked_list_str(self, expected_output: str) -> None:
         try:
             super().test_linked_list_str(expected_output)
         except NotImplementedError:

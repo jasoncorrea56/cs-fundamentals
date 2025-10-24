@@ -1,4 +1,4 @@
-import math
+import sys
 from collections import deque
 
 
@@ -24,7 +24,7 @@ class TwoPointers:
         :param target: Target sum
         :return: List of integers that sum to the target value
         """
-        result = []
+        result: list[int] = []
         left, right = 0, len(nums) - 1
         while left < right:
             temp_sum = nums[left] + nums[right]
@@ -66,7 +66,7 @@ class TwoPointers:
             return
 
         nums.sort()
-        results = []
+        results: list[list[int]] = []
         for i in range(len(nums)):
             if i > 0 and nums[i] == nums[i - 1]:
                 continue
@@ -142,7 +142,7 @@ class TwoPointers:
         :return: Sum of the triplet closest to the target number
         """
         nums.sort()
-        smallest_diff = math.inf
+        smallest_diff: int = sys.maxsize
         for i in range(len(nums) - 2):
             left = i + 1
             right = len(nums) - 1
@@ -193,7 +193,7 @@ class TwoPointers:
         return result
 
     @staticmethod
-    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list]:
+    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list[int]]:
         """
         Given an array with positive numbers and a positive target number,
         find all contiguous subarrays whose product is less than the target number.
@@ -201,14 +201,16 @@ class TwoPointers:
         :param target: Integer target product
         :return: List of subarrays whose product is less than the target
         """
-        n, result = len(arr), []
-        left, product = 0, 1
+        n: int = len(arr)
+        result: list[list[int]] = []
+        left = 0
+        product: float = 1.0
         for right in range(n):
             product *= arr[right]
             while product >= target and left < n:
                 product /= arr[left]
                 left += 1
-            temp = deque()
+            temp: deque[int] = deque()
             for i in range(right, left - 1, -1):
                 temp.appendleft(arr[i])
                 result.append(list(temp))
@@ -319,7 +321,7 @@ class PracticeTwoPointers:
         raise NotImplementedError
 
     @staticmethod
-    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list]:
+    def subarrays_with_product_less_than_target(arr: list[int], target: int) -> list[list[int]]:
         """
         Given an array with positive numbers and a positive target number,
         find all contiguous subarrays whose product is less than the target number.

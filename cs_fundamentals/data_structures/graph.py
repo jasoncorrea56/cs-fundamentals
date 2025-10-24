@@ -1,33 +1,40 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from typing import Any
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+    from collections.abc import Hashable
 
 
 class UndirectedGraphVertex:
-    def __init__(self, value) -> None:
-        self.value = value
-        self.neighbors = []
+    def __init__(self, value: Hashable) -> None:
+        self.value: Hashable = value
+        self.neighbors: list[Hashable] = []
 
-    def add_neighbor(self, neighbor, sort_self=True) -> bool:
-        if isinstance(neighbor, UndirectedGraphVertex):
-            if neighbor.value not in self.neighbors:
-                # Add neighbor
-                self.neighbors.append(neighbor.value)
-                neighbor.neighbors.append(self.value)
-
-                # Sort neighbors
-                if sort_self:
-                    self.neighbors = sorted(self.neighbors)
-                neighbor.neighbors = sorted(neighbor.neighbors)
-            return True
-        else:
+    def add_neighbor(self, neighbor: UndirectedGraphVertex, sort_self: bool = True) -> bool:
+        if not isinstance(neighbor, UndirectedGraphVertex):
             return False
 
-    def add_neighbors(self, neighbors) -> bool:
+        if neighbor.value not in self.neighbors:
+            # Add neighbor
+            self.neighbors.append(neighbor.value)
+            neighbor.neighbors.append(self.value)
+
+            # Sort neighbors
+            if sort_self:
+                self.neighbors = sorted(self.neighbors, key=lambda x: str(x))
+            neighbor.neighbors = sorted(neighbor.neighbors, key=lambda x: str(x))
+        return True
+
+    def add_neighbors(self, neighbors: list[UndirectedGraphVertex]) -> bool:
         result: bool = True
         for neighbor in neighbors:
-            result &= self.add_neighbor(neighbor, False)
-        self.neighbors = sorted(self.neighbors)
+            result &= self.add_neighbor(neighbor, sort_self=False)
+        # Final sort after bulk additions
+        self.neighbors = sorted(self.neighbors, key=lambda x: str(x))
         return result
 
     def __repr__(self) -> str:
@@ -36,18 +43,18 @@ class UndirectedGraphVertex:
 
 class UndirectedGraph:
     def __init__(self) -> None:
-        self.vertices = {}
-        self.vertex_values = []
-        self.vertex_indices = {}
-        self.adjacency_list = []
-        self.adjacency_matrix = []
+        # Map vertex value -> list of neighbor values
+        self.vertices: dict[Hashable, list[Hashable]] = {}
+        self.vertex_values: list[Hashable] = []
+        self.vertex_indices: dict[Hashable, int] = {}
+        self.adjacency_list: list[str] = []
+        self.adjacency_matrix: NDArray[np.float64] = np.zeros((0, 0), dtype=np.float64)
 
     def add_vertex(self, vertex: UndirectedGraphVertex) -> bool:
-        if isinstance(vertex, UndirectedGraphVertex):
-            self.vertices[vertex.value] = vertex.neighbors
-            return True
-        else:
+        if not isinstance(vertex, UndirectedGraphVertex):
             return False
+        self.vertices[vertex.value] = vertex.neighbors
+        return True
 
     def add_vertices(self, vertices: list[UndirectedGraphVertex]) -> bool:
         result = True
@@ -58,53 +65,58 @@ class UndirectedGraph:
     def add_edge(
         self, vertex_from: UndirectedGraphVertex, vertex_to: UndirectedGraphVertex
     ) -> bool:
-        if isinstance(vertex_from, UndirectedGraphVertex) and isinstance(
-            vertex_to, UndirectedGraphVertex
+        if not (
+            isinstance(vertex_from, UndirectedGraphVertex)
+            and isinstance(vertex_to, UndirectedGraphVertex)
         ):
-            vertex_from.add_neighbor(vertex_to)
-            self.vertices[vertex_from.value] = vertex_from.neighbors
-            self.vertices[vertex_to.value] = vertex_to.neighbors
-            return True
-        else:
             return False
+        vertex_from.add_neighbor(vertex_to)
+        self.vertices[vertex_from.value] = vertex_from.neighbors
+        self.vertices[vertex_to.value] = vertex_to.neighbors
+        return True
 
-    def add_edges(self, edges) -> bool:
+    def add_edges(self, edges: list[tuple[UndirectedGraphVertex, UndirectedGraphVertex]]) -> bool:
         result = True
-        for edge in edges:
-            result &= self.add_edge(edge[0], edge[1])
+        for v_from, v_to in edges:
+            result &= self.add_edge(v_from, v_to)
         return result
 
     def build_adjacency_list(self) -> list[str]:
-        if len(self.vertices) >= 1:
-            self.adjacency_list = [
-                str(key) + ":" + str(self.vertices[key]) for key in self.vertices
-            ]
+        if self.vertices:
+            self.adjacency_list = [f"{key}:{self.vertices[key]}" for key in self.vertices]
+        else:
+            self.adjacency_list = []
         return self.adjacency_list
 
-    def build_adjacency_matrix(self) -> np.ndarray:
-        if len(self.vertices) >= 1:
+    def build_adjacency_matrix(self) -> NDArray[np.float64]:
+        if self.vertices:
             vertex_count = len(self.vertices)
-            self.vertex_values = sorted(self.vertices.keys())
-            self.vertex_indices = dict(zip(self.vertex_values, range(vertex_count)))
-            self.adjacency_matrix = np.zeros(shape=(vertex_count, vertex_count))
+            self.vertex_values = sorted(self.vertices.keys(), key=lambda x: str(x))
+            self.vertex_indices = {val: i for i, val in enumerate(self.vertex_values)}
+            mat = np.zeros((vertex_count, vertex_count), dtype=np.float64)
+
             for i in range(vertex_count):
-                for j in range(i, vertex_count):
-                    for k in self.vertices[self.vertex_values[i]]:
-                        j = self.vertex_indices[k]
-                        self.adjacency_matrix[i, j] = 1
+                # neighbors are stored as values; translate to indices
+                for neighbor_val in self.vertices[self.vertex_values[i]]:
+                    j = self.vertex_indices[neighbor_val]
+                    mat[i, j] = 1.0
+
+            self.adjacency_matrix = mat
+        else:
+            self.adjacency_matrix = np.zeros((0, 0), dtype=np.float64)
         return self.adjacency_matrix
 
     def get_adjacency_list(self) -> list[str]:
         """Returns a graph as adjacency list."""
         return self.build_adjacency_list()
 
-    def get_adjacency_matrix(self) -> np.ndarray:
+    def get_adjacency_matrix(self) -> NDArray[np.float64]:
         """Returns a graph as adjacency matrix."""
         return self.build_adjacency_matrix()
 
     def __repr__(self) -> str:
         """Function to print a graph as adjacency list and adjacency matrix."""
-        return str(self.build_adjacency_list()) + "\n\n" + str(self.build_adjacency_matrix())
+        return f"{self.build_adjacency_list()}\n\n{self.build_adjacency_matrix()}"
 
 
 class UnionFind:
@@ -112,11 +124,11 @@ class UnionFind:
     UnionFind class - Union by Rank and Path Compression Implementation
     """
 
-    def __init__(self, size) -> None:
+    def __init__(self, size: int) -> None:
         self.root: list[int] = list(range(size))
         self.rank: list[int] = [1] * size
 
-    def find(self, x) -> int:
+    def find(self, x: int) -> int:
         """
         Searches for the root of x
         :param x: Node on which to find the root
@@ -127,7 +139,7 @@ class UnionFind:
         self.root[x] = self.find(self.root[x])
         return self.root[x]
 
-    def union(self, x, y) -> bool:
+    def union(self, x: int, y: int) -> bool:
         """
         The union function with union by rank, joins to nodes x and y
         :param x: Node to join with y
@@ -146,7 +158,7 @@ class UnionFind:
                 self.rank[root_x] += 1
         return True
 
-    def is_connected(self, x, y) -> bool:
+    def is_connected(self, x: int, y: int) -> bool:
         """
         Tests if two nodes are connected
         :param x: Node to check if connected to node y
@@ -158,17 +170,17 @@ class UnionFind:
 
 class GraphProblems:
     class UnionFind:
-        def __init__(self, size) -> None:
-            self.root = [-1] * size
-            self.rank = [0] * size
-            self.count = 0
+        def __init__(self, size: int) -> None:
+            self.root: list[int] = [-1] * size
+            self.rank: list[int] = [0] * size
+            self.count: int = 0
 
-        def find(self, node) -> int:
+        def find(self, node: int) -> int:
             if node != self.root[node]:
                 self.root[node] = self.find(self.root[node])
             return self.root[node]
 
-        def union(self, node_x, node_y) -> None:
+        def union(self, node_x: int, node_y: int) -> None:
             root_x = self.find(node_x)
             root_y = self.find(node_y)
             if root_x != root_y:
@@ -180,22 +192,22 @@ class GraphProblems:
                     self.root[root_y] = root_x
                     self.rank[root_x] += 1
                 self.count -= 1
-            return
 
-        def is_valid(self, node) -> bool:
+        def is_valid(self, node: int) -> bool:
             return self.root[node] >= 0
 
-        def set_parent(self, node) -> None:
+        def set_parent(self, node: int) -> None:
             self.root[node] = node
             self.count += 1
-            return
 
         @staticmethod
-        def remove_duplicates(self, positions) -> list[Any]:
-            seen = set()
-            clean = dict.fromkeys(tuple(tuple(x) for x in positions))
-            result = [list(x) for x in clean if not (x in seen or seen.add(x))]
-            return result
+        def remove_duplicates(positions: list[list[int]]) -> list[list[int]]:
+            """
+            Remove duplicate positions (treat each position as a 2-item list).
+            """
+            # Convert to tuples for set semantics, then back to lists
+            uniq = {tuple(p) for p in positions}
+            return [list(p) for p in uniq]
 
     def number_of_islands_2(self, m: int, n: int, positions: list[list[int]]) -> list[int]:
         """
@@ -217,27 +229,27 @@ class GraphProblems:
         :param positions: List of x and y grid coordinates indicating land
         :return: An array of integers where answer[i] is the number of islands after turning the cell (ri, ci) into land
         """
-        result: list = []
+        result: list[int] = []
         uf = self.UnionFind(m * n)
 
         for pos in positions:
             r, c = pos[0], pos[1]
-            overlap: list = []
+            overlap: list[int] = []
 
             index = (r - 1) * n + c
-            if (r - 1 >= 0) and (uf.is_valid(index)):
+            if (r - 1 >= 0) and uf.is_valid(index):
                 overlap.append(index)
 
             index = (r + 1) * n + c
-            if (r + 1 < m) and (uf.is_valid(index)):
+            if (r + 1 < m) and uf.is_valid(index):
                 overlap.append(index)
 
             index = r * n + (c - 1)
-            if (c - 1 >= 0) and (uf.is_valid(index)):
+            if (c - 1 >= 0) and uf.is_valid(index):
                 overlap.append(index)
 
             index = r * n + (c + 1)
-            if (c + 1 < n) and (uf.is_valid(index)):
+            if (c + 1 < n) and uf.is_valid(index):
                 overlap.append(index)
 
             index = r * n + c
@@ -253,56 +265,49 @@ class GraphProblems:
 
 class PracticeUnionFind:
     """
-    UnionFind class - Union by Rank and Path Compression Implementation
+    UnionFind class - Union by Rank and Path Compression Implementation (practice skeleton)
     """
 
-    def __init__(self, size) -> None:
+    def __init__(self, size: int) -> None:
         pass
 
-    def find(self, x) -> int:
+    def find(self, x: int) -> int:
         """
         Searches for the root of x
-        :param x: Node on which to find the root
+        :param x: Node for which to find the root
         :return: Root node
         """
         raise NotImplementedError
 
-    def union(self, x, y) -> bool:
+    def union(self, x: int, y: int) -> bool:
         """
-        The union function with union by rank, joins to nodes x and y
-        Unimplemented Stub:
-        return True
-        :param x: Node to join with y
-        :param y: Node to join with x
-        :return: True if successful
+        The union function with union by rank; joins nodes x and y.
+        Implementers should return True on success.
         """
         raise NotImplementedError
 
-    def is_connected(self, x, y) -> bool:
+    def is_connected(self, x: int, y: int) -> bool:
         """
-        Tests if two nodes are connected
-        :param x: Node to check if connected to node y
-        :param y: Node to check if connected to node x
-        :return: True if connected, else False
+        Tests if two nodes are connected.
         """
         raise NotImplementedError
 
 
 class PracticeGraphProblems:
     class UnionFind:
-        def __init__(self, size) -> None:
+        def __init__(self, size: int) -> None:
             pass
 
-        def find(self, node) -> int:
+        def find(self, node: int) -> int:
             raise NotImplementedError
 
-        def union(self, node_x, node_y) -> None:
+        def union(self, node_x: int, node_y: int) -> None:
             raise NotImplementedError
 
-        def is_valid(self, node) -> bool:
+        def is_valid(self, node: int) -> bool:
             raise NotImplementedError
 
-        def set_parent(self, node) -> None:
+        def set_parent(self, node: int) -> None:
             raise NotImplementedError
 
     def number_of_islands_2(self, m: int, n: int, positions: list[list[int]]) -> list[int]:

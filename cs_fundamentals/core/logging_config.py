@@ -5,8 +5,11 @@ import logging
 import os
 import sys
 from contextvars import ContextVar
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import IO
 
 # Request-scoped id (set by middleware)
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
@@ -17,7 +20,7 @@ class RequestIdFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         """
-        Attach request_id even if None so formatters can rely on the attribute existing
+        Attach request_id even if None so formatters can rely on the attribute existing.
         """
         record.request_id = request_id_var.get()
         return True
@@ -29,15 +32,13 @@ class JsonFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401
-        payload: dict[str, Any] = {
-            "ts": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
-                timespec="milliseconds"
-            ),
+        payload: dict[str, object] = {
+            "ts": datetime.fromtimestamp(record.created, tz=UTC).isoformat(timespec="milliseconds"),
             "level": record.levelname,
             "logger": record.name,
             "msg": record.getMessage(),
         }
-        # Common extras that are helpful for debugging
+        # Common extras helpful for debugging
         payload.update(
             {
                 "pid": record.process,
@@ -47,9 +48,11 @@ class JsonFormatter(logging.Formatter):
                 "func": record.funcName,
             }
         )
-        # Include request_id when available
-        if getattr(record, "request_id", None):
-            payload["request_id"] = record.request_id
+        # Include request_id when available (avoid direct attribute access for mypy)
+        rid = getattr(record, "request_id", None)
+        if rid:
+            payload["request_id"] = rid
+
         # If exception info is present, include it
         if record.exc_info:
             payload["exc_info"] = self.formatException(record.exc_info)
@@ -62,9 +65,7 @@ class ConsoleFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
-        ts = datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
-            timespec="milliseconds"
-        )
+        ts = datetime.fromtimestamp(record.created, tz=UTC).isoformat(timespec="milliseconds")
         rid = getattr(record, "request_id", None)
         rid_part = f" | rid={rid}" if rid else ""
         base = f"{ts} | {record.levelname:<7} | {record.name}{rid_part} | {record.getMessage()}"
@@ -73,7 +74,7 @@ class ConsoleFormatter(logging.Formatter):
         return base
 
 
-def _build_handler(stream, formatter: logging.Formatter) -> logging.Handler:
+def _build_handler(stream: IO[str], formatter: logging.Formatter) -> logging.Handler:
     handler = logging.StreamHandler(stream)
     handler.setFormatter(formatter)
     return handler

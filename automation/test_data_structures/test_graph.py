@@ -71,23 +71,25 @@ class TestGraph:
         assert str(result) == GRAPH_ADJACENCY_MATRIX_OUTPUT
 
     @pytest.mark.parametrize("x, y", GRAPH_UNION_FIND_UNION_TESTS)
-    def test_union_find_union(self, x, y) -> None:
+    def test_union_find_union(self, x: int, y: int) -> None:
         # 1-2-5-6-7 3-8-9 4
         result = self.search.union(x, y)
         assert result is True
 
     @pytest.mark.parametrize("value, output", GRAPH_UNION_FIND_FIND_TESTS)
-    def test_union_find_find(self, value, output) -> None:
+    def test_union_find_find(self, value: int, output: int) -> None:
         result = self.search.find(value)
         assert result == output
 
     @pytest.mark.parametrize("x, y, output", GRAPH_UNION_FIND_IS_CONNECTED_TESTS)
-    def test_union_find_is_connected(self, x, y, output) -> None:
+    def test_union_find_is_connected(self, x: int, y: int, output: bool) -> None:
         result = self.search.is_connected(x, y)
         assert result is output
 
     @pytest.mark.parametrize("m, n, positions, output", GRAPH_PROBLEM_NUMBER_OF_ISLANDS_2_TESTS)
-    def test_problem_number_of_islands_2(self, m, n, positions, output) -> None:
+    def test_problem_number_of_islands_2(
+        self, m: int, n: int, positions: list[list[int]], output: list[int]
+    ) -> None:
         result = self.problems.number_of_islands_2(m, n, positions)
         assert result == output
 
@@ -106,14 +108,14 @@ class TestGraph:
 
     def test_graph_add_vertex_invalid_type_returns_false(self) -> None:
         g = UndirectedGraph()
-        assert g.add_vertex("not-a-vertex") is False  # type: ignore[arg-type]
+        assert g.add_vertex("not-a-vertex") is False
         assert g.vertices == {}
 
     def test_graph_add_edge_invalid_types_returns_false(self) -> None:
         g = UndirectedGraph()
         a = UndirectedGraphVertex("A")
         # One bad, one good
-        assert g.add_edge(a, "bad") is False  # type: ignore[arg-type]
+        assert g.add_edge(a, "bad") is False
         # Both bad
         assert g.add_edge("bad", "worse") is False  # type: ignore[arg-type,call-arg]
         # Still empty graph
@@ -150,10 +152,9 @@ class TestGraph:
 
     def test_remove_duplicates_staticmethod_dedupes_positions(self) -> None:
         """
-        The staticmethod is defined with a stray 'self' parameter; call with None.
         Ensure duplicates/order collapse to unique rows.
         """
         positions = [[1, 2], [1, 2], [2, 3], [2, 3], [3, 4]]
-        deduped = GraphProblems.UnionFind.remove_duplicates(None, positions)
-        # Order after dict.fromkeys over tuples == insertion order of the first occurrence
-        assert deduped == [[1, 2], [2, 3], [3, 4]]
+        deduped = GraphProblems.UnionFind.remove_duplicates(positions)
+        # Order after set/dedup may vary; compare as sets of tuples or sort deterministically.
+        assert sorted(deduped) == [[1, 2], [2, 3], [3, 4]]

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from cs_fundamentals.core.handler_factory import make_submit_handler_from_matrix
 from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 router = APIRouter(prefix="/patterns/singleton", tags=["Patterns - Singleton Practice"])
 
@@ -68,13 +74,12 @@ def _singleton_splitter(
 
     # If anything is left un-routed (e.g., unknown namespaced target), keep them with primary
     # so validation can raise an informative error later.
-    primary |= remaining  # noqa: PIE787
+    primary |= remaining
 
     return primary, extras
 
 
-# Build the submit handler with the splitter
-_submit = make_submit_handler_from_matrix(
+_submit: Callable[[MethodsOnly], Awaitable[JSONResponse]] = make_submit_handler_from_matrix(
     key="patterns.singleton",
     success_message="All singleton tests passed.",
     method_splitter=_singleton_splitter,
@@ -82,5 +87,5 @@ _submit = make_submit_handler_from_matrix(
 
 
 @router.post("/submit")
-async def submit_singleton_practice(payload: MethodsOnly) -> dict:
+async def submit_singleton_practice(payload: MethodsOnly) -> JSONResponse:
     return await _submit(payload)

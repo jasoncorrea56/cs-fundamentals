@@ -2,9 +2,10 @@ import os
 import tomllib
 from importlib.metadata import version as get_version, PackageNotFoundError
 from pathlib import Path
+from typing import Any
 
 
-def get_app_version() -> str:
+def get_app_version() -> Any:
     try:
         return get_version("cs-fundamentals")
     except PackageNotFoundError:

@@ -2,12 +2,12 @@ import sys
 
 
 class MaxHeap:
-    def __init__(self, heap_size) -> None:
+    def __init__(self, heap_size: int) -> None:
         self.real_size = 0
         self.heap_size = heap_size
         self.max_heap = [0] * (heap_size + 1)
 
-    def add(self, element) -> bool:
+    def add(self, element: int) -> bool:
         """
         Add an element to the MaxHeap
         Note: if we use an array to represent the complete binary tree and store the root node at index 1, then the:
@@ -96,10 +96,10 @@ class MaxHeap:
 
 
 class PracticeMaxHeap:
-    def __init__(self, heap_size) -> None:
+    def __init__(self, heap_size: int) -> None:
         pass
 
-    def add(self, element) -> bool:
+    def add(self, element: int) -> bool:
         """
         Add an element to the MaxHeap
         :param element: Element to add to the MaxHeap

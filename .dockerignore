@@ -9,3 +9,6 @@ dist/
 build/
 .coverage
 .pytest_cache/
+
+# MonkeyType
+monkeytype.sqlite3

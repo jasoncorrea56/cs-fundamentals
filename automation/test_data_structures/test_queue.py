@@ -50,7 +50,7 @@ class TestQueue:
         result = self.queue_array.is_full()
         assert result is False
 
-    def test_array_str(self, array_output) -> None:
+    def test_array_str(self, array_output: str) -> None:
         result = str(self.queue_array)
         assert result == str(array_output)
 
@@ -81,6 +81,6 @@ class TestQueue:
         result = self.queue_linked_list.is_full()
         assert result is False
 
-    def test_linked_list_str(self, linked_list_output) -> None:
+    def test_linked_list_str(self, linked_list_output: str) -> None:
         result = str(self.queue_linked_list)
         assert result == str(linked_list_output)

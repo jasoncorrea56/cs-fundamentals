@@ -4,10 +4,13 @@ import os
 import re
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 from cs_fundamentals.core.logging_config import get_logger
 from cs_fundamentals.models.schemas import PracticeResult, PytestSummary
+
+if TYPE_CHECKING:
+    from typing import Any
 
 log = get_logger(__name__)
 
@@ -42,7 +45,7 @@ _SUMMARY_KEYS = (
 )
 
 
-def _parse_pytest_summary(stdout: str) -> dict[str, Any]:
+def _parse_pytest_summary(stdout: str) -> PytestSummary:
     """
     Parse pytest terminal summary from stdout (works with -q).
     Returns counts + duration when present.
@@ -84,6 +87,7 @@ def _parse_pytest_summary(stdout: str) -> dict[str, Any]:
     counted = sum(int(summary[k]) for k in _SUMMARY_KEYS if isinstance(summary[k], int))
     if counted > 0:
         summary["collected"] = counted
+
     return PytestSummary(**summary)
 
 
@@ -150,8 +154,9 @@ def run_pytest(
 
     # Import pytest lazily to avoid importing it in non-test code paths
     import io
+    from contextlib import redirect_stderr, redirect_stdout
+
     import pytest
-    from contextlib import redirect_stdout, redirect_stderr
 
     out_buf, err_buf = io.StringIO(), io.StringIO()
     prev_cwd = os.getcwd()

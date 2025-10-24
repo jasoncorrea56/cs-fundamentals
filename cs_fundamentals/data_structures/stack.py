@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from cs_fundamentals.data_structures.linked_list_single import Node
 
 
 class StackArray:
     def __init__(self) -> None:
-        self.stack = []
+        self.stack: list[int] = []
 
     def __str__(self) -> str:
         result = list(self.stack)
@@ -13,10 +15,10 @@ class StackArray:
     def is_empty(self) -> bool:
         return len(self.stack) == 0
 
-    def push(self, item) -> bool:
+    def push(self, item: int) -> bool:
         try:
             self.stack.append(item)
-        except Exception:
+        except Exception:  # pragma: no cover - defensive
             return False
         return True
 
@@ -33,22 +35,20 @@ class StackArray:
 
 class StackLinkedList:
     def __init__(self) -> None:
-        self.top = None
+        self.top: Node | None = None
 
     def __str__(self) -> str:
-        result = []
+        result: list[int] = []
         node = self.top
-        while True:
+        while node is not None:
             result.append(node.value)
             node = node.next
-            if not node:
-                break
         return str(result)
 
     def is_empty(self) -> bool:
-        return not self.top
+        return self.top is None
 
-    def push(self, data) -> bool:
+    def push(self, data: int) -> bool:
         node = Node(data)
         node.next = self.top
         self.top = node
@@ -57,6 +57,7 @@ class StackLinkedList:
     def pop(self) -> int | None:
         if self.is_empty():
             return None
+        assert self.top is not None  # for type checker
         popped = self.top.value
         self.top = self.top.next
         return popped
@@ -64,6 +65,7 @@ class StackLinkedList:
     def peek(self) -> int | None:
         if self.is_empty():
             return None
+        assert self.top is not None  # for type checker
         return self.top.value
 
 
@@ -77,7 +79,7 @@ class PracticeStackArray:
     def is_empty(self) -> bool:
         raise NotImplementedError
 
-    def push(self, item) -> bool:
+    def push(self, item: int) -> bool:
         raise NotImplementedError
 
     def pop(self) -> int | None:
@@ -97,7 +99,7 @@ class PracticeStackLinkedList:
     def is_empty(self) -> bool:
         raise NotImplementedError
 
-    def push(self, data) -> bool:
+    def push(self, data: int) -> bool:
         raise NotImplementedError
 
     def pop(self) -> int | None:

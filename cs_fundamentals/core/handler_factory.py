@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import importlib
 import traceback
-from collections.abc import Callable, Iterable  # noqa: TC003
-from typing import Any
+from collections.abc import Awaitable, Callable, Iterable  # noqa: TC003
+from typing import TYPE_CHECKING
+
+from fastapi.responses import JSONResponse
 
 from cs_fundamentals.core.inject import (
     DisallowedImportError,
@@ -19,10 +21,14 @@ from cs_fundamentals.core.response import (
     is_pytest_ok,
 )
 from cs_fundamentals.core.test_matrix import TestTarget, get_target
-from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
 from cs_fundamentals.core.validation import (
     validate_methods_exist as _base_validate_methods_exist,
 )
+from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
+
+if TYPE_CHECKING:
+    from typing import Any
+
 
 # method_splitter: (methods) -> (primary_methods, extra_injections)
 # extra_injections: list of tuples (module, class_name, methods_dict)
@@ -33,14 +39,17 @@ MethodSplitter = Callable[
 log = get_logger(__name__)
 
 
-def _resolve_class(module_path: str, dotted_class: str) -> type:
+def _resolve_class(module_path: str, dotted_class: str) -> type[Any]:
     """
     Resolve 'pkg.mod' + 'Outer.Inner.More' -> final class/type object.
+    Raises TypeError if the final attribute is not a class.
     """
     mod = importlib.import_module(module_path)
     obj: Any = mod
     for part in dotted_class.split("."):
         obj = getattr(obj, part)
+    if not isinstance(obj, type):
+        raise TypeError(f"Resolved attribute is not a class: {module_path}.{dotted_class}")
     return obj
 
 
@@ -94,7 +103,7 @@ def make_submit_handler_from_matrix(
     key: str,
     success_message: str | None = None,
     method_splitter: MethodSplitter | None = None,
-) -> Callable[[MethodsOnly], Any]:
+) -> Callable[[MethodsOnly], Awaitable[JSONResponse]]:
     """
     Build a /submit handler from a matrix key.
     Optional method_splitter to support multi-/nested-class injections before running tests.
@@ -115,7 +124,7 @@ def make_submit_handler_from_matrix(
         },
     )
 
-    async def _handler(payload: MethodsOnly) -> dict[str, Any]:
+    async def _handler(payload: MethodsOnly) -> JSONResponse:
         log.info(
             "submit.start",
             extra={
@@ -127,10 +136,7 @@ def make_submit_handler_from_matrix(
         )
         try:
             if not payload.methods:
-                log.warning(
-                    "submit.no_methods",
-                    extra={"target_key": target.key},
-                )
+                log.warning("submit.no_methods", extra={"target_key": target.key})
                 return error_response(
                     status_code=400,
                     message="No methods provided in payload.",
@@ -188,11 +194,7 @@ def make_submit_handler_from_matrix(
                 _inject_extra(mod, cls, methods)
                 log.debug(
                     "submit.inject_extra.done",
-                    extra={
-                        "target_key": target.key,
-                        "target_module": mod,
-                        "class_name": cls,
-                    },
+                    extra={"target_key": target.key, "target_module": mod, "class_name": cls},
                 )
 
             # 3) Run tests
@@ -248,8 +250,7 @@ def make_submit_handler_from_matrix(
                 )
 
             log.info(
-                "submit.success",
-                extra={"target_key": target.key, "summary": result.get("summary")},
+                "submit.success", extra={"target_key": target.key, "summary": result.get("summary")}
             )
             return success_response(data=result, message=message, payload=meta)
 

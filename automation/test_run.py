@@ -50,5 +50,5 @@ def test_run_entrypoint_invokes_uvicorn(monkeypatch: pytest.MonkeyPatch) -> None
     assert isinstance(kwargs["port"], int)
     assert kwargs["reload"] is True
     assert kwargs["access_log"] is False
-    assert isinstance(kwargs.get("log_config"), dict)
-    assert isinstance(kwargs.get("log_level"), str)
+    assert kwargs.get("log_config") is None
+    assert "log_level" not in kwargs

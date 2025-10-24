@@ -16,30 +16,40 @@ class BinarySearchTree(BinaryTreeNode):
     Note: Inorder traversal is the most common traversal method of a BST.
     """
 
-    def __init__(self, value=0, left=None, right=None) -> None:
+    def __init__(
+        self,
+        value: int = 0,
+        left: BinaryTreeNode | None = None,
+        right: BinaryTreeNode | None = None,
+    ) -> None:
         super().__init__(value, left, right)
 
     @staticmethod
-    def is_valid_bst(root: BinaryTreeNode) -> bool:
+    def is_valid_bst(root: BinaryTreeNode | None) -> bool:
         if not root:
             return True  # Empty is valid
 
-        stack = [(root, -math.inf, math.inf)]
+        stack: list[tuple[BinaryTreeNode, float, float]] = [(root, -math.inf, math.inf)]
         while stack:
             node, lower, upper = stack.pop()
             if node.value <= lower or node.value >= upper:
                 return False
             if node.right:
-                stack.append((node.right, node.value, upper))
+                stack.append((node.right, float(node.value), upper))
             if node.left:
-                stack.append((node.left, lower, node.value))
+                stack.append((node.left, lower, float(node.value)))
         return True
 
 
 class PracticeBinarySearchTree(BinaryTreeNode):
-    def __init__(self, value=0, left=None, right=None) -> None:
+    def __init__(
+        self,
+        value: int = 0,
+        left: BinaryTreeNode | None = None,
+        right: BinaryTreeNode | None = None,
+    ) -> None:
         super().__init__(value, left, right)
 
     @staticmethod
-    def is_valid_bst(root: BinaryTreeNode) -> bool:
+    def is_valid_bst(root: BinaryTreeNode | None) -> bool:
         raise NotImplementedError
