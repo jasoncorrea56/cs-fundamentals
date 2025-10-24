@@ -74,26 +74,34 @@ jobs:
       - name: Install Semgrep
         run: pip install semgrep==1.36.0
 
-      - name: Run Semgrep scan
-        run: semgrep ci --config p/ci --config p/security-audit --sarif --output semgrep.sarif
+      - name: Run Semgrep (YAML + Python)
+        run: |
+          semgrep ci \
+            --config p/ci \
+            --config p/security-audit \
+            --config p/python \
+            --sarif --output semgrep-python.sarif
 
       - uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: semgrep.sarif
+          sarif_file: semgrep-python.sarif
           category: semgrep
 
   osv:
     name: OSV Scanner (Dependency Analysis)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: google/osv-scanner-action@v2.2.3
-        with:
-          scan-args: >-
-            --recursive
-            --lockfile
-            .
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    # Reusable workflow requires these perms to upload SARIF
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.3
+    with:
+      scan-args: |-
+        --recursive
+        --lockfile
+        .
+      upload-sarif: true     # default true; explicit for clarity
+      fail-on-vuln: true     # default true; explicit for clarity
 
   trivy-fs:
     name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
