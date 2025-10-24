@@ -33,7 +33,6 @@ jobs:
 
   mypy:
     name: Type Checks (mypy)
-    continue-on-error: true   # TODO - Remove when mypy issues have been addressed
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Project

@@ -18,15 +18,15 @@ repos:
     -   id: ruff
         args: [--fix]
     -   id: ruff-format
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: v1.18.2
-#     hooks:
-#     -   id: mypy
-#         args: [--strict]
-#         files: ^(cs_fundamentals/|cs_fundamentals\.py)$
-#         additional_dependencies:
-#         -   types-requests>=2.32.0.20241016
-#         -   types-PyYAML>=6.0.12.20240808
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+    -   id: mypy
+        args: [--strict]
+        files: ^(cs_fundamentals/|cs_fundamentals\.py)$
+        additional_dependencies:
+        -   types-requests>=2.32.0.20241016
+        -   types-PyYAML>=6.0.12.20240808
 -   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
     rev: v0.8.0
     hooks:
