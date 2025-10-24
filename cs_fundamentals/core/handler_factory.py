@@ -3,7 +3,9 @@ from __future__ import annotations
 import importlib
 import traceback
 from collections.abc import Awaitable, Callable, Iterable  # noqa: TC003
-from typing import Any, cast
+from typing import TYPE_CHECKING
+
+from fastapi.responses import JSONResponse
 
 from cs_fundamentals.core.inject import (
     DisallowedImportError,
@@ -24,6 +26,10 @@ from cs_fundamentals.core.validation import (
 )
 from cs_fundamentals.models.schemas import MethodsOnly  # noqa: TC001
 
+if TYPE_CHECKING:
+    from typing import Any
+
+
 # method_splitter: (methods) -> (primary_methods, extra_injections)
 # extra_injections: list of tuples (module, class_name, methods_dict)
 MethodSplitter = Callable[
@@ -36,12 +42,15 @@ log = get_logger(__name__)
 def _resolve_class(module_path: str, dotted_class: str) -> type[Any]:
     """
     Resolve 'pkg.mod' + 'Outer.Inner.More' -> final class/type object.
+    Raises TypeError if the final attribute is not a class.
     """
     mod = importlib.import_module(module_path)
     obj: Any = mod
     for part in dotted_class.split("."):
         obj = getattr(obj, part)
-    return cast("type[Any]", obj)
+    if not isinstance(obj, type):
+        raise TypeError(f"Resolved attribute is not a class: {module_path}.{dotted_class}")
+    return obj
 
 
 def _validate_methods_exist_flexible(
@@ -94,7 +103,7 @@ def make_submit_handler_from_matrix(
     key: str,
     success_message: str | None = None,
     method_splitter: MethodSplitter | None = None,
-) -> Callable[[MethodsOnly], Awaitable[dict[str, Any]]]:
+) -> Callable[[MethodsOnly], Awaitable[JSONResponse]]:
     """
     Build a /submit handler from a matrix key.
     Optional method_splitter to support multi-/nested-class injections before running tests.
@@ -115,7 +124,7 @@ def make_submit_handler_from_matrix(
         },
     )
 
-    async def _handler(payload: MethodsOnly) -> dict[str, Any]:
+    async def _handler(payload: MethodsOnly) -> JSONResponse:
         log.info(
             "submit.start",
             extra={
@@ -128,13 +137,10 @@ def make_submit_handler_from_matrix(
         try:
             if not payload.methods:
                 log.warning("submit.no_methods", extra={"target_key": target.key})
-                return cast(
-                    "dict[str, Any]",
-                    error_response(
-                        status_code=400,
-                        message="No methods provided in payload.",
-                        payload={"key": key, "methods": payload.methods},
-                    ),
+                return error_response(
+                    status_code=400,
+                    message="No methods provided in payload.",
+                    payload={"key": key, "methods": payload.methods},
                 )
 
             primary_methods = payload.methods
@@ -237,35 +243,26 @@ def make_submit_handler_from_matrix(
                         "exit_code": result.get("exit_code"),
                     },
                 )
-                return cast(
-                    "dict[str, Any]",
-                    error_response(
-                        status_code=400,
-                        message=f"Test run failed{tail}. See stdout/stderr for details.",
-                        payload={"result": result, **meta, "methods": payload.methods},
-                    ),
+                return error_response(
+                    status_code=400,
+                    message=f"Test run failed{tail}. See stdout/stderr for details.",
+                    payload={"result": result, **meta, "methods": payload.methods},
                 )
 
             log.info(
                 "submit.success", extra={"target_key": target.key, "summary": result.get("summary")}
             )
-            return cast(
-                "dict[str, Any]",
-                success_response(data=result, message=message, payload=meta),
-            )
+            return success_response(data=result, message=message, payload=meta)
 
         except DisallowedImportError as diexc:
             log.warning(
                 "submit.disallowed_import",
                 extra={"target_key": target.key, "error": str(diexc)},
             )
-            return cast(
-                "dict[str, Any]",
-                error_response(
-                    status_code=400,
-                    message=str(diexc),
-                    payload={"key": key, "methods": payload.methods},
-                ),
+            return error_response(
+                status_code=400,
+                message=str(diexc),
+                payload={"key": key, "methods": payload.methods},
             )
 
         except AttributeError as aexc:
@@ -273,13 +270,10 @@ def make_submit_handler_from_matrix(
                 "submit.validation_error",
                 extra={"target_key": target.key, "error": str(aexc)},
             )
-            return cast(
-                "dict[str, Any]",
-                error_response(
-                    status_code=400,
-                    message=str(aexc),
-                    payload={"key": key, "methods": payload.methods},
-                ),
+            return error_response(
+                status_code=400,
+                message=str(aexc),
+                payload={"key": key, "methods": payload.methods},
             )
 
         except Exception as exc:  # noqa: BLE001
@@ -288,13 +282,10 @@ def make_submit_handler_from_matrix(
                 "submit.unhandled_exception",
                 extra={"target_key": target.key, "error": str(exc)},
             )
-            return cast(
-                "dict[str, Any]",
-                error_response(
-                    status_code=400,
-                    message=f"{str(exc)}\n\n{str(tb)}",
-                    payload={"key": key, "methods": payload.methods},
-                ),
+            return error_response(
+                status_code=400,
+                message=f"{str(exc)}\n\n{str(tb)}",
+                payload={"key": key, "methods": payload.methods},
             )
 
     return _handler
