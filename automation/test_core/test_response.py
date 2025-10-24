@@ -40,30 +40,31 @@ def test_normalize_payload_pydantic_v2() -> None:
     assert out == {"a": 1, "b": "x"}
 
 
-def test_normalize_payload_fake_v1_branch(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_normalize_payload_fake_v1_branch() -> None:
     """
-    Simulate a v1-style BaseModel: instance of "BaseModel" with .dict but without .model_dump.
+    Simulate a v1-style model: has .dict() but no .model_dump().
     """
 
-    class FakeBase:
-        # Acts like the module's BaseModel for isinstance checks
-        pass
-
-    class V1Like(FakeBase):
+    class V1Like:
         def __init__(self) -> None:
             self.a = 1
 
         def dict(self) -> dict[str, Any]:
             return {"a": self.a}
 
-        # Deliberately no model_dump attr
+    r = resp.success_response(data={"ok": True}, payload=V1Like())
+    body = json.loads(r.body)
+    assert body["metadata"] == {"a": 1}
 
-    # Monkeypatch the module-level BaseModel used inside response.py
-    monkeypatch.setattr(resp, "BaseModel", FakeBase, raising=True)
 
-    v1 = V1Like()
-    out = resp._normalize_payload(v1)
-    assert out == {"a": 1}
+def test_normalize_payload_fake_v2_branch() -> None:
+    class V2Like:
+        def model_dump(self) -> dict[str, Any]:
+            return {"b": 2}
+
+    r = resp.error_response(payload=V2Like())
+    body = json.loads(r.body)
+    assert body["metadata"] == {"b": 2}
 
 
 def test_normalize_payload_fallback_other_object() -> None:

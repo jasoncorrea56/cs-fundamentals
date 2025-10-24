@@ -8,12 +8,6 @@ from typing import Any, Protocol, runtime_checkable
 from fastapi.responses import JSONResponse
 
 
-# Back-compat: expose a module-level `BaseModel` symbol for tests to monkeypatch.
-# We don't rely on this for normalization; protocols below handle v1/v2 models.
-class BaseModel:  # minimal stand-in; tests may monkeypatch this
-    pass
-
-
 # Enable traceback in error responses unless explicitly disabled.
 _INCLUDE_TRACEBACK = os.getenv("PRACTICE_INCLUDE_TRACEBACK", "1") not in {
     "0",

@@ -1,48 +1,30 @@
 from __future__ import annotations
 
-from typing import Any, cast
+import os
 
 import uvicorn
 
 from cs_fundamentals.config import settings
-
-# Prefer a dedicated setup function if present, but don't require it.
-try:
-    from cs_fundamentals.core.logging_config import setup_logging as _setup_logging  # type: ignore[attr-defined]
-except Exception:  # pragma: no cover
-    _setup_logging = None
+from cs_fundamentals.core.logging_config import configure_logging, get_logger
 
 
-def _init_logging() -> dict[str, Any]:
-    """
-    Return a dictConfig for Uvicorn logging.
+def main() -> None:
+    # Configure our logging once; disable Uvicorn's dictConfig below.
+    configure_logging(force=True)
+    log = get_logger(__name__)
+    log.info("event=runner.startup", extra={"host": "0.0.0.0", "port": settings.port})
 
-    - If a project-level `setup_logging(name)` exists, use it.
-    - Otherwise, provide a minimal default dictConfig so tests (and dev runs)
-      still pass a dict for `log_config`.
-    """
-    if _setup_logging is not None:
-        cfg = _setup_logging("cs_fundamentals")
-        # Be explicit for mypy: factory may be untyped.
-        if isinstance(cfg, dict):
-            return cast("dict[str, Any]", cfg)
-
-    # Minimal fallback config
-    return {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "handlers": {},
-        "loggers": {},
-    }
-
-
-if __name__ == "__main__":
     uvicorn.run(
         "cs_fundamentals.main:app",
         host="0.0.0.0",
         port=settings.port,
         reload=True,
-        log_config=_init_logging(),
-        log_level=settings.log_level.lower(),
-        access_log=False,
+        # Disable Uvicorn's logging config so ours stays in control.
+        log_config=None,
+        # We'll keep access logs off (toggle via env if you like).
+        access_log=os.getenv("UVICORN_ACCESS_LOG", "0") not in {"0", "false", "False"},
     )
+
+
+if __name__ == "__main__":
+    main()
