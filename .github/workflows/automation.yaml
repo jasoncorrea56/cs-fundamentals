@@ -72,10 +72,14 @@ jobs:
           python-version: '3.11.13'
 
       - name: Install Semgrep
-        run: pip install "semgrep>=1.86,<2.0"
+        run: |
+          python -m pip install --upgrade pip
+          pip install "semgrep==1.86.0"
+          semgrep --version
+          python --version
 
       # PRs: compare against the merge-base with the target branch
-      - name: Run Semgrep (PR diff only)
+      - name: Run Semgrep (PR diff only → SARIF)
         if: ${{ github.event_name == 'pull_request' }}
         # Use the PR base SHA as the baseline so only NEW findings fail the job
         run: |
@@ -88,7 +92,7 @@ jobs:
             --sarif --output semgrep-python.sarif
 
       # Pushes: full scan
-      - name: Run Semgrep (YAML + Python Full Scan)
+      - name: Run Semgrep (YAML + Python Full Scan -> SARIF)
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           semgrep ci \
@@ -97,6 +101,46 @@ jobs:
             --config p/security-audit \
             --config p/python \
             --sarif --output semgrep-python.sarif
+
+      # Human-readable summary in logs (does not affect pass/fail)
+      - name: Semgrep JSON summary (logs)
+        run: |
+          semgrep ci \
+            --config p/ci \
+            --config p/security-audit \
+            --config p/python \
+            --json \
+          | jq -r '
+              if (.results|length)==0
+              then "No results."
+              else
+                (.results[] | [
+                  .check_id,
+                  .path,
+                  (.start.line // 0 | tostring),
+                  (.extra.message // "no message")
+                ] | @tsv)
+              end
+            ' | awk 'BEGIN {FS="\t"; printf "check_id\tfile\tline\tmessage\n"} {print}'
+        continue-on-error: true
+
+      # Save raw JSON as an artifact for easy download/diff
+      - name: Save Semgrep JSON artifact
+        if: always()
+        run: |
+          semgrep ci \
+            --config p/ci \
+            --config p/security-audit \
+            --config p/python \
+            --json > semgrep-python.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-json
+          path: semgrep-python.json
+          retention-days: 3
+
 
       - uses: github/codeql-action/upload-sarif@v3
         with:

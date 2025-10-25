@@ -136,7 +136,12 @@ uv run mypy --show-error-codes --pretty .
 #### Semgrep
 
 ```bash
-uv run semgrep --verbose --config p/ci --config p/security-audit --config p/python --json | jq '.results[] | {check_id, path, start: .start.line, message}'
+uv run semgrep ci \
+--verbose \
+--config p/ci \
+--config p/security-audit \
+--config p/python --json \
+| jq '.results[] | {check_id, path, start: .start.line, message}'
 ```
 
 ## Run Tests

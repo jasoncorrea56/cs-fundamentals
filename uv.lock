@@ -313,7 +313,7 @@ dev = [
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "ruff", specifier = ">=0.11.7" },
-    { name = "semgrep", specifier = ">=1.86.0" },
+    { name = "semgrep", specifier = "==1.86.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20240808" },
     { name = "types-requests", specifier = ">=2.32.0.20241016" },
 ]
