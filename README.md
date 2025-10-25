@@ -135,6 +135,18 @@ uv run mypy --show-error-codes --pretty .
 
 #### Semgrep
 
+- Replicate CI
+
+```bash
+uv run semgrep ci \
+--verbose \
+--config p/ci \
+--config p/security-audit \
+--config p/python --sarif
+```
+
+- Output to JSON Format
+
 ```bash
 uv run semgrep ci \
 --verbose \

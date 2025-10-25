@@ -220,8 +220,9 @@ def _compile_functions(src_by_name: Mapping[str, str]) -> dict[str, FunctionType
             tree = _validate_source_is_safe(src)
             code = compile(tree, "<submission>", "exec")
 
-            # nosemgrep: python.lang.security.audit.exec-detected.exec-detected
-            exec(code, safe_globals, local_ns)
+            exec(
+                code, safe_globals, local_ns
+            )  # nosemgrep: python.lang.security.audit.exec-detected.exec-detected
 
         except SyntaxError as syn:
             raise SyntaxError(

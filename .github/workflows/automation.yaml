@@ -84,56 +84,73 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo 'SEMGREP_BASE=--baseline-commit "${{ github.event.pull_request.base.sha }}"' >> "$GITHUB_ENV"
+            echo 'SEMGREP_BASE=--baseline-commit ${{ github.event.pull_request.base.sha }}' >> "$GITHUB_ENV"
           else
             echo 'SEMGREP_BASE=' >> "$GITHUB_ENV"
           fi
-          echo 'SEMGREP_CONFIGS=--config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
+          # Include your local override config first so it’s applied before registry packs
+          echo 'SEMGREP_CONFIGS=--config .semgrep.yaml --config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
 
-      # ----- Single source of truth: SARIF -----
+      # Single source of truth: SARIF
       - name: Run Semgrep → SARIF (source of truth)
         shell: bash
         run: |
           # shellcheck disable=SC2086
           semgrep ci $SEMGREP_BASE $SEMGREP_CONFIGS \
+            --metrics=off \
             --verbose \
             --sarif --output semgrep-python.sarif || true
 
-      - name: Print summary by parsing SARIF
-        shell: bash
+      - name: Ensure jq is available
         run: |
           if ! command -v jq >/dev/null 2>&1; then
             sudo apt-get update && sudo apt-get install -y jq
           fi
 
-          COUNT=$(jq '[.runs[].results[]] | length' semgrep-python.sarif)
-          echo "Semgrep SARIF findings: ${COUNT}"
+      - name: Summarize SARIF (unsuppressed only)
+        id: sarif_summary
+        shell: bash
+        run: |
+          # Count findings where .suppressions is absent or empty, across all runs
+          COUNT=$(
+            jq '[.runs[]?
+                 | (.results // [])
+                 | map(select(((.suppressions // []) | length) == 0))]
+                | add // []
+                | length' semgrep-python.sarif
+          )
+          echo "UNSUPPRESSED_COUNT=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Semgrep SARIF unsuppressed findings: ${COUNT}"
 
-          # Pretty table from SARIF
+          # Pretty table for unsuppressed findings (robust to missing fields)
           jq -r '
-            .runs[].results[]?
+            .runs[]?
+            | (.results // [])
+            | map(select(((.suppressions // []) | length) == 0))
+            | .[]
             | {
                 ruleId,
                 file: (.locations[0]?.physicalLocation?.artifactLocation?.uri // "unknown"),
                 line: (.locations[0]?.physicalLocation?.region?.startLine // 0),
-                msg: (.message?.text // "no message")
+                msg:  (.message?.text // "no message")
               }
-            | [ .ruleId, .file, ( .line | tostring ), .msg ] | @tsv
+            | [ .ruleId, .file, ( .line | tostring ), .msg ]
+            | @tsv
           ' semgrep-python.sarif \
           | awk 'BEGIN {FS="\t"; printf "check_id\tfile\tline\tmessage\n"} {print}' || true
-
-          echo "COUNT=${COUNT}" >> "$GITHUB_ENV"
 
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep-python.sarif
           category: semgrep
 
-      - name: Fail if Semgrep (SARIF) found issues
-        shell: bash
+      - name: Fail if there are unsuppressed findings
+        if: steps.sarif_summary.outputs.UNSUPPRESSED_COUNT != '0'
         run: |
-          echo "Semgrep SARIF findings (COUNT): ${COUNT}"
-          test "${COUNT}" -eq 0
+          echo "Failure! ${UNSUPPRESSED_COUNT} UNSUPPRESSED Semgrep findings were detected."
+          exit 1
+        env:
+          UNSUPPRESSED_COUNT: ${{ steps.sarif_summary.outputs.UNSUPPRESSED_COUNT }}
 
   osv-prep:
     name: Export deps for OSV (uv -> requirements)

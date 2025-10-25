@@ -130,3 +130,7 @@ dmypy.json
 
 # MonkeyType
 monkeytype.sqlite3
+
+# Semgrep
+semgrep.sarif
+semgrep-python.sarif

@@ -1,0 +1,13 @@
+# Local Semgrep overrides for this repo.
+# We override the upstream rule by ID and only exclude our sandbox file from that rule.
+
+rules:
+  - id: python.lang.security.audit.exec-detected.exec-detected
+    message: "Override: exclude sandboxed injection file from exec() rule"
+    languages: [python]
+    severity: WARNING
+    pattern-either:
+      - pattern: exec($CODE, $GLOBALS, $LOCALS)
+    paths:
+      exclude:
+        - cs_fundamentals/core/inject.py
