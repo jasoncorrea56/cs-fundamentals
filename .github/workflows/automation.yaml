@@ -65,6 +65,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # ensure baseline commit is available
 
       - name: Set up Python 3.11.13
         uses: actions/setup-python@v5
@@ -78,85 +80,60 @@ jobs:
           semgrep --version
           python --version
 
-      # ---------- JSON RUN (never fail this step) ----------
-      # PRs: diff-only (baseline) ; pushes: full scan
-      - name: Semgrep JSON (PR diff-only)
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Build Semgrep flags (PR baseline or full scan)
+        shell: bash
         run: |
-          semgrep ci \
-            --verbose \
-            --baseline-commit "${{ github.event.pull_request.base.sha }}" \
-            --config p/ci \
-            --config p/security-audit \
-            --config p/python \
-            --json > semgrep-python.json || true
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo 'SEMGREP_BASE=--baseline-commit "${{ github.event.pull_request.base.sha }}"' >> "$GITHUB_ENV"
+          else
+            echo 'SEMGREP_BASE=' >> "$GITHUB_ENV"
+          fi
+          echo 'SEMGREP_CONFIGS=--config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
 
-      - name: Semgrep JSON (full scan for pushes)
-        if: ${{ github.event_name != 'pull_request' }}
+      # ----- Single source of truth: SARIF -----
+      - name: Run Semgrep → SARIF (source of truth)
+        shell: bash
         run: |
-          semgrep ci \
+          # shellcheck disable=SC2086
+          semgrep ci $SEMGREP_BASE $SEMGREP_CONFIGS \
             --verbose \
-            --config p/ci \
-            --config p/security-audit \
-            --config p/python \
-            --json > semgrep-python.json || true
+            --sarif --output semgrep-python.sarif || true
 
-      - name: Print Semgrep summary (from JSON)
+      - name: Print summary by parsing SARIF
+        shell: bash
         run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+          COUNT=$(jq '[.runs[].results[]] | length' semgrep-python.sarif)
+          echo "Semgrep SARIF findings: ${COUNT}"
+
+          # Pretty table from SARIF
           jq -r '
-            if (.results|length)==0
-            then "No results."
-            else
-              (.results[] | [
-                .check_id,
-                .path,
-                (.start.line // 0 | tostring),
-                (.extra.message // "no message")
-              ] | @tsv)
-            end
-          ' semgrep-python.json | awk 'BEGIN {FS="\t"; printf "check_id\tfile\tline\tmessage\n"} {print}'
+            .runs[].results[]?
+            | {
+                ruleId,
+                file: (.locations[0]?.physicalLocation?.artifactLocation?.uri // "unknown"),
+                line: (.locations[0]?.physicalLocation?.region?.startLine // 0),
+                msg: (.message?.text // "no message")
+              }
+            | [ .ruleId, .file, ( .line | tostring ), .msg ] | @tsv
+          ' semgrep-python.sarif \
+          | awk 'BEGIN {FS="\t"; printf "check_id\tfile\tline\tmessage\n"} {print}' || true
 
-      - name: Upload Semgrep JSON artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-json
-          path: semgrep-python.json
-          retention-days: 3
-
-      # ---------- SARIF RUN (also do not fail this step) ----------
-      - name: Semgrep SARIF (PR diff-only)
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          semgrep ci \
-            --verbose \
-            --baseline-commit "${{ github.event.pull_request.base.sha }}" \
-            --config p/ci \
-            --config p/security-audit \
-            --config p/python \
-            --sarif --output semgrep-python.sarif || true
-
-      - name: Semgrep SARIF (full scan for pushes)
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          semgrep ci \
-            --verbose \
-            --config p/ci \
-            --config p/security-audit \
-            --config p/python \
-            --sarif --output semgrep-python.sarif || true
+          echo "COUNT=${COUNT}" >> "$GITHUB_ENV"
 
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep-python.sarif
           category: semgrep
 
-      # ---------- Explicit gate: fail if JSON had any results ----------
-      - name: Fail if Semgrep found issues
+      - name: Fail if Semgrep (SARIF) found issues
+        shell: bash
         run: |
-          COUNT=$(jq '.results | length' semgrep-python.json)
-          echo "Semgrep findings: $COUNT"
-          test "$COUNT" -eq 0
+          echo "Semgrep SARIF findings (COUNT): ${COUNT}"
+          test "${COUNT}" -eq 0
 
   osv-prep:
     name: Export deps for OSV (uv -> requirements)
