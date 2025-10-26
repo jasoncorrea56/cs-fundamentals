@@ -77,14 +77,14 @@ def test_build_tree_level_order_full_and_odd_tail() -> None:
     Ensure nodes are attached correctly and the “odd remainder” path is covered.
 
     Example:
-      values = [1, 2, 3, 4]
+      Values = [1, 2, 3, 4]
+      Level Order: [1, 2, 3, 4]
       Expected tree:
           1
          / \
         2   3
        /
       4
-      → Level order: [1, 2, 3, 4]
     """
     root: Node | None = build_tree_level_order([1, 2, 3, 4])
     assert isinstance(root, Node)

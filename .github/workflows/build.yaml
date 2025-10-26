@@ -1,6 +1,6 @@
 # This reusable workflow handles building a runtime Docker image & pushing to GHCR.
 # It is called from automation.yaml after lint/tests pass.
-# Build (no push) → Scan (Trivy) → SBOM (Syft) → Push (only if scans pass).
+# Build (no push) -> Scan (Trivy) -> SBOM (Syft) -> Push (only if scans pass).
 
 name: Build
 

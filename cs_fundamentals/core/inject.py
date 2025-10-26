@@ -284,7 +284,7 @@ def inject_into_practice(
         # Make sure user functions can see the discovered symbols
         try:
             fn.__globals__.update(discovered)
-        except Exception:
+        except Exception:  # pragma: no cover
             # If something odd slips in (shouldn't), don't let it break injection
             for k, v in discovered.items():
                 fn.__globals__.setdefault(k, v)

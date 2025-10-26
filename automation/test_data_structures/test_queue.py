@@ -84,3 +84,55 @@ class TestQueue:
     def test_linked_list_str(self, linked_list_output: str) -> None:
         result = str(self.queue_linked_list)
         assert result == str(linked_list_output)
+
+    def test_array_empty_peek_rear_and_dequeue_return_none(self) -> None:
+        q = QueueCircularArray(2)
+        assert q.is_empty() is True
+        assert q.peek() is None
+        assert q.rear() is None
+        assert q.dequeue() is None
+
+    def test_array_enqueue_when_full_returns_false(self) -> None:
+        q = QueueCircularArray(2)
+        assert q.enqueue(1) is True
+        assert q.enqueue(2) is True
+        assert q.is_full() is True
+        assert q.enqueue(3) is False
+
+    def test_array_dequeue_to_empty_then_peek_rear_none(self) -> None:
+        q = QueueCircularArray(3)
+        for v in (10, 20, 30):
+            assert q.enqueue(v) is True
+        assert q.dequeue() == 10
+        assert q.dequeue() == 20
+        assert q.dequeue() == 30
+        assert q.is_empty() is True
+        # After emptying, internal head/size wrap is covered; now None paths:
+        assert q.peek() is None
+        assert q.rear() is None
+
+    def test_linked_list_empty_peek_rear_and_dequeue_return_none(self) -> None:
+        q = QueueCircularLinkedList(3)
+        assert q.is_empty() is True
+        assert q.peek() is None
+        assert q.rear() is None
+        assert q.dequeue() is None
+
+    def test_linked_list_dequeue_last_element_resets_tail(self) -> None:
+        q = QueueCircularLinkedList(2)
+        assert q.enqueue(7) is True
+        assert q.enqueue(8) is True
+        assert q.dequeue() == 7
+        assert q.dequeue() == 8
+        # Validate both pointers reset (exercises lines that only run on last removal)
+        assert q.head is None
+        assert q.tail is None
+        assert q.peek() is None
+        assert q.rear() is None
+
+    def test_linked_list_enqueue_when_full_returns_false(self) -> None:
+        q = QueueCircularLinkedList(2)
+        assert q.enqueue(10) is True
+        assert q.enqueue(20) is True
+        assert q.is_full() is True
+        assert q.enqueue(30) is False

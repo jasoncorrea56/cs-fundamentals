@@ -92,7 +92,7 @@ jobs:
           echo 'SEMGREP_CONFIGS=--config .semgrep.yaml --config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
 
       # Gated: JSON excludes inline-suppressed findings, so exit code reflects only unsuppressed issues
-      - name: Run Semgrep → JSON (gating)
+      - name: Run Semgrep - JSON (Gated)
         shell: bash
         run: |
           # shellcheck disable=SC2086
@@ -101,7 +101,7 @@ jobs:
             --json --output semgrep.json
 
       # Non-Gated: Upload SARIF for code scanning UI
-      - name: Run Semgrep → SARIF (upload only)
+      - name: Run Semgrep - SARIF (Upload Only)
         shell: bash
         run: |
           # shellcheck disable=SC2086

@@ -14,7 +14,6 @@ policy:
 
   # Licenses that should fail the job
   deny:
-    # Strong copyleft & SSPL (block)
     - GPL-3.0-only
     - GPL-3.0-or-later
     - AGPL-3.0-only
@@ -28,7 +27,6 @@ policy:
     - SSPL-1.0
 
   severity:
-    # Weak/reciprocal copyleft → warn (MEDIUM)
     - name: "MPL-2.0"
       level: MEDIUM
     - name: "EPL-2.0"
@@ -36,6 +34,5 @@ policy:
     - name: "CDDL-1.0"
       level: MEDIUM
 
-    # Unknown classifiers → surface but don't fail
     - name: "UNKNOWN"
       level: LOW
