@@ -135,6 +135,10 @@ uv run mypy --show-error-codes --pretty .
 
 #### Semgrep
 
+AppSec platform providing security-based code analysis and reporting.
+
+- <https://semgrep.dev/docs/>
+
 - Replicate CI
 
 ```bash

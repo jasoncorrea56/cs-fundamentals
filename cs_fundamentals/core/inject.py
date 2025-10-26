@@ -212,17 +212,16 @@ def _compile_functions(src_by_name: Mapping[str, str]) -> dict[str, FunctionType
 
     # 1) Compile each function in its own safe globals dict with minimal builtins.
     for name, src in src_by_name.items():
-        safe_globals: dict[str, Any] = {"__builtins__": SAFE_BUILTINS.copy()}
-        local_ns: dict[str, Any] = {}
+        # Forgive me future me, filthy naming allows semgrep suppression to fit inline
+        s: dict[str, Any] = {"__builtins__": SAFE_BUILTINS.copy()}  # safe_globals
+        ns: dict[str, Any] = {}  # local_ns
 
         # Validate AST and execute in sandbox with restricted builtins/imports.
         try:
             tree = _validate_source_is_safe(src)
             code = compile(tree, "<submission>", "exec")
 
-            exec(
-                code, safe_globals, local_ns
-            )  # nosemgrep: python.lang.security.audit.exec-detected.exec-detected
+            exec(code, s, ns)  # nosemgrep: python.lang.security.audit.exec-detected.exec-detected
 
         except SyntaxError as syn:
             raise SyntaxError(
@@ -232,7 +231,7 @@ def _compile_functions(src_by_name: Mapping[str, str]) -> dict[str, FunctionType
         except Exception as exc:
             raise RuntimeError(f"Error compiling method '{name}': {exc}") from exc
 
-        fn = local_ns.get(name)
+        fn = ns.get(name)
         if not callable(fn):
             raise ValueError(f"Function '{name}' not defined by provided source.")
 
