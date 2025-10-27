@@ -78,8 +78,7 @@ jobs:
           set -Eeuo pipefail
           echo "IMAGE_ID=${IMAGE_NAME}:${GIT_SHA}" >> "$GITHUB_ENV"
 
-      # Gated: Table format for vulnerabilities only
-      - name: Trivy Image Vuln Scan - Table (Gated)
+      - name: Trivy Image Vuln Scan - Gated
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: image
@@ -92,8 +91,7 @@ jobs:
           trivyignores: .trivyignore
           exit-code: '1'  # Fail on matching vulns
 
-      # Non-Gated: Build SARIF for image scanning
-      - name: Trivy Image SARIF Scan - Upload Only)
+      - name: Trivy Image SARIF Scan - Upload Only for Audit
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: image
@@ -111,13 +109,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-image.sarif
-          category: trivy-image
-
-      - name: Upload Trivy SARIF Image
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-image.sarif
-          category: trivy-image
+          category: trivy-image-${{ github.job }}-${{ steps.meta.outputs.sha }}
 
       - name: SBOM (Syft CycloneDX)
         uses: anchore/sbom-action@v0
