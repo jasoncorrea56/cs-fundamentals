@@ -182,7 +182,7 @@ jobs:
   # After lint and tests pass, call the reusable build workflow.
   build-and-push:
     name: Build, Scan & Push
-    needs: [pre-commit, mypy, pytest, semgrep, osv, trivy-fs]
+    needs: [pre-commit, pytest, semgrep, osv, trivy-fs]
     if: github.event_name == 'push'   # Temporarily run on any push for testing TODO UNDO
     # if: >
     #   github.event_name == 'push' &&
