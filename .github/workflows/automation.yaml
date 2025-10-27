@@ -8,6 +8,10 @@ on:
   pull_request:
     types: [ opened, synchronize ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -53,8 +57,121 @@ jobs:
         run: |
           uv run --frozen mypy cs_fundamentals
 
+  semgrep:
+    name: Semgrep (SAST)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure baseline commit is available for PRs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.13'
+
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install "semgrep==1.86.0"
+          semgrep --version
+          python --version
+
+      - name: Build Semgrep flags (PR baseline or full scan)
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo 'SEMGREP_BASE=--baseline-commit ${{ github.event.pull_request.base.sha }}' >> "$GITHUB_ENV"
+          else
+            echo 'SEMGREP_BASE=' >> "$GITHUB_ENV"
+          fi
+          # Include local override config first
+          echo 'SEMGREP_CONFIGS=--config .semgrep.yaml --config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
+
+      # Gated: JSON excludes inline-suppressed findings, so exit code reflects only unsuppressed issues
+      - name: Run Semgrep - JSON (Gated)
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086
+          semgrep ci $SEMGREP_BASE $SEMGREP_CONFIGS \
+            --metrics=off \
+            --json --output semgrep.json
+
+      # Non-Gated: Upload SARIF for code scanning UI
+      - name: Run Semgrep - SARIF (Upload Only)
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086
+          semgrep ci $SEMGREP_BASE $SEMGREP_CONFIGS \
+            --metrics=off \
+            --sarif --output semgrep-python.sarif || true
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-python.sarif
+          category: semgrep
+
+
+  osv-prep:
+    name: Export deps for OSV (uv -> requirements)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      # Export all groups/extras; drop hashes so OSV treats it as a lock manifest
+      - name: Export Requirements from uv.lock
+        run: |
+          uv export --format=requirements-txt --all-groups --all-extras --no-hashes -o osv-requirements.txt
+          test -s osv-requirements.txt || (echo "No deps exported" && exit 1)
+      - name: Upload OSV Deps Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-deps
+          path: osv-requirements.txt
+          retention-days: 3
+
+  osv:
+    name: OSV Scanner (Dependency Analysis)
+    needs: [osv-prep]
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.3
+    with:
+      download-artifact: osv-deps
+      # Tell OSV what the file is (left side = lockfile type, right side = filename inside artifact)
+      scan-args: |-
+        --lockfile=requirements.txt:osv-requirements.txt
+        --include-git-root
+        ./
+      upload-sarif: true  # default true; explicit for clarity
+      fail-on-vuln: true  # default true; explicit for clarity
+
+  trivy-fs:
+    name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          vuln-type: 'os,library'
+          scanners: 'vuln,secret,license'
+          format: 'table'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignorefile: .trivyignore
+          license-policy: trivy-license-policy.yaml
+          license-full: true
+
   pytest:
-    name: pytest ${{ matrix.python-version }}
+    name: Pytest ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -82,8 +199,8 @@ jobs:
 
   # After lint and tests pass, call the reusable build workflow.
   build-and-push:
-    name: build (reusable)
-    needs: [pre-commit, mypy, pytest]
+    name: Build, Scan & Push
+    needs: [pre-commit, mypy, pytest, semgrep, osv, trivy-fs]
     if: >
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
@@ -93,3 +210,4 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write

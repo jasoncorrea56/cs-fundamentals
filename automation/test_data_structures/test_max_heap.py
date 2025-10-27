@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from ast import literal_eval
 
 from automation.resources.data_structures.heap_data import MAXHEAP_OUTPUT
 from cs_fundamentals.data_structures.max_heap import MaxHeap
@@ -88,6 +89,6 @@ class TestHeap:
             assert h.add(v) is True
         s: str = str(h)
         assert s.startswith("[") and s.endswith("]")
-        contents = eval(s, {"__builtins__": {}})
+        contents = literal_eval(s)
         assert len(contents) == 3
         assert max(contents) == 10

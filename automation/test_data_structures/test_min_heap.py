@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from ast import literal_eval
 
 from automation.resources.data_structures.heap_data import MINHEAP_OUTPUT
 from cs_fundamentals.data_structures.min_heap import MinHeap
@@ -89,6 +90,6 @@ class TestHeap:
         _ = h.peek()  # ensure heap property
         s: str = str(h)
         assert s.startswith("[") and s.endswith("]")
-        contents: list[int] = eval(s, {"__builtins__": {}})  # safe here
+        contents = literal_eval(s)
         assert len(contents) == 3
         assert min(contents) == 1

@@ -43,10 +43,11 @@ class SingletonClass:
     _instance: ClassVar[SingletonClass | None] = None
 
     def __new__(cls: type[_SelfSingleton]) -> _SelfSingleton:
-        if cls._instance is None:
-            # super().__new__ returns an instance of 'cls'
-            cls._instance = super().__new__(cls)
-        return cls._instance  # type: ignore[return-value]
+        # Always use the base-class slot so the entire hierarchy shares one instance
+        if SingletonClass._instance is None:
+            # The first class to construct decides the concrete type (cls)
+            SingletonClass._instance = super().__new__(cls)
+        return SingletonClass._instance  # type: ignore[return-value]
 
     def __init__(self) -> None:
         self.__instance_var: str | None = None
@@ -61,8 +62,9 @@ class SingletonClass:
     def get_instance_access(self) -> str | None:
         return self.__instance_var
 
-    # def print_access(self) -> None:
-    #     print("Printed SingletonClass")
+    def print_access(self) -> None:
+        print(f"Singleton class_access = {self.get_class_access()}")
+        print(f"Singleton instance_access = {self.get_instance_access()}")
 
 
 class SingletonChild(SingletonClass):
@@ -123,32 +125,32 @@ class BorgSingletonResetChild(BorgSingletonClass):
 
 class PracticeSingletonClass:
     def __new__(cls: type[PracticeSingletonClass]) -> PracticeSingletonClass:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class PracticeSingletonChild(PracticeSingletonClass):
     def print_access(self) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class PracticeBorgSingletonClass:
     def __new__(
         cls: type[PracticeBorgSingletonClass], *args: Any, **kwargs: Any
     ) -> PracticeBorgSingletonClass:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class PracticeBorgSingletonChild(PracticeBorgSingletonClass):
     def print_access(self) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class PracticeBorgSingletonResetChild(PracticeBorgSingletonClass):
     def print_access(self) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     print()
     normal = NormalClass()
     normal_child = NormalChild()

@@ -9,7 +9,7 @@ import pytest
 from cs_fundamentals.core import inject as inj
 
 
-# ------------------------------ _safe_import ------------------------------
+# ------------------------------ _safe_import() ------------------------------
 
 
 def test_safe_import_allows_whitelisted_and_blocks_others() -> None:
@@ -36,7 +36,7 @@ def test_safe_import_allows_whitelisted_and_blocks_others() -> None:
         inj._safe_import("pathlib")
 
 
-# --------------------------- _compile_functions ---------------------------
+# --------------------------- _compile_functions() ---------------------------
 
 
 def test_compile_functions_single_and_multiple_with_recursion_and_crosscalls() -> None:
@@ -106,7 +106,7 @@ def test_compiled_functions_use_safe_builtins_for_imports() -> None:
         _ = funcs_bad["k"]()
 
 
-# --------------------------- inject_into_practice --------------------------
+# --------------------------- inject_into_practice() --------------------------
 
 
 def _make_dummy_practice_module(name: str = "practice_mod") -> ModuleType:
@@ -149,9 +149,9 @@ def test_inject_into_practice_binds_symbols_and_preserves_descriptors(
     # one intended to replace classmethod, and one replaces instance method.
     sources: dict[str, str] = {
         "make_node_value": "def make_node_value(v):\n    n = Node(v)\n    return n.value",
-        "sstub": "def sstub(a):\n    return a * 10",  # should remain staticmethod
-        "cstub": "def cstub(cls, a):\n    return a * 100",  # should remain classmethod
-        "istub": "def istub(self, a):\n    return a * 1000",  # should remain instance method
+        "sstub": "def sstub(a):\n    return a * 10",  # Should remain staticmethod
+        "cstub": "def cstub(cls, a):\n    return a * 100",  # Should remain classmethod
+        "istub": "def istub(self, a):\n    return a * 1000",  # Should remain instance method
     }
     funcs = inj._compile_functions(sources)
 
@@ -176,3 +176,100 @@ def test_inject_into_practice_binds_symbols_and_preserves_descriptors(
     # istub stays a normal instance method
     p = Practice()
     assert p.istub(2) == 2000
+
+
+def test_inject_into_practice_adds_brand_new_instance_method() -> None:
+    mod = _make_dummy_practice_module("practice_mod_newmethod")
+    Practice = getattr(mod, "Practice")
+
+    sources = {"brand_new": "def brand_new(self, x):\n    return x * 5"}
+    funcs = inj._compile_functions(sources)
+    inj.inject_into_practice("practice_mod_newmethod", "Practice", funcs)
+
+    assert hasattr(Practice, "brand_new")
+    p = Practice()
+    assert p.brand_new(3) == 15
+
+
+# --------------------------- _validate_source_is_safe() --------------------------
+
+
+def test_validate_module_allows_assign_and_annassign_literal_and_annotation_only() -> None:
+    src = (
+        "x: int = 3\n"  # AnnAssign with safe literal value
+        "y: list[int] | None\n"  # AnnAssign with value=None (annotation-only)
+        "z = {'a': [1, 2], 'b': (3, 4)}\n"  # Assign with nested literal containers
+        "def ok():\n"
+        "    return 42\n"
+    )
+    tree = inj._validate_source_is_safe(src)
+    assert isinstance(tree, type(inj.ast.parse("", mode="exec")))
+
+
+def test_validate_module_rejects_non_literal_toplevel_and_other_defs() -> None:
+    # Non-literal top-level value: call expression
+    with pytest.raises(SyntaxError):
+        inj._validate_source_is_safe("x = f()\n")
+
+    # Class definition not allowed at top level
+    with pytest.raises(SyntaxError):
+        inj._validate_source_is_safe("class C: pass\n")
+
+    # Import is not allowed at top level (only literal/builtin assigns + defs)
+    with pytest.raises(SyntaxError):
+        inj._validate_source_is_safe("import math\n")
+
+
+def test_validator_dunder_attribute_rules() -> None:
+    # 1) object.__new__ access allowed
+    src_ok_new = "def f():\n    return object.__new__\n"
+    inj._validate_source_is_safe(src_ok_new)
+
+    # 2) __dict__ in STORE context is allowed
+    src_ok_dict_store = "def f(a):\n    a.__dict__ = {}\n"
+    inj._validate_source_is_safe(src_ok_dict_store)
+
+    # 3) __dict__ read (LOAD) must be rejected
+    src_bad_dict_load = "def f(a):\n    return a.__dict__\n"
+    with pytest.raises(SyntaxError):
+        inj._validate_source_is_safe(src_bad_dict_load)
+
+
+def test_validator_denied_calls() -> None:
+    for bad in (
+        "eval('1')",
+        "exec('pass')",
+        "open('x')",
+        "__import__('os')",
+        "compile('','<x>','exec')",
+    ):
+        with pytest.raises(SyntaxError):
+            inj._validate_source_is_safe(f"def f():\n    {bad}\n")
+
+
+def test_literal_expr_unary_numbers_and_reject_dict_unpack() -> None:
+    # Allowed: unary numeric literals
+    inj._validate_source_is_safe("x = -1\ndef ok():\n    return 0")
+    inj._validate_source_is_safe("x = +2\ndef ok():\n    return 0")
+
+    # Rejected: dict unpack produces Dict(keys=[None]) -> unsafe literal
+    with pytest.raises(SyntaxError):
+        inj._validate_source_is_safe("x = {**{1: 2}}\n")
+
+
+def test_toplevel_assignment_to_safe_builtin_name_ok() -> None:
+    # x = print (builtin name) should be allowed as a top-level assignment
+    src = "x = print\ndef ok():\n    return 1\n"
+    inj._validate_source_is_safe(src)
+
+
+def test_validate_module_allows_module_docstring_only() -> None:
+    src = '"""top-level module docstring allowed by validator"""\n'
+    tree = inj._validate_source_is_safe(src)
+    # Just ensure it parsed and validated
+    assert isinstance(tree, type(inj.ast.parse("", mode="exec")))
+
+
+def test_validator_visit_call_allows_non_denied_builtin_name() -> None:
+    src = "def f():\n    return len([1, 2, 3])\n"
+    inj._validate_source_is_safe(src)

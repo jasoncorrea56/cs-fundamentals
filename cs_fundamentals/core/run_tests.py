@@ -148,8 +148,8 @@ def run_pytest(
     os.environ.pop("PYTEST_PLUGINS", None)
 
     # Portable working dir:
-    # - container: /app exists → use it
-    # - local: fall back to repo root (where pyproject.toml lives)
+    # - container: /app exists and preferentially used
+    # - local: fall back to repo root
     cwd = Path("/app") if Path("/app").exists() else REPO_ROOT
 
     # Import pytest lazily to avoid importing it in non-test code paths

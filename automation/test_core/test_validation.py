@@ -12,8 +12,6 @@ def test_validate_methods_exist_all_methods_present(monkeypatch: pytest.MonkeyPa
     dummy_cls = types.SimpleNamespace(a=lambda: None, b=lambda: None)
     dummy_mod = types.SimpleNamespace(Dummy=dummy_cls)
     monkeypatch.setattr(val.importlib, "import_module", lambda m: dummy_mod)
-
-    # All methods exist → no error expected
     val.validate_methods_exist("dummy_mod", "Dummy", ["a", "b"])
 
 

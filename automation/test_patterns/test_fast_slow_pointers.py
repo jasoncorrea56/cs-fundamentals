@@ -34,3 +34,22 @@ class TestFastSlowPointers:
     def test_get_first_node_for_cycle_in_linked_list(self, cycle_first_node: Node) -> None:
         results = self.fs_pointers.get_first_node_for_cycle_in_linked_list(self.linked_list.head)
         assert results == cycle_first_node
+
+    def test_has_cycle_in_linked_list_empty(self) -> None:
+        assert FastSlowPointers.has_cycle_in_linked_list(None) is False
+
+    def test_has_cycle_in_linked_list_no_cycle(self) -> None:
+        ll = SinglyLinkedList()
+        ll.add_at_head(1)
+        ll.add_at_tail(2)
+        ll.add_at_tail(3)
+        assert FastSlowPointers.has_cycle_in_linked_list(ll.head) is False
+
+    def test_get_first_node_for_cycle_head_none(self) -> None:
+        assert FastSlowPointers.get_first_node_for_cycle_in_linked_list(None) is None
+
+    def test_get_first_node_for_cycle_no_cycle(self) -> None:
+        ll = SinglyLinkedList()
+        ll.add_at_head(10)
+        ll.add_at_tail(20)
+        assert FastSlowPointers.get_first_node_for_cycle_in_linked_list(ll.head) is None

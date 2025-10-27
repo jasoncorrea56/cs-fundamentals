@@ -24,3 +24,33 @@ class TestBinarySearchTree:
     def test_is_valid_bst(self, bst_root) -> None:
         result = self.bst.is_valid_bst(bst_root)
         assert result is True
+
+    def test_is_valid_bst_true_with_left_and_right_branches(self) -> None:
+        #        10
+        #       /  \
+        #      5    15
+        #     / \     \
+        #    2   7     20
+        root = BinaryTreeNode(
+            10,
+            left=BinaryTreeNode(5, BinaryTreeNode(2), BinaryTreeNode(7)),
+            right=BinaryTreeNode(15, None, BinaryTreeNode(20)),
+        )
+        assert BinarySearchTree.is_valid_bst(root) is True
+
+    def test_is_valid_bst_false_due_to_bounds_violation(self) -> None:
+        # Classic violation: 12 is in the left subtree of 10 but > 10
+        #        10
+        #       /  \
+        #      5    15
+        #       \
+        #       12   <-- violates BST property
+        bad = BinaryTreeNode(
+            10,
+            left=BinaryTreeNode(5, None, BinaryTreeNode(12)),
+            right=BinaryTreeNode(15),
+        )
+        assert BinarySearchTree.is_valid_bst(bad) is False
+
+    def test_is_valid_bst_empty_is_true(self) -> None:
+        assert BinarySearchTree.is_valid_bst(None) is True

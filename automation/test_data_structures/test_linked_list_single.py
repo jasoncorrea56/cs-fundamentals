@@ -68,7 +68,7 @@ class TestLinkedListSingle:
     def test_get_tail_empty_and_singleton(self) -> None:
         ll = self.ListImpl()
         try:
-            assert ll.get_tail() is None  # Empty list
+            assert ll.get_tail() is None
         except AttributeError:
             # If get_tail isn't exposed, nothing else to assert here
             return
@@ -105,14 +105,14 @@ class TestLinkedListSingle:
     def test_add_at_index_out_of_range_noop(self) -> None:
         ll = self.ListImpl()
         ll.add_at_head(1)
-        ll.add_at_index(5, 99)  # No previous node → no-op
+        ll.add_at_index(5, 99)
         assert ll.get_list() == [1]
 
     def test_add_at_index_middle_inserts_between_nodes(self) -> None:
         ll = self.ListImpl()
         ll.add_at_head(1)
         ll.add_at_tail(3)
-        ll.add_at_index(1, 2)  # Insert between 1 and 3
+        ll.add_at_index(1, 2)
         assert ll.get_list() == [1, 2, 3]
 
     def test_add_at_index_tail_position_appends(self) -> None:
@@ -132,18 +132,17 @@ class TestLinkedListSingle:
     def test_delete_at_index_head_moves_head(self) -> None:
         ll = self.ListImpl()
         ll.add_at_head(2)
-        ll.add_at_head(1)  # 1 -> 2
+        ll.add_at_head(1)
         ll.delete_at_index(0)
         assert ll.get_list() == [2]
 
     def test_delete_at_index_middle_skips_node(self) -> None:
         ll = self.ListImpl()
-        # Build [1, 2, 3, 4] using public methods only
         ll.add_at_head(1)
         ll.add_at_tail(2)
         ll.add_at_tail(3)
         ll.add_at_tail(4)
-        ll.delete_at_index(2)  # Remove value 3
+        ll.delete_at_index(2)
         assert ll.get_list() == [1, 2, 4]
 
     def test_get_list_stops_on_duplicate_value(self) -> None:
@@ -151,7 +150,6 @@ class TestLinkedListSingle:
         ll.add_at_head(1)
         ll.add_at_tail(2)
         ll.add_at_tail(3)
-        ll.add_at_tail(1)  # duplicate; some impls stop early
+        ll.add_at_tail(1)
         out = ll.get_list()
-        # Teaching impls often early-stop at dup
         assert out in ([1, 2, 3], [1, 2, 3, 1])
