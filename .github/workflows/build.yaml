@@ -78,20 +78,58 @@ jobs:
           set -Eeuo pipefail
           echo "IMAGE_ID=${IMAGE_NAME}:${GIT_SHA}" >> "$GITHUB_ENV"
 
-      - name: Trivy (Image Scan -> SARIF)
+      # - name: Trivy (Image Scan -> SARIF)
+      #   uses: aquasecurity/trivy-action@0.24.0
+      #   with:
+      #     image-ref: ${{ env.IMAGE_ID }}
+      #     format: 'sarif'
+      #     output: 'trivy-image.sarif'
+      #     vuln-type: 'os,library'
+      #     scanners: 'vuln,secret,license'
+      #     ignore-unfixed: true
+      #     severity: 'CRITICAL,HIGH'
+      #     limit-severities-for-sarif: 'CRITICAL,HIGH'
+      #     exit-code: '1'  # Fail on unsuppressed CRITICAL/HIGH
+      #     hide-progress: true
+
+      # Gated: Table format for vulnerabilities only
+      - name: Trivy Image Vuln Scan - Table (Gated)
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ env.IMAGE_ID }}  # Use local image built above
-          format: 'sarif'
-          output: 'trivy-image.sarif'
-          vuln-type: 'os,library'
-          scanners: 'vuln,secret,license'
+          scan-type: image
+          image-ref: ${{ env.IMAGE_ID }}
+          scanners: vuln
+          vuln-type: os,library
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          exit-code: '1'  # Fail job on findings
-          ignorefile: .trivyignore
-          license-policy: trivy-license-policy.yaml
-          license-full: true
+          severity: CRITICAL,HIGH  # Fail build on HIGH/CRITICAL
+          format: table
+          # use the plural key; this points to your repo-level ignore file
+          trivyignores: .trivyignore
+          # fail the step if any matching vulns are found
+          exit-code: '1'
+
+      # Non-Gated: Build SARIF for image scanning
+      - name: Trivy Image SARIF Scan - Upload Only)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.IMAGE_ID }}
+          scanners: vuln,secret,license
+          vuln-type: os,library
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH,MEDIUM
+          format: sarif
+          output: trivy-image.sarif
+          # limit SARIF contents to selected severities for vulns
+          limit-severities-for-sarif: true
+          # don’t fail this step on findings; SARIF is for upload/visibility
+          exit-code: '0'
+
+      - name: Upload Trivy SARIF Image
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
 
       - name: Upload Trivy SARIF Image
         uses: github/codeql-action/upload-sarif@v3

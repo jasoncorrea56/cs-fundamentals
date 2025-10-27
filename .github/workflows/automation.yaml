@@ -91,8 +91,8 @@ jobs:
           # Include local override config first
           echo 'SEMGREP_CONFIGS=--config .semgrep.yaml --config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
 
-      # Gated: JSON excludes inline-suppressed findings, so exit code reflects only unsuppressed issues
-      - name: Run Semgrep - JSON (Gated)
+      # Gated: JSON mode respects inline suppressions
+      - name: Semgrep Code Scan - JSON (Gated)
         shell: bash
         run: |
           # shellcheck disable=SC2086
@@ -100,8 +100,8 @@ jobs:
             --metrics=off \
             --json --output semgrep.json
 
-      # Non-Gated: Upload SARIF for code scanning UI
-      - name: Run Semgrep - SARIF (Upload Only)
+      # Non-Gated: Upload SARIF file for complete audit
+      - name: Semgrep Code Scan - SARIF (Upload Only)
         shell: bash
         run: |
           # shellcheck disable=SC2086
@@ -201,9 +201,10 @@ jobs:
   build-and-push:
     name: Build, Scan & Push
     needs: [pre-commit, mypy, pytest, semgrep, osv, trivy-fs]
-    if: >
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: github.event_name == 'push'   # Temporarily run on any push for testing TODO UNDO
+    # if: >
+    #   github.event_name == 'push' &&
+    #   (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     uses: ./.github/workflows/build.yaml
     # Inherit repo secrets (GITHUB_TOKEN) for GHCR login/push inside the called workflow
     secrets: inherit

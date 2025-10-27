@@ -139,7 +139,7 @@ AppSec platform providing security-based code analysis and reporting.
 
 - <https://semgrep.dev/docs/>
 
-- Replicate CI
+- Output to SARIF
 
 ```bash
 uv run semgrep ci \
@@ -149,7 +149,7 @@ uv run semgrep ci \
 --config p/python --sarif
 ```
 
-- Output to JSON Format
+- Output to JSON
 
 ```bash
 uv run semgrep ci \
@@ -158,6 +158,26 @@ uv run semgrep ci \
 --config p/security-audit \
 --config p/python --json \
 | jq '.results[] | {check_id, path, start: .start.line, message}'
+```
+
+#### Trivy
+
+- Install Trivy
+
+```bash
+brew install trivy
+```
+
+- Launch Trivy Container
+
+```bash
+docker run --rm -v $(pwd):/app -w /app aquasec/trivy:latest fs .
+```
+
+- Scan code with Trivy
+
+```bash
+trivy fs --scanners secret --format table .
 ```
 
 ## Run Tests

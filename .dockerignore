@@ -12,3 +12,10 @@ build/
 
 # MonkeyType
 monkeytype.sqlite3
+
+# Semgrep
+semgrep.sarif
+semgrep-python.sarif
+
+# Trivy
+trivy-fs.sarif
