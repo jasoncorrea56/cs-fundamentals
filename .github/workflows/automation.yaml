@@ -148,8 +148,8 @@ jobs:
         --lockfile=requirements.txt:osv-requirements.txt
         --include-git-root
         ./
-      upload-sarif: true  # default true; explicit for clarity
-      fail-on-vuln: true  # default true; explicit for clarity
+      upload-sarif: true  # Default - explicit for clarity
+      fail-on-vuln: true  # Default - explicit for clarity
 
   trivy-fs:
     name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
