@@ -75,17 +75,10 @@ jobs:
     permissions:
       security-events: write
       contents: read
-    outputs:
-      sha: ${{ steps.meta.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure baseline commit is available for PRs
-
-      - name: Set Metadata
-        id: meta
-        run: |
-          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -127,7 +120,7 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep-python.sarif
-          category: semgrep-fs-${{ github.job }}-${{ steps.meta.outputs.sha }}
+          category: semgrep
 
   osv-prep:
     name: Export deps for OSV (uv -> requirements)
