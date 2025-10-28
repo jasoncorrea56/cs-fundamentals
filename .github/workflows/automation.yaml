@@ -5,8 +5,11 @@ name: Automation - Lint/Tests
 
 on:
   push:
+    branches: [ main ]  # Merge to main
+    tags:    [ 'v*', 'release-*' ]
   pull_request:
-    types: [ opened, synchronize ]
+    branches: [ main ]  # PR targeting main
+    types: [ opened, synchronize, reopened ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,6 +30,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           python-version: '3.11.13'
+          enable-cache: true
 
       - name: Install Deps
         shell: bash
@@ -52,6 +56,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
 
       - name: Install Deps
         shell: bash
@@ -70,17 +75,10 @@ jobs:
     permissions:
       security-events: write
       contents: read
-    outputs:
-      sha: ${{ steps.meta.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure baseline commit is available for PRs
-
-      - name: Set Metadata
-        id: meta
-        run: |
-          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -122,7 +120,7 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep-python.sarif
-          category: semgrep-fs-${{ github.job }}-${{ steps.meta.outputs.sha }}
+          category: semgrep
 
   osv-prep:
     name: Export deps for OSV (uv -> requirements)
@@ -130,6 +128,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: '3.11.13'
+          enable-cache: true
       # Export all groups/extras; drop hashes so OSV treats it as a lock manifest
       - name: Export Requirements from uv.lock
         run: |
@@ -185,7 +186,7 @@ jobs:
     needs: [pre-commit, pytest, semgrep, osv, trivy-fs]
     if: >
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+      (startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))
     uses: ./.github/workflows/build.yaml
     # Inherit repo secrets (GITHUB_TOKEN) for GHCR login/push inside the called workflow
     secrets: inherit
