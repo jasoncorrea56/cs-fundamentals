@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cs-fundamentals
+  labels:
+    app: cs-fundamentals
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cs-fundamentals
+  template:
+    metadata:
+      labels:
+        app: cs-fundamentals
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: api
+          image: cs-fundamentals:dev # Skaffold will tag/replace this
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: cs-fundamentals-config
+                  key: APP_ENV
+          envFrom:
+            - secretRef:
+                name: cs-fundamentals-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 2

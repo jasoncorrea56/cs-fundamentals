@@ -258,6 +258,32 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
     cp local.env .env
     ```
 
+### Run API with Makefile
+
+- Start Minikube
+
+```bash
+make k8s-up
+```
+
+- Point Docker builds at Minikube
+
+```bash
+make k8s-env
+```
+
+- Launch Dev
+
+```bash
+make dev
+```
+
+- Stop Dev
+
+```bash
+make down
+```
+
 ### Run API in uv venv
 
 - Run API for development with `uvicorn` from terminal

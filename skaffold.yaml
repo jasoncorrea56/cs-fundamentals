@@ -1,0 +1,30 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: cs-fundamentals
+build:
+  platforms: ["linux/arm64"]
+  artifacts:
+    - image: cs-fundamentals
+      context: .
+      docker:
+        dockerfile: Dockerfile
+  local:
+    push: false
+manifests:
+  kustomize:
+    paths:
+      - deploy/k8s/base
+deploy:
+  kubectl: {}
+profiles:
+  - name: minikube
+    build:
+      local:
+        push: false
+    portForward:
+      - resourceType: service
+        resourceName: cs-fundamentals
+        namespace: default
+        port: 80
+        localPort: 8080
