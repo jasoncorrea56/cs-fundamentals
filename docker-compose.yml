@@ -15,7 +15,7 @@ x-app-common: &app-common
   build: .            # Build from root Dockerfile (multi-stage; small runtime)
   env_file: .env      # Config stays in env, not baked into image
   ports:
-    - "8000:8000"
+    - "8080:8080"
   pull_policy: build  # Prefer local build; avoids GHCR pulls during iteration
 
 services:
@@ -45,12 +45,12 @@ services:
     command: >
       uvicorn cs_fundamentals.main:app
       --host 0.0.0.0
-      --port ${PORT:-8000}
+      --port ${PORT:-8080}
       --workers ${WEB_CONCURRENCY:-2}
       --timeout-keep-alive 5
       --timeout-graceful-shutdown ${GRACEFUL_TIMEOUT:-10}
     healthcheck:
-      test: ["CMD", "python", "-c", "import os,sys,urllib.request; port=os.getenv('PORT','8000'); url=f'http://127.0.0.1:{port}/readyz'; __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"]
+      test: ["CMD", "python", "-c", "import os,sys,urllib.request; port=os.getenv('PORT','8080'); url=f'http://127.0.0.1:{port}/readyz'; __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -71,11 +71,11 @@ services:
     command: >
       uvicorn cs_fundamentals.main:app
       --host 0.0.0.0
-      --port ${PORT:-8000}
+      --port ${PORT:-8080}
       --reload
       --reload-dir /app
     healthcheck:
-      test: ["CMD", "python", "-c", "import os,sys,urllib.request; port=os.getenv('PORT','8000'); url=f'http://127.0.0.1:{port}/readyz'; __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"]
+      test: ["CMD", "python", "-c", "import os,sys,urllib.request; port=os.getenv('PORT','8080'); url=f'http://127.0.0.1:{port}/readyz'; __import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"]
       interval: 30s
       timeout: 3s
       retries: 3

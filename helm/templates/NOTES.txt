@@ -1,0 +1,16 @@
+1. Get the application URL by running these commands:
+
+  NOTE: It may take a few minutes for the LoadBalancer IP/Ingress to be available.
+
+{{- if .Values.ingress.enabled }}
+  Ingress:
+    http://{{ (index .Values.ingress.hosts 0).host }}{{ (index (index .Values.ingress.hosts 0).paths 0).path }}
+{{- else if eq .Values.service.type "LoadBalancer" }}
+  LoadBalancer:
+    export SERVICE_IP=$(kubectl get svc {{ include "cs-fundamentals.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo "http://$SERVICE_IP:{{ .Values.service.port }}"
+{{- else }}
+  Port-forward:
+    kubectl port-forward svc/{{ include "cs-fundamentals.fullname" . }} 8080:{{ .Values.service.port }}
+    echo "http://127.0.0.1:8080/"
+{{- end }}

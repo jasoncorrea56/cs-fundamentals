@@ -66,11 +66,6 @@ ENV TMPDIR=/tmp
 EXPOSE 8080
 ENV PORT=8080
 
-# Container-level healthcheck: K8s will use probes, but this helps when running `docker run`
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD python -c "import os,sys,urllib.request; port=os.getenv('PORT','8080'); url=f'http://127.0.0.1:{port}/healthz'; \
-__import__('urllib.request').urlopen(url, timeout=2).getcode()==200 and sys.exit(0) or sys.exit(1)"
-
 # Run as non-root user
 USER appuser
 

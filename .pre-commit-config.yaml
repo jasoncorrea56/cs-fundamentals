@@ -8,6 +8,8 @@ repos:
     -   id: check-merge-conflict
     -   id: check-case-conflict
     -   id: check-yaml
+        # Helm templates contain Go templating
+        exclude: ^helm/templates/
     -   id: check-ast
     -   id: debug-statements
     -   id: name-tests-test
@@ -32,3 +34,11 @@ repos:
     hooks:
     -   id: pre-commit-update
         args: []
+- repo: local
+  hooks:
+    - id: helm-lint
+      name: helm lint
+      entry: bash -c 'helm lint helm'
+      language: system
+      pass_filenames: false
+      files: ^helm/(Chart\.yaml|values\.yaml|templates/.*\.yaml)$

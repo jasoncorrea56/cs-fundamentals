@@ -13,7 +13,7 @@
         "--env-file",
         ".env"
     ],
-  "forwardPorts": [8000],
+  "forwardPorts": [8080],
   "postCreateCommand": "uv sync --group dev && pre-commit install",
   "remoteUser": "vscode",
   "customizations": {
@@ -38,14 +38,14 @@
             "args": [
               "cs_fundamentals.main:app",
               "--host", "0.0.0.0",
-              "--port", "8000",
+              "--port", "8080",
               "--reload",
               "--reload-dir", "~/Dev/projects/cs-fundamentals"
             ],
             "jinja": true,
             "justMyCode": true,
             "env": {
-              "PORT": "8000",
+              "PORT": "8080",
               "LOG_LEVEL": "INFO"
             }
           }
