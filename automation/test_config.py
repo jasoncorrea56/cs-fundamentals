@@ -30,7 +30,7 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     s = cfg.Settings(_env_file=None)  # do not read any .env here
     assert s.app_name == "CS Fundamentals API"
     assert s.env == "prod"
-    assert s.port == 8000
+    assert s.port == 8080
     assert s.log_level == "INFO"
     assert s.db_url is None
     assert s.web_concurrency is None

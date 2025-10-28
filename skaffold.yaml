@@ -2,6 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 metadata:
   name: cs-fundamentals
+
 build:
   platforms: ["linux/arm64"]
   artifacts:
@@ -11,12 +12,27 @@ build:
         dockerfile: Dockerfile
   local:
     push: false
-manifests:
-  kustomize:
-    paths:
-      - deploy/k8s/base
+
 deploy:
-  kubectl: {}
+  helm:
+    releases:
+      - name: csf
+        chartPath: helm
+        namespace: default
+        createNamespace: false
+        # Pass Skaffold-built image coordinates to the chart
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO}}"
+          image.tag: "{{.IMAGE_TAG}}"
+          fullnameOverride: "cs-fundamentals"
+        valuesFiles:
+          - helm/values.yaml
+        wait: true  # Wait for resources to be ready on each deploy
+        # Optional: atomic upgrades (roll back on failure)
+        # flags:
+        #   upgrade:
+        #     - --atomic
+
 profiles:
   - name: minikube
     build:

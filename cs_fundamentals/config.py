@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "CS Fundamentals API"
     env: str = "prod"
-    port: int = 8000
+    port: int = 8080
     log_level: str = "INFO"
     db_url: str | None = None
     web_concurrency: int | None = None

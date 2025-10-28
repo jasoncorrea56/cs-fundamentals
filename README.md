@@ -284,6 +284,24 @@ make dev
 make down
 ```
 
+### Helm Chart
+
+```bash
+# Package and install
+helm install csf ./cs-fundamentals --set image.repository=ghcr.io/your-org/cs-fundamentals --set image.tag=latest
+
+# Or with Ingress
+helm install csf ./cs-fundamentals --set ingress.enabled=true --set ingress.className=nginx --set ingress.hosts[0].host=csf.localtest.me
+```
+
+### Skaffold
+
+- Run Skaffold with Minikube for Development
+
+```bash
+skaffold dev -p minikube -v info
+```
+
 ### Run API in uv venv
 
 - Run API for development with `uvicorn` from terminal
@@ -453,25 +471,25 @@ uv run mypy .
 1. HealthZ
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/healthz | jq
+    curl -s http://127.0.0.1:8080/api/v1/healthz | jq
     ```
 
 2. ConfigZ
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/configz | jq
+    curl -s http://127.0.0.1:8080/api/v1/configz | jq
     ```
 
 3. Version
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/version | jq
+    curl -s http://127.0.0.1:8080/api/v1/version | jq
     ```
 
 4. List Practice Targets
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/targets | jq
+    curl -s http://127.0.0.1:8080/api/v1/targets | jq
     ```
 
 <!-- markdownlint-disable MD029 MD031 MD032 MD034 MD037 MD046 -->
@@ -479,7 +497,7 @@ uv run mypy .
 5. Submit Practice via Matrix
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/practice-matrix/submit \
+    curl -s http://127.0.0.1:8080/api/v1/practice-matrix/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -494,7 +512,7 @@ uv run mypy .
 6. Submit Practice
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/practice/submit \
+    curl -s http://127.0.0.1:8080/api/v1/practice/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -515,7 +533,7 @@ uv run mypy .
 7. Submit Practice for Data-Structure: Binary Search Tree
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/bst/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/bst/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -529,7 +547,7 @@ uv run mypy .
 8. Submit Practice for Data-Structure: Graph (Islands II)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/graph/islands/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/graph/islands/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -548,7 +566,7 @@ uv run mypy .
 9. Submit Practice for Data-Structure: Graph (Union-Find)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/graph/union-find/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/graph/union-find/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -565,7 +583,7 @@ uv run mypy .
 10. Submit Practice for Data-Structure: Linked List (Double)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-double/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/linked-list-double/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -587,7 +605,7 @@ uv run mypy .
 11. Submit Practice for Data-Structure: Linked List (Single)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/linked-list-single/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/linked-list-single/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -609,7 +627,7 @@ uv run mypy .
 12. Submit Practice for Data-Structure: Max Heap
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/max-heap/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/max-heap/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -625,7 +643,7 @@ uv run mypy .
 13. Submit Practice for Data-Structure: Min Heap
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/min-heap/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/min-heap/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -641,7 +659,7 @@ uv run mypy .
 14. Submit Practice for Data-Structure: Queue (Array)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/queue/array/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/queue/array/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -662,7 +680,7 @@ uv run mypy .
 15. Submit Practice for Data-Structure: Queue (Linked List)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/queue/linked-list/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/queue/linked-list/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -683,7 +701,7 @@ uv run mypy .
 16. Submit Practice for Data-Structure: Stack (Array)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/stack/array/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/stack/array/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -702,7 +720,7 @@ uv run mypy .
 17. Submit Practice for Data-Structure: Stack (Linked List)
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/data-structures/stack/linked-list/submit \
+    curl -s http://127.0.0.1:8080/api/v1/data-structures/stack/linked-list/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -721,7 +739,7 @@ uv run mypy .
 18. Submit Practice for Pattern: Breadth First Search
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/bfs/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/bfs/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -735,7 +753,7 @@ uv run mypy .
 19. Submit Practice for Pattern: Depth First Search
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/dfs/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/dfs/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -752,7 +770,7 @@ uv run mypy .
 20. Submit Practice for Pattern: Fast/Slow Pointers
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/fast-slow-pointers/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/fast-slow-pointers/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -767,7 +785,7 @@ uv run mypy .
 21. Submit Practice for Pattern: Sliding Windows
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/sliding-window/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/sliding-window/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -788,7 +806,7 @@ uv run mypy .
 22. Submit Practice for Pattern: Two Pointers
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/two-pointers/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/two-pointers/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -810,7 +828,7 @@ uv run mypy .
 23. Submit Practice for Pattern: Singleton
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/singleton/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/singleton/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
@@ -829,7 +847,7 @@ uv run mypy .
 24. Submit Practice for Pattern: Sorting
 
     ```bash
-    curl -s http://127.0.0.1:8000/api/v1/patterns/sorting/submit \
+    curl -s http://127.0.0.1:8080/api/v1/patterns/sorting/submit \
       -H 'Content-Type: application/json' \
       -d @- <<'JSON' | jq
     {
