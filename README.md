@@ -288,10 +288,10 @@ make down
 
 ```bash
 # Package and install
-helm install csf ./cs-fundamentals \  --set image.repository=ghcr.io/your-org/cs-fundamentals \  --set image.tag=latest
+helm install csf ./cs-fundamentals --set image.repository=ghcr.io/your-org/cs-fundamentals --set image.tag=latest
 
 # Or with Ingress
-helm install csf ./cs-fundamentals \  --set ingress.enabled=true \  --set ingress.className=nginx \  --set ingress.hosts[0].host=csf.localtest.me
+helm install csf ./cs-fundamentals --set ingress.enabled=true --set ingress.className=nginx --set ingress.hosts[0].host=csf.localtest.me
 ```
 
 ### Skaffold
