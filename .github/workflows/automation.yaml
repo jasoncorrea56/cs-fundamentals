@@ -183,10 +183,9 @@ jobs:
   build-and-push:
     name: Build, Scan & Push
     needs: [pre-commit, pytest, semgrep, osv, trivy-fs]
-    if: github.event_name == 'push'   # Temporarily run on any push for testing TODO UNDO
-    # if: >
-    #   github.event_name == 'push' &&
-    #   (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     uses: ./.github/workflows/build.yaml
     # Inherit repo secrets (GITHUB_TOKEN) for GHCR login/push inside the called workflow
     secrets: inherit
