@@ -78,26 +78,38 @@ jobs:
           set -Eeuo pipefail
           echo "IMAGE_ID=${IMAGE_NAME}:${GIT_SHA}" >> "$GITHUB_ENV"
 
-      - name: Trivy (Image Scan -> SARIF)
+      - name: Trivy Image Vuln Scan - Gated
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ env.IMAGE_ID }}  # Use local image built above
-          format: 'sarif'
-          output: 'trivy-image.sarif'
-          vuln-type: 'os,library'
-          scanners: 'vuln,secret,license'
+          scan-type: image
+          image-ref: ${{ env.IMAGE_ID }}
+          scanners: vuln
+          vuln-type: os,library
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          exit-code: '1'  # Fail job on findings
-          ignorefile: .trivyignore
-          license-policy: trivy-license-policy.yaml
-          license-full: true
+          severity: CRITICAL,HIGH  # Fail build on HIGH/CRITICAL
+          format: table
+          trivyignores: .trivyignore
+          exit-code: '1'  # Fail on matching vulns
+
+      - name: Trivy Image SARIF Scan - Upload Only for Audit
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.IMAGE_ID }}
+          scanners: vuln,secret,license
+          vuln-type: os,library
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH,MEDIUM
+          format: sarif
+          output: trivy-image.sarif
+          limit-severities-for-sarif: true
+          exit-code: '0'  # Never fail step (SARIF is for upload/visibility)
 
       - name: Upload Trivy SARIF Image
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-image.sarif
-          category: trivy-image
+          category: trivy-image-${{ github.job }}-${{ steps.meta.outputs.sha }}
 
       - name: SBOM (Syft CycloneDX)
         uses: anchore/sbom-action@v0

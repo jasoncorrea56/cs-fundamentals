@@ -37,6 +37,9 @@ WORKDIR /app
 # Create non-root user
 RUN useradd -u 10001 -r -s /sbin/nologin appuser
 
+# Update base tools in runtime image
+RUN python -m pip install --upgrade "pip>=24.3" "setuptools>=78.1.1" "wheel>=0.43"
+
 # Install deps wheels from builder
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels

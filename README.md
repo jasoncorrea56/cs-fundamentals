@@ -71,24 +71,6 @@ Check installed dependencies in venv:
 uv pip list
 ```
 
-### Conda Setup (deprecated)
-
-Install Anaconda
-
-- <https://www.anaconda.com/products/distribution#Downloads>
-
-Create conda environment:
-
-```bash
-conda env create -f environment.yml
-```
-
-Activate conda new environment:
-
-```bash
-conda activate cs-fundamentals-env
-```
-
 ### Pre-commit
 
 Install pre-commit hooks to automatically run linting and formatting prior to making a commit or run pre-commit manually anytime.
@@ -139,7 +121,7 @@ AppSec platform providing security-based code analysis and reporting.
 
 - <https://semgrep.dev/docs/>
 
-- Replicate CI
+- Output to SARIF
 
 ```bash
 uv run semgrep ci \
@@ -149,7 +131,7 @@ uv run semgrep ci \
 --config p/python --sarif
 ```
 
-- Output to JSON Format
+- Output to JSON
 
 ```bash
 uv run semgrep ci \
@@ -158,6 +140,50 @@ uv run semgrep ci \
 --config p/security-audit \
 --config p/python --json \
 | jq '.results[] | {check_id, path, start: .start.line, message}'
+```
+
+#### Trivy Local Setup
+
+- Option 1: Install Trivy (Recommended)
+
+```bash
+brew install trivy
+```
+
+- Option 2: Launch Trivy Container Locally
+
+```bash
+docker run --rm -v $(pwd):/app -w /app aquasec/trivy:latest fs .
+```
+
+#### Trivy File System Scan
+
+- Scan code with Trivy
+
+```bash
+trivy fs --scanners secret --format table .
+```
+
+#### Trivy Image Scan
+
+- Build cs-fundamentals image
+
+```bash
+docker build -t cs-fundamentals:dev .
+```
+
+- Scan code with Trivy
+
+```bash
+trivy image \
+--format table \
+--exit-code 1 \
+--ignore-unfixed \
+--vuln-type os,library \
+--scanners vuln \
+--severity CRITICAL,HIGH \
+--ignorefile .trivyignore \
+cs-fundamentals:dev
 ```
 
 ## Run Tests

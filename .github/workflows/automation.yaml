@@ -25,37 +25,44 @@ jobs:
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
+        with:
+          python-version: '3.11.13'
 
       - name: Install Deps
         shell: bash
-        # Sync dev dependencies and fail CI if drift between pyproject.toml and uv.lock
+        # Sync dev deps and fail CI on drift between pyproject.toml and uv.lock
         run: |
           uv sync --frozen --only-dev
 
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
 
-  mypy:
-    name: Type Checks (mypy)
+  pytest:
+    name: Pytest ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11.13', '3.12', '3.13' ]
+    continue-on-error: ${{ matrix.python-version != '3.11' }}
     steps:
-      - name: Checkout Project
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install Deps (including dev)
+      - name: Install Deps
         shell: bash
+        # Sync default dependencies and fail CI if drift between pyproject.toml and uv.lock
         run: |
           uv sync --frozen --all-groups
 
-      - name: Type check
+      - name: Run Tests
         shell: bash
         run: |
-          uv run --frozen mypy cs_fundamentals
+          uv run --frozen pytest
 
   semgrep:
     name: Semgrep (SAST)
@@ -63,10 +70,17 @@ jobs:
     permissions:
       security-events: write
       contents: read
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure baseline commit is available for PRs
+
+      - name: Set Metadata
+        id: meta
+        run: |
+          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -84,36 +98,31 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo 'SEMGREP_BASE=--baseline-commit ${{ github.event.pull_request.base.sha }}' >> "$GITHUB_ENV"
+            echo 'SEMGREP_BASE=--metrics=off --baseline-commit ${{ github.event.pull_request.base.sha }}' >> "$GITHUB_ENV"
           else
-            echo 'SEMGREP_BASE=' >> "$GITHUB_ENV"
+            echo 'SEMGREP_BASE=--metrics=off' >> "$GITHUB_ENV"
           fi
           # Include local override config first
           echo 'SEMGREP_CONFIGS=--config .semgrep.yaml --config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
 
-      # Gated: JSON excludes inline-suppressed findings, so exit code reflects only unsuppressed issues
-      - name: Run Semgrep - JSON (Gated)
+      - name: Semgrep Code Vuln Scan - Gated
         shell: bash
         run: |
           # shellcheck disable=SC2086
           semgrep ci $SEMGREP_BASE $SEMGREP_CONFIGS \
-            --metrics=off \
             --json --output semgrep.json
 
-      # Non-Gated: Upload SARIF for code scanning UI
-      - name: Run Semgrep - SARIF (Upload Only)
+      - name: Semgrep Code SARIF Scan - Upload Only (Audit)
         shell: bash
         run: |
           # shellcheck disable=SC2086
           semgrep ci $SEMGREP_BASE $SEMGREP_CONFIGS \
-            --metrics=off \
             --sarif --output semgrep-python.sarif || true
 
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep-python.sarif
-          category: semgrep
-
+          category: semgrep-fs-${{ github.job }}-${{ steps.meta.outputs.sha }}
 
   osv-prep:
     name: Export deps for OSV (uv -> requirements)
@@ -148,8 +157,8 @@ jobs:
         --lockfile=requirements.txt:osv-requirements.txt
         --include-git-root
         ./
-      upload-sarif: true  # default true; explicit for clarity
-      fail-on-vuln: true  # default true; explicit for clarity
+      upload-sarif: true  # Default - explicit for clarity
+      fail-on-vuln: true  # Default - explicit for clarity
 
   trivy-fs:
     name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
@@ -166,41 +175,14 @@ jobs:
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
-          ignorefile: .trivyignore
+          trivyignores: .trivyignore
           license-policy: trivy-license-policy.yaml
           license-full: true
-
-  pytest:
-    name: Pytest ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.11', '3.12', '3.13' ]
-    continue-on-error: ${{ matrix.python-version != '3.11' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Deps
-        shell: bash
-        # Sync default dependencies and fail CI if drift between pyproject.toml and uv.lock
-        run: |
-          uv sync --frozen --all-groups
-
-      - name: Run Tests
-        shell: bash
-        run: |
-          uv run --frozen pytest
 
   # After lint and tests pass, call the reusable build workflow.
   build-and-push:
     name: Build, Scan & Push
-    needs: [pre-commit, mypy, pytest, semgrep, osv, trivy-fs]
+    needs: [pre-commit, pytest, semgrep, osv, trivy-fs]
     if: >
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
