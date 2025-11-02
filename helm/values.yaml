@@ -1,6 +1,7 @@
 image:
-  repository: ghcr.io/jasoncorrea56/cs-fundamentals
-  tag: "latest"
+  # repository: ghcr.io/jasoncorrea56/cs-fundamentals
+  repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
+  tag: "v0.1.0"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -25,18 +26,21 @@ probes:
 
 ingress:
   enabled: true
-  className: "nginx"
-  annotations: {}
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
   hosts:
-    - host: cs-fundamentals.local
+    - host: "" # Hostless rule matches all hosts (use ALB hostname)
       paths:
         - path: /
           pathType: Prefix
   tls: []
 
 serviceAccount:
-  create: true
-  name: ""
+  create: false
+  name: "csf-app"
   annotations: {}
 
 podAnnotations: {}
@@ -68,11 +72,11 @@ affinity: {}
 env:
   - name: LOG_LEVEL
     value: "info"
-  # - name: SOME_API_KEY
-  #   valueFrom:
-  #     secretKeyRef:
-  #       name: {{ include "cs-fundamentals.fullname" . }}-secret
-  #       key: someApiKey
+  - name: DB_URL
+    valueFrom:
+      secretKeyRef:
+        name: csf-db
+        key: DB_URL
 
 config:
   enabled: true

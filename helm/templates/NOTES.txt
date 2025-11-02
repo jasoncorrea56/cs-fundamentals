@@ -3,14 +3,19 @@
   NOTE: It may take a few minutes for the LoadBalancer IP/Ingress to be available.
 
 {{- if .Values.ingress.enabled }}
+  {{- if gt (len .Values.ingress.hosts) 0 }}
   Ingress:
-    http://{{ (index .Values.ingress.hosts 0).host }}{{ (index (index .Values.ingress.hosts 0).paths 0).path }}
+    http{{ if gt (len .Values.ingress.tls) 0 }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}{{ (index (index .Values.ingress.hosts 0).paths 0).path }}
+  {{- else }}
+  Ingress (ALB hostname):
+    kubectl -n {{ .Release.Namespace }} get ingress {{ include "cs-fundamentals.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'; echo
+  {{- end }}
 {{- else if eq .Values.service.type "LoadBalancer" }}
   LoadBalancer:
-    export SERVICE_IP=$(kubectl get svc {{ include "cs-fundamentals.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    export SERVICE_IP=$(kubectl -n {{ .Release.Namespace }} get svc {{ include "cs-fundamentals.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
     echo "http://$SERVICE_IP:{{ .Values.service.port }}"
 {{- else }}
   Port-forward:
-    kubectl port-forward svc/{{ include "cs-fundamentals.fullname" . }} 8080:{{ .Values.service.port }}
+    kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "cs-fundamentals.fullname" . }} 8080:{{ .Values.service.port }}
     echo "http://127.0.0.1:8080/"
 {{- end }}

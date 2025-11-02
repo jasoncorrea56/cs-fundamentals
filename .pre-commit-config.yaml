@@ -15,7 +15,7 @@ repos:
     -   id: name-tests-test
         args: [--pytest-test-first]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.2
+    rev: v0.14.3
     hooks:
     -   id: ruff
         args: [--fix]
@@ -34,11 +34,11 @@ repos:
     hooks:
     -   id: pre-commit-update
         args: []
-- repo: local
-  hooks:
-    - id: helm-lint
-      name: helm lint
-      entry: bash -c 'helm lint helm'
-      language: system
-      pass_filenames: false
-      files: ^helm/(Chart\.yaml|values\.yaml|templates/.*\.yaml)$
+-   repo: local
+    hooks:
+    -   id: helm-lint
+        name: helm lint
+        entry: bash -c 'helm lint helm'
+        language: system
+        pass_filenames: false
+        files: ^helm/(Chart\.yaml|values\.yaml|templates/.*\.yaml)$

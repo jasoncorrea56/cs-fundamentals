@@ -115,6 +115,10 @@ uv run mypy --show-error-codes --pretty .
 
 ### Static Analysis
 
+#### OSV
+
+<https://google.github.io/osv-scanner/github-action/>
+
 #### Semgrep
 
 AppSec platform providing security-based code analysis and reporting.
@@ -143,6 +147,8 @@ uv run semgrep ci \
 ```
 
 #### Trivy Local Setup
+
+<https://trivy.dev/latest/>
 
 - Option 1: Install Trivy (Recommended)
 
