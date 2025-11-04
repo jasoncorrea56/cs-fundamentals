@@ -31,12 +31,18 @@ ingress:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-west-2:948319129176:certificate/e6b92505-243a-45a0-bb66-54474bf1fac3"
   hosts:
-    - host: "" # Hostless rule matches all hosts (use ALB hostname)
+    - host: "csf.jasoncorrea.com"   # ExternalDNS uses to create the A record
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  # Optional TLS block for ALB TLS termination (ALB uses annotation above).
+  # Empty is fine, but including host for clarity.
+  tls: {}
+    # - hosts: ["csf.jasoncorrea.com"]
 
 serviceAccount:
   create: false
