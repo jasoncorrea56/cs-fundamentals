@@ -1,7 +1,9 @@
 image:
-  repository: ghcr.io/jasoncorrea56/cs-fundamentals
-  tag: "latest"
+  # repository: ghcr.io/jasoncorrea56/cs-fundamentals
+  repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
+  tag: "v0.2.0"
   pullPolicy: IfNotPresent
+  fullname: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -25,18 +27,27 @@ probes:
 
 ingress:
   enabled: true
-  className: "nginx"
-  annotations: {}
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-west-2:948319129176:certificate/e6b92505-243a-45a0-bb66-54474bf1fac3"
   hosts:
-    - host: cs-fundamentals.local
+    - host: "csf.jasoncorrea.com"   # ExternalDNS uses to create the A record
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  # Optional TLS block for ALB TLS termination (ALB uses annotation above).
+  # Empty is fine, but including host for clarity.
+  tls: {}
+    # - hosts: ["csf.jasoncorrea.com"]
 
 serviceAccount:
   create: true
-  name: ""
+  name: "csf-app"
   annotations: {}
 
 podAnnotations: {}
@@ -68,11 +79,11 @@ affinity: {}
 env:
   - name: LOG_LEVEL
     value: "info"
-  # - name: SOME_API_KEY
-  #   valueFrom:
-  #     secretKeyRef:
-  #       name: {{ include "cs-fundamentals.fullname" . }}-secret
-  #       key: someApiKey
+  - name: DB_URL
+    valueFrom:
+      secretKeyRef:
+        name: csf-db
+        key: DB_URL
 
 config:
   enabled: true
@@ -85,3 +96,23 @@ config:
 secret:
   enabled: false
   stringData: {}
+
+secretsStore:
+  enabled: false
+
+podSecurityContext:
+  fsGroup: 2000
+  runAsNonRoot: true
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+
+devWritableTmp:
+  enabled: true

@@ -14,6 +14,7 @@ k8s-env:
 
 .PHONY: dev
 dev:
+	@export DB_URL="$(grep -E '^DB_URL=' .env | cut -d= -f2-)"
 	@skaffold dev -p minikube
 
 .PHONY: dev-in-node
@@ -45,3 +46,23 @@ semgrep-deep:
 .PHONY: tests
 tests:
 	@uv run pytest -q
+
+.PHONY: verify
+verify:
+	@echo "🔍 Verifying cs-fundamentals deployment in namespace 'csf'..."
+	@echo "\n✅ Checking deployment and pods..."
+	kubectl -n csf get deploy,rs,pods
+	@echo "\n✅ Checking deployment conditions..."
+	kubectl -n csf describe deploy csf-cs-fundamentals | grep -A5 "Conditions" || true
+	@echo "\n✅ Checking health endpoint..."
+	@if kubectl -n csf get svc csf-cs-fundamentals >/dev/null 2>&1; then \
+		curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8080/api/v1/healthz || true; \
+	fi
+	@echo "\n✅ Checking environment variables..."
+	kubectl -n csf exec -it deploy/csf-cs-fundamentals -- printenv | grep -E 'DB_URL|TMPDIR' || true
+	@echo "\n✅ Checking writable /tmp..."
+	kubectl -n csf exec -it deploy/csf-cs-fundamentals -- sh -c 'touch /tmp/testfile && ls -l /tmp/testfile' || true
+	@echo "\n✅ Helm chart lint and manifest check..."
+	helm lint ./helm
+	@helm get manifest csf -n csf | head -n 30 || true
+	@echo "\n🎯 Verification complete!"

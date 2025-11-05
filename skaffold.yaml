@@ -17,9 +17,9 @@ deploy:
   helm:
     releases:
       - name: csf
-        chartPath: helm
-        namespace: default
-        createNamespace: false
+        chartPath: ./helm
+        namespace: csf
+        createNamespace: true
         # Pass Skaffold-built image coordinates to the chart
         setValueTemplates:
           image.repository: "{{.IMAGE_REPO}}"
@@ -38,9 +38,28 @@ profiles:
     build:
       local:
         push: false
+
+    deploy:
+      helm:
+        releases:
+          - name: csf
+            namespace: csf
+            chartPath: ./helm
+            wait: true
+            skipBuildDependencies: true
+            createNamespace: true
+            setValueTemplates:
+              image.repository: "{{.IMAGE_REPO}}"
+              image.tag: "{{.IMAGE_TAG}}"
+              secret.enabled: "true"
+              secret.name: "csf-db"
+              secret.data.DB_URL: "{{.DB_URL}}"
+            valuesFiles:
+              - helm/values-minikube.yaml
+
     portForward:
       - resourceType: service
-        resourceName: cs-fundamentals
-        namespace: default
+        resourceName: csf-cs-fundamentals
+        namespace: csf
         port: 80
         localPort: 8080

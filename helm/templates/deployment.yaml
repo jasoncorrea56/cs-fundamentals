@@ -1,3 +1,7 @@
+{{- /* local flags (safe even if values are missing) */ -}}
+{{- $useSecrets := (default false .Values.secretsStore.enabled) -}}
+{{- $useTmp := (default false .Values.devWritableTmp.enabled) -}}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,25 +23,41 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ if .Values.serviceAccount.create }}{{ include "cs-fundamentals.fullname" . }}{{ else }}{{ default "default" .Values.serviceAccount.name }}{{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.name | quote }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
       containers:
         - name: app
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{- if .Values.image.fullname -}}{{ .Values.image.fullname }}{{- else -}}{{ .Values.image.repository }}:{{ .Values.image.tag }}{{- end -}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
+
+          {{- if or .Values.env $useTmp }}
           env:
+            {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 }}
-          {{- if .Values.config.enabled }}
+            {{- end }}
+            {{- if $useTmp }}
+            - name: TMPDIR
+              value: /tmp
+            {{- end }}
+          {{- end }}
+
+          {{- if or .Values.config.enabled .Values.secret.enabled }}
           envFrom:
+            {{- if .Values.config.enabled }}
             - configMapRef:
                 name: {{ include "cs-fundamentals.fullname" . }}
-          {{- end }}
-          {{- if .Values.secret.enabled }}
+            {{- end }}
+            {{- if .Values.secret.enabled }}
             - secretRef:
                 name: {{ include "cs-fundamentals.fullname" . }}-secret
+            {{- end }}
           {{- end }}
+
           readinessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
@@ -47,6 +67,7 @@ spec:
             timeoutSeconds: {{ .Values.probes.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.failureThreshold }}
             successThreshold: {{ .Values.probes.successThreshold }}
+
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
@@ -56,8 +77,26 @@ spec:
             timeoutSeconds: {{ .Values.probes.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.failureThreshold }}
             successThreshold: {{ .Values.probes.successThreshold }}
+
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
+          {{- if or $useSecrets $useTmp }}
+          volumeMounts:
+            {{- if $useSecrets }}
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+            {{- end }}
+            {{- if $useTmp }}
+            - name: tmp
+              mountPath: /tmp
+            {{- end }}
+          {{- end }}
+
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -69,4 +108,20 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- if or $useSecrets $useTmp }}
+      volumes:
+        {{- if $useSecrets }}
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: csf-db-spc
+        {{- end }}
+        {{- if $useTmp }}
+        - name: tmp
+          emptyDir: {}
+        {{- end }}
       {{- end }}
