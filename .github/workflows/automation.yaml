@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, lint/format, and run tests with a Python version matrix
 # After lint/tests succeed, we conditionally call the reusable build workflow for pushes to main or version tags.
 
-name: Automation - Lint/Tests
+name: Automation - Lint/Scan/Test
 
 on:
   push:

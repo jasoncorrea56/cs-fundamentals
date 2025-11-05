@@ -1,0 +1,141 @@
+name: CD - Deploy to EKS
+
+on:
+  workflow_run:
+    workflows: ["Build - Build/Scan/Push"]
+    types: [completed]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  K8S_NAMESPACE: csf
+  HELM_RELEASE: csf
+  HELM_CHART_DIR: ./helm
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    # Branch -> Dev, Tag (v*) -> Prod (environment protection on Prod)
+    environment: ${{ startsWith(github.event.workflow_run.head_branch, 'v') && 'prod' || 'dev' }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download Image Refs from Build
+        uses: actions/download-artifact@v4
+        with:
+          name: image-refs
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Load Image Refs
+        run: |
+          set -Eeuo pipefail
+          source image-refs.env
+          echo "GHCR_REF=$ghcr_ref" >> $GITHUB_ENV
+          echo "ECR_REF=$ecr_ref"   >> $GITHUB_ENV
+          echo "SHA=$sha"           >> $GITHUB_ENV
+          # ECR repo and registry
+          echo "ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}" >> $GITHUB_ENV
+          echo "ECR_REPO=cs-fundamentals" >> $GITHUB_ENV
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Configure KubeConfig (EKS)
+        run: |
+          aws eks update-kubeconfig \
+            --name "${{ secrets.EKS_CLUSTER_NAME }}" \
+            --region "${{ secrets.AWS_REGION }}"
+          kubectl auth can-i get pods -A
+
+      - name: Ensure Namespace
+        run: |
+          kubectl get ns ${{ env.K8S_NAMESPACE }} || kubectl create ns ${{ env.K8S_NAMESPACE }}
+
+      - name: Helm Upgrade
+        env:
+          IMAGE_REPO: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}
+        run: |
+          set -Eeuo pipefail
+          helm upgrade --install ${{ env.HELM_RELEASE }} ${{ env.HELM_CHART_DIR }} \
+            --namespace ${{ env.K8S_NAMESPACE }} \
+            --create-namespace \
+            -f ${{ env.HELM_CHART_DIR }}/values.yaml \
+            --set image.repository="${IMAGE_REPO}" \
+            --set image.tag="${SHA}"
+
+      - name: Wait for Rollout
+        run: |
+          kubectl rollout status deploy/${{ env.HELM_RELEASE }} -n ${{ env.K8S_NAMESPACE }} --timeout=180s
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+
+      # --- In-cluster smoke test Job: /healthz + simple API call ---
+      - name: Run smoke test Job
+        id: smoketest
+        env:
+          JOB: csf-smoke-${{ github.run_id }}
+        run: |
+          set -Eeuo pipefail
+          cat > job.yaml <<'YAML'
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${JOB}
+            namespace: ${K8S_NAMESPACE}
+          spec:
+            backoffLimit: 0
+            ttlSecondsAfterFinished: 300
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: curl
+                    image: curlimages/curl:8.7.1
+                    args:
+                      - /bin/sh
+                      - -c
+                      - |
+                        set -e
+                        echo "Probing service..."
+                        for i in $(seq 1 30); do
+                          if curl -fsS --max-time 2 http://csf/api/v1/healthz > /dev/null; then
+                            echo "healthz OK on attempt $i"; break
+                          fi
+                          sleep 2
+                        done
+                        curl -fsS --max-time 5 http://csf/api/v1/targets | head -c 200 >/dev/null
+          YAML
+          envsubst < job.yaml | kubectl apply -f -
+          kubectl wait --for=condition=complete job/${JOB} -n ${K8S_NAMESPACE} --timeout=90s
+
+      - name: Show Service/Ingress
+        if: always()
+        run: |
+          kubectl get svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide
+
+      - name: Rollback on Failure
+        if: failure() && steps.smoketest.outcome == 'failure'
+        env:
+          RELEASE: ${{ env.HELM_RELEASE }}
+          NS: ${{ env.K8S_NAMESPACE }}
+        run: |
+          set +e
+          echo "Smoke test failed—dumping Job logs, then rolling back..."
+          kubectl logs -l job-name="csf-smoke-${{ github.run_id }}" -n ${NS} --tail=-1 || true
+          PREV=$(helm history ${RELEASE} -n ${NS} --output json | jq '.[-2].revision' -r 2>/dev/null)
+          if [ -n "$PREV" ] && [ "$PREV" != "null" ]; then
+            helm rollback ${RELEASE} ${PREV} -n ${NS}
+          else
+            echo "No previous revision found; skipping rollback."
+          fi
+          exit 1

@@ -2,7 +2,7 @@
 # It is called from automation.yaml after lint/tests pass.
 # Build (no push) -> Scan (Trivy) -> SBOM (Syft) -> Push (only if scans pass).
 
-name: Build
+name: Build - Build/Scan/Push
 
 on:
   workflow_call:
@@ -17,17 +17,40 @@ on:
         required: false
         type: boolean
         default: true
+      push_to_ecr:
+        description: "Also push to Amazon ECR"
+        required: false
+        type: boolean
+        default: true
+      ecr_registry:
+        description: "ECR registry URI, e.g. 123456789012.dkr.ecr.us-west-2.amazonaws.com"
+        required: false
+        type: string
+        default: ${{ secrets.ECR_REGISTRY }}
+      ecr_repo:
+        description: "ECR repo name, e.g. cs-fundamentals"
+        required: false
+        type: string
+        default: cs-fundamentals
+      aws_region:
+        description: "AWS region for ECR login"
+        required: false
+        type: string
+        default: ${{ secrets.AWS_REGION }}
 
 permissions:
   contents: read
-  packages: write  # Required to push to GHCR
+  packages: write         # Required to push to GHCR
   security-events: write  # Needed for SARIF upload to code scanning
+  id-token: write         # Needed for OIDC access to AWS
 
 jobs:
   build-and-push:
     name: Build, Scan Image & Push
     runs-on: ubuntu-latest
     outputs:
+      ecr_ref: ${{ steps.publish.outputs.ecr_ref }}
+      ghcr_ref: ${{ steps.publish.outputs.ghcr_ref }}
       image_name: ${{ inputs.image_name }}
       sha: ${{ steps.meta.outputs.sha }}
     steps:
@@ -51,6 +74,7 @@ jobs:
             exit 1
           fi
 
+      # --- Docker Image Build ---
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -70,7 +94,7 @@ jobs:
             GIT_SHA=${{ steps.meta.outputs.sha }}
             BUILD_TIME=${{ steps.meta.outputs.created }}
 
-      - name: Set IMAGE_ID env
+      - name: Set IMAGE_ID Env Var
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
@@ -78,6 +102,7 @@ jobs:
           set -Eeuo pipefail
           echo "IMAGE_ID=${IMAGE_NAME}:${GIT_SHA}" >> "$GITHUB_ENV"
 
+      # --- Code Quality and Vulnerability Scan ---
       - name: Trivy Image Vuln Scan - Gated
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -91,7 +116,7 @@ jobs:
           trivyignores: .trivyignore
           exit-code: '1'  # Fail on matching vulns
 
-      - name: Trivy Image SARIF Scan - Upload Only for Audit
+      - name: Trivy Image SARIF Scan - Audit
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: image
@@ -111,19 +136,20 @@ jobs:
           sarif_file: trivy-image.sarif
           category: trivy-image
 
-      - name: SBOM (Syft CycloneDX)
+      - name: SBOM - Syft CycloneDX
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.IMAGE_ID }}  # Same local image built above
           format: cyclonedx-json
           output-file: sbom.cdx.json
 
-      - name: Upload SBOM artifact
+      - name: Upload SBOM Artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx
           path: sbom.cdx.json
 
+      # --- GHCR Login and Push ---
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -146,6 +172,74 @@ jobs:
         run: |
           set -Eeuo pipefail
           docker push "${IMAGE_NAME}:latest"
+
+      # --- Optional ECR Login and Push ---
+      - name: Configure AWS (for ECR via OIDC)
+        if: ${{ inputs.push_to_ecr }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Login to ECR
+        if: ${{ inputs.push_to_ecr }}
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ inputs.ecr_registry }}
+
+      - name: Tag Image for ECR
+        if: ${{ inputs.push_to_ecr }}
+        env:
+          GHCR_IMAGE: ${{ inputs.image_name }}
+          ECR_REGISTRY: ${{ inputs.ecr_registry }}
+          ECR_REPO: ${{ inputs.ecr_repo }}
+          GIT_SHA: ${{ steps.meta.outputs.sha }}
+        run: |
+          set -Eeuo pipefail
+          docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
+          if [ "${{ inputs.push_latest }}" = "true" ]; then
+            docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:latest"
+          fi
+
+      - name: Push Image to ECR (SHA)
+        if: ${{ inputs.push_to_ecr }}
+        env:
+          ECR_REGISTRY: ${{ inputs.ecr_registry }}
+          ECR_REPO: ${{ inputs.ecr_repo }}
+          GIT_SHA: ${{ steps.meta.outputs.sha }}
+        run: |
+          docker push "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
+
+      - name: Push Image to ECR (Latest)
+        if: ${{ inputs.push_to_ecr && inputs.push_latest }}
+        env:
+          ECR_REGISTRY: ${{ inputs.ecr_registry }}
+          ECR_REPO: ${{ inputs.ecr_repo }}
+        run: |
+          docker push "${ECR_REGISTRY}/${ECR_REPO}:latest"
+
+      # --- Manage Image Metadata for CD ---
+      - name: Write Image Refs Artifact
+        env:
+          GHCR_IMAGE: ${{ inputs.image_name }}
+          ECR_REGISTRY: ${{ inputs.ecr_registry }}
+          ECR_REPO: ${{ inputs.ecr_repo }}
+          GIT_SHA: ${{ steps.meta.outputs.sha }}
+        run: |
+          {
+            echo "ghcr_ref=${GHCR_IMAGE}:${GIT_SHA}"
+            echo "ghcr_latest=${GHCR_IMAGE}:latest"
+            echo "ecr_ref=${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
+            echo "ecr_latest=${ECR_REGISTRY}/${ECR_REPO}:latest"
+            echo "sha=${GIT_SHA}"
+          } | tee image-refs.env
+
+      - name: Upload Image Refs
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-refs
+          path: image-refs.env
+          retention-days: 3
 
   smoke-test:
     needs: build-and-push
