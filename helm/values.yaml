@@ -3,6 +3,7 @@ image:
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
   tag: "v0.1.0"
   pullPolicy: IfNotPresent
+  fullname: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -45,7 +46,7 @@ ingress:
     # - hosts: ["csf.jasoncorrea.com"]
 
 serviceAccount:
-  create: false
+  create: true
   name: "csf-app"
   annotations: {}
 
@@ -95,3 +96,23 @@ config:
 secret:
   enabled: false
   stringData: {}
+
+secretsStore:
+  enabled: false
+
+podSecurityContext:
+  fsGroup: 2000
+  runAsNonRoot: true
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+
+devWritableTmp:
+  enabled: true
