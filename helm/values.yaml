@@ -111,6 +111,8 @@ secret:
 
 secretsStore:
   enabled: false
+  spcName: csf-db-spc
+  mountPath: /mnt/secrets-store
 
 podSecurityContext:
   fsGroup: 2000

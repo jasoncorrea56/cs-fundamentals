@@ -43,7 +43,7 @@ profiles:
       helm:
         releases:
           - name: csf
-            namespace: csf
+            namespace: csf-dev
             chartPath: ./helm
             wait: true
             skipBuildDependencies: true
@@ -60,6 +60,6 @@ profiles:
     portForward:
       - resourceType: service
         resourceName: csf-cs-fundamentals
-        namespace: csf
+        namespace: csf-dev
         port: 80
         localPort: 8080

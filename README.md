@@ -258,10 +258,16 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
 
 ### Runtime Prep
 
-- Copy project environment variable file `local.env` to `.env`
+- Copy project environment variable file `local.env` to `.local.env` and update as needed.
 
     ```bash
-    cp local.env .env
+    cp local.env .local.env
+    ```
+
+- Copy project secret environment variable file `local.secret.env` to `/deploy/k8s/overlays/dev/.local.secret.env` and updated as needed.
+
+    ```bash
+    cp local.secret.env /deploy/k8s/overlays/dev/.local.secret.env
     ```
 
 ### Run API with Makefile
@@ -288,6 +294,39 @@ make dev
 
 ```bash
 make down
+```
+
+- Check Dev
+
+```bash
+helm -n csf-dev status csf --show-resources
+```
+
+### Secrets (Prod via ASM + CSI)
+
+Prod uses AWS Secrets Manager with the Secrets Store CSI Driver. Terraform provides the following:
+
+- Creates a JSON secret at `csf/db-url` with `{ "db_url": "..." }`
+- Provisions an IRSA role for ServiceAccount `csf-app`
+- Installs a SecretProviderClass `csf-db-spc` that syncs `db_url` into a namespaced K8s Secret `csf-db` (key `DB_URL`)
+
+Helm (Prod):
+
+- Does **not** create a ServiceAccount; it uses the TF-managed `csf-app`
+- Mounts the CSI volume (read-only) and reads `DB_URL` from the synced K8s Secret
+
+Minikube/Dev uses a plain K8s Secret for convenience (`helm/values-minikube.yaml`).
+
+To apply changes in Dev:
+
+```bash
+helm upgrade --install csf ./helm -f helm/values-minikube.yaml -n csf-dev --create-namespace
+```
+
+To apply changes in Prod:
+
+```bash
+helm upgrade --install csf ./helm -f helm/values-prod.yaml -n csf
 ```
 
 ### Helm Chart

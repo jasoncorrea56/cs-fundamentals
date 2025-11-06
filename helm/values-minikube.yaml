@@ -10,18 +10,20 @@ imagePullSecrets: []
 
 serviceAccount:
   create: true
-  name: csf-app
+  name: csf-app-dev  # Dev-only SA to avoid collision with prod IRSA-owned SA
 
 # Disable AWS Secrets Store CSI for minikube
 secretsStore:
   enabled: false
 
-# Create a simple K8s Secret in minikube for DB_URL
+# Dev uses a simple K8s Secret for DB_URL, but we DO NOT commit any values here.
+# The Secret is created by `make dev-secret` from a local, gitignored env file.
+# This chart will *reference* that Secret.
 secret:
-  enabled: true
-  name: csf-db
-  data: {}
-  external: false
+  enabled: false       # Helm will NOT create the Secret (we create it via Makefile)
+  name: csf-db-dev     # Dev-only Secret name (created by Makefile target)
+  data: {}             # Intentionally empty; no plaintext in repo
+  external: true       # Clarifies intent: provided externally for dev
 
 env:
   - name: LOG_LEVEL
@@ -29,7 +31,7 @@ env:
   - name: DB_URL
     valueFrom:
       secretKeyRef:
-        name: csf-db
+        name: csf-db-dev
         key: DB_URL
 
 service:

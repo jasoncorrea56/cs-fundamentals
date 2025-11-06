@@ -1,0 +1,49 @@
+replicaCount: 2
+
+serviceAccount:
+  create: false  # TF creates SA with IRSA (secret_sync module)
+  name: csf-app
+
+secretsStore:
+  enabled: true
+  spcName: csf-db-spc  # Match TF secret_sync.spc_name
+  mountPath: /mnt/secrets-store
+
+# DB_URL comes from the synced K8s Secret made by the CSI driver
+env:
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: LOG_FORMAT
+    value: "json"
+  - name: DB_URL
+    valueFrom:
+      secretKeyRef:
+        name: csf-db
+        key: DB_URL
+
+# Harden container FS for prod
+containerSecurityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+
+# Keep a tmp dir available (read-only root FS needs it)
+devWritableTmp:
+  enabled: true
+
+# Non-secret app config (aligns with pydantic env names)
+config:
+  enabled: true
+  data:
+    APP_NAME: "CS Fundamentals API"
+    ENV: "prod"
+    PORT: "8080"
+    LOG_LEVEL: "INFO"
+    LOG_FORMAT: "json"
+    WEB_CONCURRENCY: "2"
+    GRACEFUL_TIMEOUT: "30"

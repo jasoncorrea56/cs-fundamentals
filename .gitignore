@@ -137,3 +137,8 @@ semgrep-python.sarif
 
 # Trivy
 trivy-fs.sarif
+
+# Local secrets
+.local.env
+.local.secret.env
+deploy/k8s/overlays/dev/.local.secret.env

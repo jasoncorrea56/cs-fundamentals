@@ -95,7 +95,7 @@ spec:
           volumeMounts:
             {{- if $useSecrets }}
             - name: secrets-store
-              mountPath: /mnt/secrets-store
+              mountPath: {{ .Values.secretsStore.mountPath | default "/mnt/secrets-store" | quote }}
               readOnly: true
             {{- end }}
             {{- if $useTmp }}
@@ -128,7 +128,7 @@ spec:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: csf-db-spc
+              secretProviderClass: {{ .Values.secretsStore.spcName | default "csf-db-spc" | quote }}
         {{- end }}
         {{- if $useTmp }}
         - name: tmp
