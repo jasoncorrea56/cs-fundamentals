@@ -61,11 +61,15 @@ jobs:
           echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
 
-      - name: Detect Git Version Tag
+      - name: Detect Version (Git tag then pyproject.toml)
         id: version
         run: |
           set -Eeuo pipefail
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [[ -z "$VERSION" ]]; then
+            VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | cut -d '"' -f2)
+            VERSION="v${VERSION}"
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Detected version: ${VERSION}"
 
