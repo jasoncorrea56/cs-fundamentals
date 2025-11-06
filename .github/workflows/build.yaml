@@ -176,9 +176,15 @@ jobs:
       # --- Optional ECR Login and Push ---
       - name: Resolve ECR/AWS Settings
         id: cfg
+        env:
+          INPUT_ECR_REGISTRY: ${{ inputs.ecr_registry }}
+          INPUT_AWS_REGION: ${{ inputs.aws_region }}
+          ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY }}
+          AWS_REGION_SECRET: ${{ secrets.AWS_REGION }}
         run: |
-          ECR_REG="${{ inputs.ecr_registry != '' && inputs.ecr_registry || secrets.ECR_REGISTRY }}"
-          AWS_REG="${{ inputs.aws_region != '' && inputs.aws_region || secrets.AWS_REGION }}"
+          set -Eeuo pipefail
+          ECR_REG="${INPUT_ECR_REGISTRY:-$ECR_REGISTRY_SECRET}"
+          AWS_REG="${INPUT_AWS_REGION:-$AWS_REGION_SECRET}"
           echo "ecr_registry=${ECR_REG}" >> "$GITHUB_OUTPUT"
           echo "aws_region=${AWS_REG}" >> "$GITHUB_OUTPUT"
 
@@ -202,10 +208,11 @@ jobs:
           ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
+          PUSH_LATEST: ${{ inputs.push_latest }}
         run: |
           set -Eeuo pipefail
           docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
-          if [ "${{ inputs.push_latest }}" = "true" ]; then
+          if [ "${PUSH_LATEST}" = "true" ]; then
             docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:latest"
           fi
 
