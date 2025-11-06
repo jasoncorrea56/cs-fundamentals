@@ -17,6 +17,9 @@ concurrency:
 
 permissions:
   contents: read
+  packages: write
+  security-events: write
+  id-token: write
 
 jobs:
   pre-commit:
@@ -179,6 +182,15 @@ jobs:
           trivyignores: .trivyignore
           license-policy: trivy-license-policy.yaml
           license-full: true
+
+  debug-event:
+    needs: [pre-commit, pytest, semgrep, osv, trivy-fs]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "ref=${{ github.ref }}"
 
   # After lint and tests pass, call the reusable build workflow.
   build-and-push:
