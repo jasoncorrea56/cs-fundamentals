@@ -1,5 +1,5 @@
-# This reusable workflow handles building a runtime Docker image & pushing to GHCR.
-# It is called from automation.yaml after lint/tests pass.
+# This reusable workflow handles building a runtime Docker image & pushing to GHCR (and ECR).
+# Called from automation.yaml after lint/tests pass.
 # Build (no push) -> Scan (Trivy) -> SBOM (Syft) -> Push (only if scans pass).
 
 name: Build - Build/Scan/Push
@@ -49,8 +49,6 @@ jobs:
     name: Build, Scan Image & Push
     runs-on: ubuntu-latest
     outputs:
-      ecr_ref: ${{ steps.publish.outputs.ecr_ref }}
-      ghcr_ref: ${{ steps.publish.outputs.ghcr_ref }}
       image_name: ${{ inputs.image_name }}
       sha: ${{ steps.meta.outputs.sha }}
     steps:
@@ -63,12 +61,20 @@ jobs:
           echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
 
+      - name: Detect Git Version Tag
+        id: version
+        run: |
+          set -Eeuo pipefail
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Detected version: ${VERSION}"
+
       - name: Validate Inputs
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
         run: |
           set -Eeuo pipefail
-          # Accept ghcr.io/<owner>/<repo-or-image> (lowercase + ., _, - allowed)
+          # Accept ghcr.io/<owner>/<repo-or-image>
           if [[ ! "$IMAGE_NAME" =~ ^ghcr\.io/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$ ]]; then
             echo "Invalid image_name: '$IMAGE_NAME'"
             exit 1
@@ -89,6 +95,7 @@ jobs:
           load: true
           tags: |
             ${{ inputs.image_name }}:${{ steps.meta.outputs.sha }}
+            ${{ inputs.image_name }}:${{ steps.version.outputs.version }}
             ${{ inputs.image_name }}${{ inputs.push_latest && ':latest' || '' }}
           build-args: |
             GIT_SHA=${{ steps.meta.outputs.sha }}
@@ -102,7 +109,7 @@ jobs:
           set -Eeuo pipefail
           echo "IMAGE_ID=${IMAGE_NAME}:${GIT_SHA}" >> "$GITHUB_ENV"
 
-      # --- Code Quality and Vulnerability Scan ---
+      # --- Vulnerability Scans / SBOM ---
       - name: Trivy Image Vuln Scan - Gated
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -173,6 +180,14 @@ jobs:
           set -Eeuo pipefail
           docker push "${IMAGE_NAME}:latest"
 
+      - name: Push image (version tag)
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -Eeuo pipefail
+          docker push "${IMAGE_NAME}:${VERSION}"
+
       # --- Optional ECR Login and Push ---
       - name: Resolve ECR/AWS Settings
         id: cfg
@@ -198,8 +213,6 @@ jobs:
       - name: Login to ECR
         if: ${{ inputs.push_to_ecr }}
         uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registries: ${{ inputs.ecr_registry }}
 
       - name: Tag Image for ECR
         if: ${{ inputs.push_to_ecr }}
@@ -208,10 +221,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
+          VERSION: ${{ steps.version.outputs.version }}
           PUSH_LATEST: ${{ inputs.push_latest }}
         run: |
           set -Eeuo pipefail
+          # SHA tag
           docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
+          # Version tag
+          docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
+          # Latest (optional)
           if [ "${PUSH_LATEST}" = "true" ]; then
             docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:latest"
           fi
@@ -223,6 +241,14 @@ jobs:
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
         run: docker push "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
+
+      - name: Push Image to ECR (Version)
+        if: ${{ inputs.push_to_ecr }}
+        env:
+          ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
+          ECR_REPO: ${{ inputs.ecr_repo }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: docker push "${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
 
       - name: Push Image to ECR (Latest)
         if: ${{ inputs.push_to_ecr && inputs.push_latest }}
@@ -238,13 +264,17 @@ jobs:
           ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           {
             echo "ghcr_ref=${GHCR_IMAGE}:${GIT_SHA}"
             echo "ghcr_latest=${GHCR_IMAGE}:latest"
+            echo "ghcr_version=${GHCR_IMAGE}:${VERSION}"
             echo "ecr_ref=${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
             echo "ecr_latest=${ECR_REGISTRY}/${ECR_REPO}:latest"
+            echo "ecr_version=${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
             echo "sha=${GIT_SHA}"
+            echo "version=${VERSION}"
           } | tee image-refs.env
 
       - name: Upload Image Refs
@@ -283,6 +313,7 @@ jobs:
           echo "Smoke-Test FAILED - /api/v1/healthz NOT ready after 30s!"
           docker logs app || true
           exit 1
+
       - name: Stop container
         if: always()
         run: docker stop app || true

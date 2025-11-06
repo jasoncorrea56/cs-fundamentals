@@ -72,7 +72,7 @@ jobs:
             --create-namespace \
             -f ${{ env.HELM_CHART_DIR }}/values.yaml \
             --set image.repository="${IMAGE_REPO}" \
-            --set image.tag="${SHA}"
+            --set image.tag=${{ needs.build-and-push.outputs.version || needs.build-and-push.outputs.sha }}
 
       - name: Wait for Rollout
         run: |
