@@ -5,7 +5,7 @@ name: Automation - Lint/Scan/Test
 
 on:
   push:
-    branches: [ main ]  # Merge to main
+    branches: [ '**' ]  # TODO UNDO [ main ]  # Merge to main
     tags:    [ 'v*', 'release-*' ]
   pull_request:
     branches: [ main ]  # PR targeting main
