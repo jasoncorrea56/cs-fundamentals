@@ -78,7 +78,20 @@ autoscaling:
   minReplicas: 2
   maxReplicas: 5
   targetCPUUtilizationPercentage: 70
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30  # Quick to scale up
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300   # Slow to scale down & avoid flapping
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
 
 pdb:
   enabled: true
