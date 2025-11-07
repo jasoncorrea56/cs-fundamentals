@@ -142,3 +142,6 @@ trivy-fs.sarif
 .local.env
 .local.secret.env
 deploy/k8s/overlays/dev/.local.secret.env
+
+# Zipfiles
+*.zip

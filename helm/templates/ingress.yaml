@@ -5,10 +5,17 @@ metadata:
   name: {{ include "cs-fundamentals.fullname" . }}
   labels:
     {{- include "cs-fundamentals.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- if and .Values.canary.enabled (gt (int .Values.canary.weight) 0) (lt (int .Values.canary.weight) 100) }}
+    alb.ingress.kubernetes.io/actions.csf-weighted: >
+      {"Type":"forward","ForwardConfig":{"TargetGroups":[
+        {"ServiceName":"{{ include "cs-fundamentals.fullname" . }}","ServicePort":"{{ .Values.service.port }}","Weight":{{ sub 100 (int .Values.canary.weight) }}},
+        {"ServiceName":"{{ include "cs-fundamentals.canary.fullname" . }}","ServicePort":"{{ .Values.service.port }}","Weight":{{ .Values.canary.weight }}}
+      ]}}
+    {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
@@ -22,10 +29,19 @@ spec:
           - path: {{ .path }}
             pathType: {{ .pathType }}
             backend:
+              {{- if and $.Values.canary.enabled (gt (int $.Values.canary.weight) 0) (lt (int $.Values.canary.weight) 100) }}
+              # Weighted split between stable and canary via ALB action.
+              service:
+                name: csf-weighted
+                port:
+                  name: use-annotation
+              {{- else }}
+              # Default: all traffic to stable service.
               service:
                 name: {{ include "cs-fundamentals.fullname" $ }}
                 port:
                   number: {{ $.Values.service.port }}
+              {{- end }}
           {{- end }}
     {{- end }}
   {{- if .Values.ingress.tls }}

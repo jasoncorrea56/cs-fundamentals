@@ -76,7 +76,7 @@ resources:
 autoscaling:
   enabled: false
   minReplicas: 2
-  maxReplicas: 5
+  maxReplicas: 4
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
   behavior:
@@ -144,3 +144,20 @@ containerSecurityContext:
 
 devWritableTmp:
   enabled: true
+
+canary:
+  # When enabled, the chart will provision a parallel Deployment + Service.
+  # If weight is between 1 and 99, configure ALB weighted routing.
+  enabled: false
+  replicas: 1
+  weight: 10  # % of traffic to send to canary via ALB.
+  nameSuffix: "canary"
+
+  # If empty, falls back to stable image settings.
+  image:
+    repository: ""
+    tag: ""
+
+  env: []
+  podLabels: {}
+  podAnnotations: {}

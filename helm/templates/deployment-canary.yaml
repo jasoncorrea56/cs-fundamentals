@@ -1,0 +1,88 @@
+{{- if .Values.canary.enabled }}
+
+{{- $baseImageRepo := .Values.image.repository -}}
+{{- $baseImageTag := .Values.image.tag -}}
+{{- $canaryImageRepo := default $baseImageRepo .Values.canary.image.repository -}}
+{{- $canaryImageTag := default $baseImageTag .Values.canary.image.tag -}}
+{{- $replicas := default 1 .Values.canary.replicas -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cs-fundamentals.canary.fullname" . }}
+  labels:
+    {{- include "cs-fundamentals.labels" . | nindent 4 }}
+    canary: "true"
+spec:
+  replicas: {{ $replicas }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "cs-fundamentals.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      canary: "true"
+  template:
+    metadata:
+      labels:
+        {{- include "cs-fundamentals.labels" . | nindent 8 }}
+        canary: "true"
+        {{- with .Values.canary.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.canary.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name | quote }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: app
+          image: "{{ $canaryImageRepo }}:{{ $canaryImageTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+          {{- if or .Values.env .Values.canary.env .Values.devWritableTmp.enabled }}
+          env:
+            {{- if .Values.env }}
+            {{- toYaml .Values.env | nindent 12 }}
+            {{- end }}
+            {{- if .Values.canary.env }}
+            {{- toYaml .Values.canary.env | nindent 12 }}
+            {{- end }}
+            {{- if .Values.devWritableTmp.enabled }}
+            - name: TMPDIR
+              value: /tmp
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+
+{{- end }}
