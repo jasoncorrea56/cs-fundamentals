@@ -19,3 +19,16 @@
     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "cs-fundamentals.fullname" . }} 8080:{{ .Values.service.port }}
     echo "http://127.0.0.1:8080/"
 {{- end }}
+
+---
+
+2. Validate rollout strategy and PodDisruptionBudget:
+
+  # Check current rollout progress and ensure maxUnavailable / surge behavior
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "cs-fundamentals.fullname" . }} --watch
+
+  # Verify PDB limits (ensures at least one pod always stays up)
+  kubectl -n {{ .Release.Namespace }} get pdb {{ include "cs-fundamentals.fullname" . }} -o wide
+
+  # Inspect events for autoscaler / drain coordination (optional)
+  kubectl -n {{ .Release.Namespace }} get events --sort-by=.metadata.creationTimestamp | grep -E "Disruption|Evict|Scaled"

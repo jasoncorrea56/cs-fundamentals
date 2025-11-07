@@ -47,3 +47,7 @@ config:
     LOG_FORMAT: "json"
     WEB_CONCURRENCY: "2"
     GRACEFUL_TIMEOUT: "30"
+
+pdb:
+  enabled: true
+  maxUnavailable: 1

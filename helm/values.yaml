@@ -81,8 +81,9 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 pdb:
-  enabled: false
-  minAvailable: 1
+  enabled: true
+  maxUnavailable: 1  # Prefer maxUnavailable for to allow one eviction at a time.
+  # minAvailable: 1  # Fallback used only if maxUnavailable not set
 
 nodeSelector: {}
 tolerations: []
