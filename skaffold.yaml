@@ -43,14 +43,15 @@ profiles:
       helm:
         releases:
           - name: csf
-            namespace: csf-dev
             chartPath: ./helm
+            namespace: csf-dev
+            createNamespace: true
             wait: true
             skipBuildDependencies: true
-            createNamespace: true
             setValueTemplates:
               image.repository: "{{.IMAGE_REPO}}"
               image.tag: "{{.IMAGE_TAG}}"
+              fullnameOverride: "cs-fundamentals"
               secret.enabled: "true"
               secret.name: "csf-db"
               secret.data.DB_URL: "{{.DB_URL}}"
@@ -59,7 +60,7 @@ profiles:
 
     portForward:
       - resourceType: service
-        resourceName: csf-cs-fundamentals
+        resourceName: cs-fundamentals
         namespace: csf-dev
         port: 80
         localPort: 8080

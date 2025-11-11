@@ -22,7 +22,7 @@ secretsStore:
 secret:
   enabled: false       # Helm will NOT create the Secret (we create it via Makefile)
   name: csf-db-dev     # Dev-only Secret name (created by Makefile target)
-  data: {}             # Intentionally empty; no plaintext in repo
+  data: {}             # Intentionally empty - no plaintext in repo
   external: true       # Clarifies intent: provided externally for dev
 
 env:
@@ -39,6 +39,11 @@ service:
   port: 80
   targetPort: 8080
 
-# Ingress is usually off for minikube unless running nginx ingress locally
 ingress:
-  enabled: false
+  enabled: false  # Use port-forward for local dev
+  hosts:
+    - host: csf.localtest.me  # Resolves to 127.0.0.1
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []

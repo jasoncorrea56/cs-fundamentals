@@ -52,6 +52,23 @@ dev-install: dev-image dev-secrets
 .PHONY: dev-setup
 dev-setup: dev-install
 
+init:
+	@echo "🚀 Starting local environment..."
+	make k8s-up
+	@echo "✅ Minikube started."
+
+	@echo "🔧 Setting up Dev namespace..."
+	make dev-namespace
+	@echo "✅ Local Dev namespace ready."
+
+	@echo "🔧 Setting up Dev secrets..."
+	make dev-secrets
+	@echo "✅ Local Dev secrets ready."
+
+	@echo "🌱 Building Dev image..."
+	make dev-image
+	@echo "🎉 Initialization complete!"
+
 .PHONY: dev
 dev:
 	@export DB_URL="$(grep -E '^DB_URL=' .env | cut -d= -f2-)"
