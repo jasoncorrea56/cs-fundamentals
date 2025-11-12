@@ -170,6 +170,7 @@ jobs:
             -f ${{ env.HELM_CHART_DIR }}/values.yaml
             --set image.repository="${IMAGE_REPO}"
             --set image.tag="${IMAGE_TAG}"
+            --set serviceAccount.create=false
           )
 
           if [ "${DEPLOY_ENV}" = "prod" ]; then
