@@ -31,8 +31,8 @@ on:
       canary_weight:
         description: "Canary traffic weight 1-99"
         required: false
-        type: number
-        default: 10
+        type: string
+        default: "10"
       canary_image_tag:
         description: "Override tag for canary image (defaults to built IMAGE_TAG)"
         required: false

@@ -366,8 +366,7 @@ jobs:
 
       # Canary controls (can be toggled via repo variables or per-branch env)
       canary_enabled: ${{ vars.CANARY_ENABLED }}
-      canary_weight:  '10'
-      # canary_weight:  ${{ vars.CANARY_WEIGHT }}
+      canary_weight:  ${{ vars.CANARY_WEIGHT }}
       canary_image_tag: ''   # default to built tag in deploy.yaml
 
       # Allow forcing prod from branch for tests (set repo var FORCE_PROD=true temporarily)
