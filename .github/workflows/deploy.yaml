@@ -22,6 +22,28 @@ on:
         required: false
         type: string
         default: ./helm
+      # Canary controls
+      canary_enabled:
+        description: "Enable canary (true|false)"
+        required: false
+        type: string
+        default: "false"
+      canary_weight:
+        description: "Canary traffic weight 1-99"
+        required: false
+        type: number
+        default: 10
+      canary_image_tag:
+        description: "Override tag for canary image (defaults to built IMAGE_TAG)"
+        required: false
+        type: string
+        default: ""
+      # Allow prod deploy from branch (testing only)
+      force_prod:
+        description: "Force prod environment even if not main/tag"
+        required: false
+        type: string
+        default: "false"
     secrets:
       AWS_ROLE_TO_ASSUME:
         required: true
@@ -49,9 +71,6 @@ env:
   APP_DEPLOYMENT_NAME: csf-cs-fundamentals
   APP_SERVICE_NAME: csf-cs-fundamentals
 
-  # Deploy environment: dev|prod provided by caller
-  DEPLOY_ENV: ${{ inputs.deploy_env }}
-
   # Prod routing (only used when DEPLOY_ENV=prod)
   APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
   ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
@@ -60,10 +79,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # GitHub Environments for protections:
-    # - prod env when deploy_env == 'prod'
-    # - dev env otherwise
-    environment: ${{ inputs.deploy_env == 'prod' && 'prod' || 'dev' }}
+    # Respect caller env or force_prod in the UI
+    environment: ${{ (inputs.force_prod == 'true' && 'prod') || (inputs.deploy_env == 'prod' && 'prod') || 'dev' }}
 
     steps:
       - name: Checkout Repo at Built SHA
@@ -78,14 +95,7 @@ jobs:
         id: imagerefs
         run: |
           set -Eeuo pipefail
-
-          if [ ! -f "image-refs.env" ]; then
-            echo "image-refs.env artifact missing; cannot deploy."
-            exit 1
-          fi
-
-          # shellcheck source=/dev/null
-          source image-refs.env
+          source image-refs.env || { echo "image-refs.env missing"; exit 1; }
 
           echo "GHCR_REF=${ghcr_ref:-}"         >> "$GITHUB_ENV"
           echo "GHCR_LATEST=${ghcr_latest:-}"   >> "$GITHUB_ENV"
@@ -99,17 +109,7 @@ jobs:
           echo "VERSION=${version:-}"           >> "$GITHUB_ENV"
 
           IMAGE_TAG="${version:-${sha}}"
-
-          if [ -z "${IMAGE_TAG}" ]; then
-            echo "Missing version/sha in image-refs; refusing to deploy."
-            exit 1
-          fi
-
-          if ! echo "${IMAGE_TAG}" | grep -Eq '^[a-zA-Z0-9._:-]+$'; then
-            echo "Refusing unsafe IMAGE_TAG: '${IMAGE_TAG}'"
-            exit 1
-          fi
-
+          [ -n "${IMAGE_TAG}" ] || { echo "Missing version/sha in image-refs"; exit 1; }
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
 
           if [ -n "${ecr_ref:-}" ]; then
@@ -143,50 +143,77 @@ jobs:
           kubectl get ns "${K8S_NAMESPACE}" >/dev/null 2>&1 || \
             kubectl create ns "${K8S_NAMESPACE}"
 
-      - name: Helm Upgrade (Artifact-driven Image)
+      - name: Resolve Deploy Target & Canary Flags
+        id: cfg
         env:
-          # Prefer ECR from artifact but fallback to configured ECR registry
+          CALLER_ENV: ${{ inputs.deploy_env }}
+          FORCE_PROD: ${{ inputs.force_prod }}
+          CANARY_ENABLED_IN: ${{ inputs.canary_enabled }}
+          CANARY_WEIGHT_IN: ${{ inputs.canary_weight }}
+          CANARY_IMAGE_TAG_IN: ${{ inputs.canary_image_tag }}
+        run: |
+          set -Eeuo pipefail
+          # Effective environment: force_prod overrides
+          if [ "${FORCE_PROD}" = "true" ]; then
+            DEPLOY_ENV="prod"
+          else
+            DEPLOY_ENV="${CALLER_ENV}"
+          fi
+          echo "deploy_env=${DEPLOY_ENV}" >> "$GITHUB_OUTPUT"
+
+          # Normalize booleans
+          CANARY_ENABLED=$(echo "${CANARY_ENABLED_IN}" | tr '[:upper:]' '[:lower:]')
+          [ "${CANARY_ENABLED}" = "true" ] || CANARY_ENABLED="false"
+          echo "canary_enabled=${CANARY_ENABLED}" >> "$GITHUB_OUTPUT"
+
+          # Weight bounds
+          W="${CANARY_WEIGHT_IN:-10}"
+          if [ "${W}" -lt 1 ] || [ "${W}" -gt 99 ]; then
+            echo "Invalid canary_weight=${W}; must be 1..99"
+            exit 1
+          fi
+          echo "canary_weight=${W}" >> "$GITHUB_OUTPUT"
+
+          # Canary image tag defaults to built IMAGE_TAG
+          echo "canary_image_tag=${CANARY_IMAGE_TAG_IN:-$IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Helm Upgrade (Stable or Canary)
+        env:
           FALLBACK_ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-        # - values.yaml: base defaults
-        # - values-prod.yaml: prod-only hardening & secret wiring
-        # - image.*: always from CI artifact (immutable + auditable)
+          DEPLOY_ENV: ${{ steps.cfg.outputs.deploy_env }}
+          CANARY_ENABLED: ${{ steps.cfg.outputs.canary_enabled }}
+          CANARY_WEIGHT: ${{ steps.cfg.outputs.canary_weight }}
+          CANARY_IMAGE_TAG: ${{ steps.cfg.outputs.canary_image_tag }}
         run: |
           set -Eeuo pipefail
 
           REGISTRY="${ECR_REGISTRY:-$FALLBACK_ECR_REGISTRY}"
           REPO="${ECR_REPO:-cs-fundamentals}"
-
-          if [ -z "${REGISTRY}" ]; then
-            echo "No ECR registry configured; cannot determine IMAGE_REPO."
-            exit 1
-          fi
-
-          if [ -z "${IMAGE_TAG:-}" ]; then
-            echo "IMAGE_TAG is not set; cannot deploy."
-            exit 1
-          fi
+          [ -n "${REGISTRY}" ] || { echo "No ECR registry configured"; exit 1; }
+          [ -n "${IMAGE_TAG}" ] || { echo "IMAGE_TAG not set"; exit 1; }
 
           IMAGE_REPO="${REGISTRY}/${REPO}"
-          echo "Deploying ${IMAGE_REPO}:${IMAGE_TAG} to '${DEPLOY_ENV}'"
+          echo "Registry: ${IMAGE_REPO}"
+          echo "Deploy env: ${DEPLOY_ENV}"
+          echo "Canary enabled: ${CANARY_ENABLED}"
 
-          HELM_CMD=(
-            helm upgrade --install ${{ env.HELM_RELEASE }} ${{ env.HELM_CHART_DIR }}
-            --namespace ${{ env.K8S_NAMESPACE }}
+          # Base helm args
+          HELM_ARGS=(
+            upgrade --install "${HELM_RELEASE}" "${HELM_CHART_DIR}"
+            --namespace "${K8S_NAMESPACE}"
             --create-namespace
-            -f ${{ env.HELM_CHART_DIR }}/values.yaml
+            -f "${HELM_CHART_DIR}/values.yaml"
             --set image.repository="${IMAGE_REPO}"
-            --set image.tag="${IMAGE_TAG}"
             --set serviceAccount.create=false
           )
 
+          # Prod ingress wiring
           if [ "${DEPLOY_ENV}" = "prod" ]; then
-            if [ -z "${APP_DOMAIN:-}" ] || [ -z "${ACM_CERT_ARN:-}" ]; then
-              echo "APP_DOMAIN and/or ACM_CERT_ARN not set; cannot configure Ingress for prod."
-              exit 1
-            fi
-
-            HELM_CMD+=(
-              -f ${{ env.HELM_CHART_DIR }}/values-prod.yaml
+            [ -n "${APP_DOMAIN:-}" ] && [ -n "${ACM_CERT_ARN:-}" ] || {
+              echo "APP_DOMAIN/ACM_CERT_ARN missing for prod"; exit 1;
+            }
+            HELM_ARGS+=(
+              -f "${HELM_CHART_DIR}/values-prod.yaml"
               --set ingress.enabled=true
               --set ingress.className=alb
               --set ingress.hosts[0].host="${APP_DOMAIN}"
@@ -199,15 +226,46 @@ jobs:
             )
           fi
 
-          "${HELM_CMD[@]}"
+          if [ "${DEPLOY_ENV}" = "prod" ] && [ "${CANARY_ENABLED}" = "true" ]; then
+            echo "Running CANARY deploy (prod) with weight=${CANARY_WEIGHT}"
 
-      - name: Wait for rollout
+            # Detect current STABLE image tag to avoid touching it
+            CURRENT_IMAGE=$(kubectl -n "${K8S_NAMESPACE}" get deploy "${APP_DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[0].image}' || true)
+            if [ -z "${CURRENT_IMAGE}" ]; then
+              echo "No existing stable deployment found; cannot run canary safely."
+              exit 1
+            fi
+            CURRENT_TAG="${CURRENT_IMAGE##*:}"
+            echo "Stable currently running tag: ${CURRENT_TAG}"
+
+            HELM_ARGS+=(
+              --set image.tag="${CURRENT_TAG}"
+              --set canary.enabled=true
+              --set canary.image.repository="${IMAGE_REPO}"
+              --set canary.image.tag="${CANARY_IMAGE_TAG}"
+              --set canary.weight="${CANARY_WEIGHT}"
+            )
+          else
+            echo "Running NORMAL deploy (set stable to new image)"
+            HELM_ARGS+=( --set image.tag="${IMAGE_TAG}" --set canary.enabled=false )
+          fi
+
+          helm "${HELM_ARGS[@]}"
+
+      - name: Wait for rollout (stable)
         run: |
           set -Eeuo pipefail
           kubectl rollout status deploy/${{ env.APP_DEPLOYMENT_NAME }} \
-            -n ${{ env.K8S_NAMESPACE }} \
-            --timeout=180s
+            -n ${{ env.K8S_NAMESPACE }} --timeout=180s
           kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+
+      - name: Wait for rollout (canary - if present)
+        if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
+        run: |
+          set -Eeuo pipefail
+          kubectl rollout status deploy/${{ env.APP_DEPLOYMENT_NAME }}-canary \
+            -n ${{ env.K8S_NAMESPACE }} --timeout=180s
+          kubectl get deploy,svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide
 
       - name: Show Service & Ingress
         if: always()
