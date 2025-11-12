@@ -53,14 +53,13 @@ def test_app_title_and_version(main_module: Any) -> None:
     assert app.version == "9.9.9"
 
 
-def test_root_endpoint_and_docs_link(main_module: Any) -> None:
+def test_root_endpoint_not_found(main_module: Any) -> None:
     app: FastAPI = main_module.app
     client: TestClient = TestClient(app)
     r = client.get("/")
-    assert r.status_code == 200
+    assert r.status_code == 404
     payload: dict[str, str] = r.json()
-    assert payload["message"] == "API is running"
-    assert payload["docs"] == "/docs"
+    assert payload["detail"] == "Not Found"
 
 
 def test_some_routes_are_mounted(main_module: Any) -> None:

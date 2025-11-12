@@ -124,8 +124,3 @@ app.include_router(singleton_router, prefix=v1_prefix)
 app.include_router(sliding_window_router, prefix=v1_prefix)
 app.include_router(sorting_router, prefix=v1_prefix)
 app.include_router(two_pointers_router, prefix=v1_prefix)
-
-
-@app.get("/")
-def root() -> dict[str, str]:
-    return {"message": "API is running", "docs": "/docs"}
