@@ -340,3 +340,28 @@ jobs:
           IMAGE="${{ needs.build-and-push.outputs.image_name }}"
           TAG="${{ needs.build-and-push.outputs.sha }}"
           docker run --rm --entrypoint python "${IMAGE}:${TAG}" -m cs_fundamentals.admin health
+
+  deploy:
+    name: Deploy to EKS
+    needs: [build-and-push, smoke-test, admin-test]
+    # Only deploy when:
+    # - This reusable workflow is running for a push
+    # - And the ref is:
+    #     - main       (prod)
+    #     - add_cd     (dev test path)
+    #     - v* tag     (prod release)
+    if: ${{ github.event_name == 'push' && (
+            github.ref == 'refs/heads/add_cd' ||
+            github.ref == 'refs/heads/main' ||
+            startsWith(github.ref, 'refs/tags/v')
+          ) }}
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      # Map git ref to deploy environment:
+      # - main or v* tags -> prod
+      # - add_cd          -> dev
+      deploy_env: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && 'prod' || 'dev' }}
+      app_namespace: csf
+      helm_release: csf
+      helm_chart_dir: ./helm
+    secrets: inherit

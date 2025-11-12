@@ -1,73 +1,71 @@
 name: CD - Deploy to EKS
 
 on:
-  workflow_run:
-    workflows: ["Automation - Lint/Scan/Test"]
-    types: [completed]
+  workflow_call:
+    inputs:
+      deploy_env:
+        description: "Target environment (dev|prod)"
+        required: true
+        type: string
+      app_namespace:
+        description: "Kubernetes namespace"
+        required: false
+        type: string
+        default: csf
+      helm_release:
+        description: "Helm release name"
+        required: false
+        type: string
+        default: csf
+      helm_chart_dir:
+        description: "Path to Helm chart"
+        required: false
+        type: string
+        default: ./helm
+    secrets:
+      AWS_ROLE_TO_ASSUME:
+        required: true
+      AWS_REGION:
+        required: true
+      EKS_CLUSTER_NAME:
+        required: true
+      ECR_REGISTRY:
+        required: false
 
 permissions:
   contents: read
   id-token: write
 
 env:
-  # Static chart wiring
-  K8S_NAMESPACE: csf
-  HELM_RELEASE: csf
-  HELM_CHART_DIR: ./helm
+  # Static wiring (overridable via inputs if needed later)
+  K8S_NAMESPACE: ${{ inputs.app_namespace }}
+  HELM_RELEASE: ${{ inputs.helm_release }}
+  HELM_CHART_DIR: ${{ inputs.helm_chart_dir }}
 
   # Helm default fullname: "<release>-<chartName>" -> "csf-cs-fundamentals"
   APP_DEPLOYMENT_NAME: csf-cs-fundamentals
   APP_SERVICE_NAME: csf-cs-fundamentals
 
-  # Plumb workflow_run -> env once
-  BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
-  BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
-  BUILD_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
-
-  # Default: real value derived in a step
-  DEPLOY_ENV: dev
+  # Deploy environment: dev|prod provided by caller
+  DEPLOY_ENV: ${{ inputs.deploy_env }}
 
 jobs:
   deploy:
-    # Only deploy if:
-    # - Automation workflow succeeded, and
-    # - Source ref is main, add_cd, or a v* tag
-    if: ${{ github.event.workflow_run.conclusion == 'success' &&
-           (
-             github.event.workflow_run.head_branch == 'main' ||
-             github.event.workflow_run.head_branch == 'add_cd' ||
-             startsWith(github.event.workflow_run.head_branch || '', 'v')
-           ) }}
     runs-on: ubuntu-latest
 
-    # GitHub Environments for protections:
-    # main or v* -> prod, everything else (e.g. add_cd) -> dev
-    environment: ${{ (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch || '', 'v')) && 'prod' || 'dev' }}
+    # Use GitHub Environments for protections:
+    # - prod env when deploy_env == 'prod'
+    # - dev env otherwise
+    environment: ${{ inputs.deploy_env == 'prod' && 'prod' || 'dev' }}
 
     steps:
       - name: Checkout Repo at Built SHA
         uses: actions/checkout@v4
-        with:
-          # Use the exact commit that produced the image
-          ref: ${{ env.BUILD_SHA }}
-
-      - name: Derive deploy environment
-        id: set_env
-        run: |
-          set -euo pipefail
-          BRANCH="${{ env.BUILD_BRANCH }}"
-          if [[ "$BRANCH" == "main" || "$BRANCH" =~ ^v ]]; then
-            echo "DEPLOY_ENV=prod" >> $GITHUB_ENV
-          else
-            echo "DEPLOY_ENV=dev" >> $GITHUB_ENV
-          fi
-          echo "Determined DEPLOY_ENV=$(grep DEPLOY_ENV $GITHUB_ENV | tail -1)"
 
       - name: Download Built Image Refs from Artifact
         uses: actions/download-artifact@v4
         with:
           name: image-refs
-          run-id: ${{ env.BUILD_RUN_ID }}
 
       - name: Load Image Refs into Env
         id: imagerefs
@@ -82,16 +80,16 @@ jobs:
           # shellcheck source=/dev/null
           source image-refs.env
 
-          echo "GHCR_REF=${ghcr_ref:-}" >> "$GITHUB_ENV"
-          echo "GHCR_LATEST=${ghcr_latest:-}" >> "$GITHUB_ENV"
+          echo "GHCR_REF=${ghcr_ref:-}"         >> "$GITHUB_ENV"
+          echo "GHCR_LATEST=${ghcr_latest:-}"   >> "$GITHUB_ENV"
           echo "GHCR_VERSION=${ghcr_version:-}" >> "$GITHUB_ENV"
 
-          echo "ECR_REF=${ecr_ref:-}" >> "$GITHUB_ENV"
-          echo "ECR_LATEST=${ecr_latest:-}" >> "$GITHUB_ENV"
-          echo "ECR_VERSION=${ecr_version:-}" >> "$GITHUB_ENV"
+          echo "ECR_REF=${ecr_ref:-}"           >> "$GITHUB_ENV"
+          echo "ECR_LATEST=${ecr_latest:-}"     >> "$GITHUB_ENV"
+          echo "ECR_VERSION=${ecr_version:-}"   >> "$GITHUB_ENV"
 
-          echo "SHA=${sha:-}" >> "$GITHUB_ENV"
-          echo "VERSION=${version:-}" >> "$GITHUB_ENV"
+          echo "SHA=${sha:-}"                   >> "$GITHUB_ENV"
+          echo "VERSION=${version:-}"           >> "$GITHUB_ENV"
 
           IMAGE_TAG="${version:-${sha}}"
 
@@ -112,7 +110,7 @@ jobs:
             REGISTRY="${REGISTRY_REPO%/*}"
             REPO="${REGISTRY_REPO#${REGISTRY}/}"
             echo "ECR_REGISTRY=${REGISTRY}" >> "$GITHUB_ENV"
-            echo "ECR_REPO=${REPO}" >> "$GITHUB_ENV"
+            echo "ECR_REPO=${REPO}"         >> "$GITHUB_ENV"
           fi
 
       - name: Configure AWS (OIDC)
@@ -138,7 +136,7 @@ jobs:
           kubectl get ns "${K8S_NAMESPACE}" >/dev/null 2>&1 || \
             kubectl create ns "${K8S_NAMESPACE}"
 
-      - name: Helm upgrade (uses artifact-driven image)
+      - name: Helm Upgrade (Artifact-driven Image)
         env:
           # Prefer ECR from artifact but fallback to configured ECR registry
           FALLBACK_ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
