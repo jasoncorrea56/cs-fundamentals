@@ -226,25 +226,44 @@ jobs:
             backoffLimit: 0
             ttlSecondsAfterFinished: 300
             template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: smoke
               spec:
+                # Restricted — pod-level security posture
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 65532
+                  runAsGroup: 65532
+                  seccompProfile:
+                    type: RuntimeDefault
                 restartPolicy: Never
                 containers:
                   - name: curl
                     image: curlimages/curl:8.7.1
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      capabilities:
+                        drop: ["ALL"]
                     args:
                       - /bin/sh
                       - -c
                       - |
                         set -e
                         echo "Probing service at http://${APP_SERVICE_NAME}..."
+                        ok=""
                         for i in $(seq 1 30); do
                           if curl -fsS --max-time 2 "http://${APP_SERVICE_NAME}/api/v1/healthz" > /dev/null; then
                             echo "healthz OK on attempt $i"
+                            ok="yes"
                             break
                           fi
                           sleep 2
                         done
+                        [ -n "$ok" ] || { echo "healthz probe failed"; exit 1; }
 
+                        # brief functional check
                         curl -fsS --max-time 5 "http://${APP_SERVICE_NAME}/api/v1/targets" | head -c 200 > /dev/null
                         echo "Smoke test completed."
           YAML
