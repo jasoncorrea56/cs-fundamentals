@@ -31,13 +31,13 @@ env:
 
 jobs:
   deploy:
-    # Only deploy if the upstream Build workflow succeeded
+    # Only deploy if:
+    # - Automation workflow succeeded, and
+    # - Source ref is main, add_cd, or a v* tag
     if: ${{ github.event.workflow_run.conclusion == 'success' &&
-           (
-             github.event.workflow_run.head_branch == 'main' ||
-             github.event.workflow_run.head_branch == 'add_cd' ||
-             startsWith(github.event.workflow_run.head_branch || '', 'v')
-           ) }}
+           (env.BUILD_BRANCH == 'main' ||
+            env.BUILD_BRANCH == 'add_cd' ||
+            startsWith(env.BUILD_BRANCH, 'v')) }}
     runs-on: ubuntu-latest
 
     # Use GitHub Environments for approvals/protections
