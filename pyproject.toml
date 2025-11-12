@@ -1,6 +1,6 @@
 [project]
 name = "cs-fundamentals"
-version = "0.4.7"
+version = "0.4.8"
 description = "Python project to hone computer science fundamentals of data structures, algorithms and problem solving patterns"
 readme = "README.md"
 requires-python = ">=3.11.13"
