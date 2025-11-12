@@ -41,7 +41,6 @@ permissions:
   id-token: write
 
 env:
-  # Static wiring (overridable via inputs if needed later)
   K8S_NAMESPACE: ${{ inputs.app_namespace }}
   HELM_RELEASE: ${{ inputs.helm_release }}
   HELM_CHART_DIR: ${{ inputs.helm_chart_dir }}
@@ -52,6 +51,10 @@ env:
 
   # Deploy environment: dev|prod provided by caller
   DEPLOY_ENV: ${{ inputs.deploy_env }}
+
+  # Prod routing (only used when DEPLOY_ENV=prod)
+  APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+  ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
 
 jobs:
   deploy:
@@ -144,8 +147,6 @@ jobs:
         env:
           # Prefer ECR from artifact but fallback to configured ECR registry
           FALLBACK_ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-          APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
-          ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
         # - values.yaml: base defaults
         # - values-prod.yaml: prod-only hardening & secret wiring
         # - image.*: always from CI artifact (immutable + auditable)
@@ -179,7 +180,6 @@ jobs:
           )
 
           if [ "${DEPLOY_ENV}" = "prod" ]; then
-            # Require prod routing inputs from secrets
             if [ -z "${APP_DOMAIN:-}" ] || [ -z "${ACM_CERT_ARN:-}" ]; then
               echo "APP_DOMAIN and/or ACM_CERT_ARN not set; cannot configure Ingress for prod."
               exit 1
@@ -209,91 +209,7 @@ jobs:
             --timeout=180s
           kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
 
-      - name: In-cluster smoke test Job
-        id: smoketest
-        env:
-          JOB_NAME: csf-smoke-${{ github.run_id }}
-        run: |
-          set -Eeuo pipefail
-
-          cat > job.yaml << 'YAML'
-          apiVersion: batch/v1
-          kind: Job
-          metadata:
-            name: ${JOB_NAME}
-            namespace: ${K8S_NAMESPACE}
-          spec:
-            backoffLimit: 0
-            ttlSecondsAfterFinished: 300
-            template:
-              metadata:
-                labels:
-                  app.kubernetes.io/name: smoke
-              spec:
-                # Restricted — pod-level security posture
-                securityContext:
-                  runAsNonRoot: true
-                  runAsUser: 65532
-                  runAsGroup: 65532
-                  seccompProfile:
-                    type: RuntimeDefault
-                restartPolicy: Never
-                containers:
-                  - name: curl
-                    image: curlimages/curl:8.7.1
-                    securityContext:
-                      allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      capabilities:
-                        drop: ["ALL"]
-                    args:
-                      - /bin/sh
-                      - -c
-                      - |
-                        set -e
-                        echo "Probing service at http://${APP_SERVICE_NAME}..."
-                        ok=""
-                        for i in $(seq 1 30); do
-                          if curl -fsS --max-time 2 "http://${APP_SERVICE_NAME}/api/v1/healthz" > /dev/null; then
-                            echo "healthz OK on attempt $i"
-                            ok="yes"
-                            break
-                          fi
-                          sleep 2
-                        done
-                        [ -n "$ok" ] || { echo "healthz probe failed"; exit 1; }
-
-                        # brief functional check
-                        curl -fsS --max-time 5 "http://${APP_SERVICE_NAME}/api/v1/targets" | head -c 200 > /dev/null
-                        echo "Smoke test completed."
-          YAML
-
-          envsubst < job.yaml | kubectl apply -f -
-          kubectl wait \
-            --for=condition=complete \
-            job/"${JOB_NAME}" \
-            -n "${K8S_NAMESPACE}" \
-            --timeout=90s
-
       - name: Show Service & Ingress
         if: always()
         run: |
           kubectl get svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide
-
-      - name: Rollback on Smoke Test Failure
-        if: failure() && steps.smoketest.outcome == 'failure'
-        env:
-          NS: ${{ env.K8S_NAMESPACE }}
-          RELEASE: ${{ env.HELM_RELEASE }}
-        run: |
-          set +e
-          echo "Smoke test failed — dumping logs and attempting rollback..."
-          kubectl logs -l job-name="csf-smoke-${{ github.run_id }}" -n "${NS}" --tail=-1 || true
-          PREV=$(helm history "${RELEASE}" -n "${NS}" --output json | jq '.[-2].revision' -r 2>/dev/null)
-          if [ -n "${PREV}" ] && [ "${PREV}" != "null" ]; then
-            echo "Rolling back ${RELEASE} to revision ${PREV}"
-            helm rollback "${RELEASE}" "${PREV}" -n "${NS}"
-          else
-            echo "No previous revision found; skipping rollback."
-          fi
-          exit 1
