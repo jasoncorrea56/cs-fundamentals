@@ -19,14 +19,12 @@ env:
   APP_DEPLOYMENT_NAME: csf-cs-fundamentals
   APP_SERVICE_NAME: csf-cs-fundamentals
 
-  # Plumb workflow_run -> env once, per security/code scanning guidance
+  # Plumb workflow_run -> env once
   BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
   BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
   BUILD_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
 
-  # Environment routing:
-  # - Tags v* or main -> prod
-  # - Everything else -> dev (i.e. add_cd branch)
+  # Default: real value derived in a step
   DEPLOY_ENV: dev
 
 jobs:
@@ -35,13 +33,15 @@ jobs:
     # - Automation workflow succeeded, and
     # - Source ref is main, add_cd, or a v* tag
     if: ${{ github.event.workflow_run.conclusion == 'success' &&
-           (env.BUILD_BRANCH == 'main' ||
-            env.BUILD_BRANCH == 'add_cd' ||
-            startsWith(env.BUILD_BRANCH, 'v')) }}
+           (
+             github.event.workflow_run.head_branch == 'main' ||
+             github.event.workflow_run.head_branch == 'add_cd' ||
+             startsWith(github.event.workflow_run.head_branch || '', 'v')
+           ) }}
     runs-on: ubuntu-latest
 
-    # Use GitHub Environments for approvals/protections
-    # main or v* tags -> prod, everything else (e.g. add_cd) -> dev
+    # GitHub Environments for protections:
+    # main or v* -> prod, everything else (e.g. add_cd) -> dev
     environment: ${{ (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch || '', 'v')) && 'prod' || 'dev' }}
 
     steps:
@@ -79,6 +79,7 @@ jobs:
             exit 1
           fi
 
+          # shellcheck source=/dev/null
           source image-refs.env
 
           echo "GHCR_REF=${ghcr_ref:-}" >> "$GITHUB_ENV"
@@ -110,7 +111,6 @@ jobs:
             REGISTRY_REPO="${ecr_ref%:*}"
             REGISTRY="${REGISTRY_REPO%/*}"
             REPO="${REGISTRY_REPO#${REGISTRY}/}"
-
             echo "ECR_REGISTRY=${REGISTRY}" >> "$GITHUB_ENV"
             echo "ECR_REPO=${REPO}" >> "$GITHUB_ENV"
           fi
