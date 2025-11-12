@@ -365,10 +365,10 @@ jobs:
       helm_chart_dir: ./helm
 
       # Canary controls (can be toggled via repo variables or per-branch env)
-      canary_enabled: ${{ vars.CANARY_ENABLED || 'false' }}
-      canary_weight:  ${{ vars.CANARY_WEIGHT  || '10' }}
+      canary_enabled: ${{ vars.CANARY_ENABLED }}
+      canary_weight:  ${{ vars.CANARY_WEIGHT }}
       canary_image_tag: ''   # default to built tag in deploy.yaml
 
       # Allow forcing prod from branch for tests (set repo var FORCE_PROD=true temporarily)
-      force_prod: ${{ vars.FORCE_PROD || 'false' }}
+      force_prod: ${{ vars.FORCE_PROD }}
     secrets: inherit
