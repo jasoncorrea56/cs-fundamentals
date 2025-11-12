@@ -1,4 +1,8 @@
-{{- if .Values.ingress.enabled -}}
+{{- if .Values.ingress.enabled }}
+{{- $hosts := .Values.ingress.hosts | default (list) }}
+{{- if not (and (gt (len $hosts) 0) (hasKey (index $hosts 0) "host") (ne (index $hosts 0).host "")) }}
+{{- fail "ingress.enabled=true but ingress.hosts[0].host is not set" }}
+{{- end }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -18,15 +22,15 @@ metadata:
     {{- end }}
 spec:
   {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
   {{- end }}
   rules:
     {{- range .Values.ingress.hosts }}
-    - host: {{ .host }}
+    - host: {{ .host | quote }}
       http:
         paths:
           {{- range .paths }}
-          - path: {{ .path }}
+          - path: {{ .path | quote }}
             pathType: {{ .pathType }}
             backend:
               {{- if and $.Values.canary.enabled (gt (int $.Values.canary.weight) 0) (lt (int $.Values.canary.weight) 100) }}

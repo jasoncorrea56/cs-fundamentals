@@ -31,6 +31,10 @@ on:
         required: true
       ECR_REGISTRY:
         required: false
+      APP_DOMAIN:
+        required: false
+      ACM_CERT_ARN:
+        required: false
 
 permissions:
   contents: read
@@ -41,8 +45,6 @@ env:
   K8S_NAMESPACE: ${{ inputs.app_namespace }}
   HELM_RELEASE: ${{ inputs.helm_release }}
   HELM_CHART_DIR: ${{ inputs.helm_chart_dir }}
-  APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
-  ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
 
   # Helm default fullname: "<release>-<chartName>" -> "csf-cs-fundamentals"
   APP_DEPLOYMENT_NAME: csf-cs-fundamentals
@@ -55,7 +57,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # Use GitHub Environments for protections:
+    # GitHub Environments for protections:
     # - prod env when deploy_env == 'prod'
     # - dev env otherwise
     environment: ${{ inputs.deploy_env == 'prod' && 'prod' || 'dev' }}
@@ -142,6 +144,8 @@ jobs:
         env:
           # Prefer ECR from artifact but fallback to configured ECR registry
           FALLBACK_ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+          ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
         # - values.yaml: base defaults
         # - values-prod.yaml: prod-only hardening & secret wiring
         # - image.*: always from CI artifact (immutable + auditable)
