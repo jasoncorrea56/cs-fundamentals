@@ -450,6 +450,33 @@ docker compose run --rm admin health
   LOG_FORMAT=json LOG_LEVEL=INFO docker compose --profile prod up
   ```
 
+### CI / Terraform Host Overrides
+
+Ingress host configuration for production is not defined statically in the Helm chart.
+Instead, it is **dynamically injected** during deployment:
+
+| Layer | Source | Responsibility |
+|-------|---------|----------------|
+| **Terraform** | `modules/app_chart` | Passes `var.app_domain` (`csf.dawnforgegaming.com`) and ACM certificate ARN directly into the Helm release. Ensures the Ingress always points to the correct domain and certificate. |
+| **CI/CD (GitHub Actions)** | `deploy.yaml` | During the `helm upgrade` step, the pipeline overrides the Ingress host and annotations explicitly for the current environment (`DEPLOY_ENV=prod`). |
+| **Helm chart defaults** | `helm/values-prod.yaml` | Provides a minimal fallback (`ingress.enabled=true`, `className=alb`) for local or test deployments. Host values here are placeholders only. |
+
+> 🔒 This setup ensures the production host and TLS configuration are **authoritative** from infrastructure and CI configuration, not from local values files.
+> Developers can still deploy locally without touching real DNS or ACM certificates.
+
+---
+
+#### Value Injection Flow (Local → CI → Terraform)
+
+| Layer | Source of Truth | Purpose | Example Override |
+|:------|:----------------|:---------|:----------------|
+| **Helm (values-prod.yaml)** | `helm/values-prod.yaml` | Baseline chart config used for local or dev deployments. | `ingress.enabled=true` <br> `className=alb` |
+| **CI/CD (GitHub Actions)** | `.github/workflows/deploy.yaml` | Overrides ingress host and annotations per environment during `helm upgrade`. | `--set ingress.hosts[0].host=csf.dawnforgegaming.com` |
+| **Terraform (app_chart module)** | `infra/envs/prod/main.tf` | Provides the authoritative domain, ACM cert ARN, and environment wiring into Helm values. | `var.app_domain = "csf.dawnforgegaming.com"` <br> `var.acm_certificate_arn = module.acm_csf.certificate_arn` |
+
+> In short: **Helm sets defaults → CI customizes per environment → Terraform anchors production.**
+> This ensures reproducible deployments with environment-specific configuration baked into infrastructure as code.
+
 ## Type Inference with MonkeyType
 
 MonkeyType infers and applies type hints from **runtime traces** collected during test runs. It complements `mypy` by filling in missing annotations to speed up strict typing adoption.

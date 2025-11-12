@@ -1,5 +1,18 @@
 replicaCount: 2
 
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
+  hosts:
+    - host: placeholder.invalid   # Real host comes from deploy.yaml or Terraform
+      paths:
+        - path: /
+          pathType: Prefix
+
 serviceAccount:
   create: false  # TF creates SA with IRSA (secret_sync module)
   name: csf-app
