@@ -41,6 +41,8 @@ env:
   K8S_NAMESPACE: ${{ inputs.app_namespace }}
   HELM_RELEASE: ${{ inputs.helm_release }}
   HELM_CHART_DIR: ${{ inputs.helm_chart_dir }}
+  APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+  ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
 
   # Helm default fullname: "<release>-<chartName>" -> "csf-cs-fundamentals"
   APP_DEPLOYMENT_NAME: csf-cs-fundamentals
@@ -160,7 +162,6 @@ jobs:
           fi
 
           IMAGE_REPO="${REGISTRY}/${REPO}"
-
           echo "Deploying ${IMAGE_REPO}:${IMAGE_TAG} to '${DEPLOY_ENV}'"
 
           HELM_CMD=(
@@ -174,7 +175,24 @@ jobs:
           )
 
           if [ "${DEPLOY_ENV}" = "prod" ]; then
-            HELM_CMD+=( -f ${{ env.HELM_CHART_DIR }}/values-prod.yaml )
+            # Require prod routing inputs from secrets
+            if [ -z "${APP_DOMAIN:-}" ] || [ -z "${ACM_CERT_ARN:-}" ]; then
+              echo "APP_DOMAIN and/or ACM_CERT_ARN not set; cannot configure Ingress for prod."
+              exit 1
+            fi
+
+            HELM_CMD+=(
+              -f ${{ env.HELM_CHART_DIR }}/values-prod.yaml
+              --set ingress.enabled=true
+              --set ingress.className=alb
+              --set ingress.hosts[0].host="${APP_DOMAIN}"
+              --set ingress.hosts[0].paths[0].path="/"
+              --set ingress.hosts[0].paths[0].pathType=Prefix
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/scheme"="internet-facing"
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/target-type"="ip"
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/healthcheck-path"="/api/v1/healthz"
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/certificate-arn"="${ACM_CERT_ARN}"
+            )
           fi
 
           "${HELM_CMD[@]}"
