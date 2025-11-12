@@ -331,11 +331,15 @@ helm upgrade --install csf ./helm -f helm/values-prod.yaml -n csf
 
 ### Helm Chart
 
-```bash
-# Package and install
-helm install csf ./cs-fundamentals --set image.repository=ghcr.io/your-org/cs-fundamentals --set image.tag=latest
+Package and Install
 
-# Or with Ingress
+```bash
+helm install csf ./cs-fundamentals --set image.repository=ghcr.io/your-org/cs-fundamentals --set image.tag=latest
+```
+
+With Ingress
+
+```bash
 helm install csf ./cs-fundamentals --set ingress.enabled=true --set ingress.className=nginx --set ingress.hosts[0].host=csf.localtest.me
 ```
 
