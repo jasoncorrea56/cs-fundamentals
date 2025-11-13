@@ -1,0 +1,97 @@
+name: CD - Manual Deploy to EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "ECR image tag to deploy (i.e. v0.6.5 or a short SHA)"
+        required: true
+        type: string
+      canary_enabled:
+        description: "Enable canary / blue-green (true/false)"
+        required: false
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "true"
+      canary_weight:
+        description: "Canary traffic weight (0-100). 0=stage-only, 100=promote to stable."
+        required: false
+        type: string
+        default: "0"
+      force_prod:
+        description: "Force prod routing (normally true here)"
+        required: false
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "true"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  prepare-image-refs:
+    name: Prepare image-refs for deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create image-refs.env for manual deploy
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+        run: |
+          set -Eeuo pipefail
+
+          REPO="cs-fundamentals"
+
+          if [ -z "${ECR_REGISTRY}" ]; then
+            echo "ECR_REGISTRY secret is required (e.g. 9483....dkr.ecr.us-west-2.amazonaws.com)"
+            exit 1
+          fi
+
+          # This mimics build.yaml's image-refs.env structure enough for deploy.yaml
+          {
+            echo "ghcr_ref="
+            echo "ghcr_latest="
+            echo "ghcr_version="
+            echo "ecr_ref=${ECR_REGISTRY}/${REPO}:${IMAGE_TAG}"
+            echo "ecr_latest=${ECR_REGISTRY}/${REPO}:latest"
+            echo "ecr_version=${ECR_REGISTRY}/${REPO}:${IMAGE_TAG}"
+            echo "sha="
+            echo "version=${IMAGE_TAG}"
+          } > image-refs.env
+
+          echo "Generated image-refs.env:"
+          cat image-refs.env
+
+      - name: Upload image-refs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-refs
+          path: image-refs.env
+          retention-days: 3
+
+  deploy:
+    name: Deploy existing image to EKS (prod)
+    needs: prepare-image-refs
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      deploy_env: prod
+      app_namespace: csf
+      helm_release: csf
+      helm_chart_dir: ./helm
+
+      # Canary / Blue-Green controls:
+      # - canary_enabled=true, canary_weight=0 -> stage-only
+      # - canary_enabled=true, canary_weight>0 -> canary / blue-green behavior
+      canary_enabled: ${{ inputs.canary_enabled }}
+      canary_weight:  ${{ inputs.canary_weight }}
+      # Let deploy.yaml default canary_image_tag to IMAGE_TAG from image-refs.env
+      canary_image_tag: ''
+
+      # Still pass through force_prod, but for this workflow it's basically always prod
+      force_prod: ${{ inputs.force_prod }}
+    secrets: inherit

@@ -344,10 +344,6 @@ jobs:
   deploy:
     name: Deploy to EKS
     needs: [build-and-push, smoke-test, admin-test]
-    # Allow deploy from:
-    # - main / tags (prod)
-    # - add_bluegreen (dev) while testing
-    # We'll still call deploy.yaml with explicit deploy_env & canary flags.
     if: ${{ github.event_name == 'push' && (
             github.ref == 'refs/heads/add_bluegreen' ||
             github.ref == 'refs/heads/main' ||
@@ -357,17 +353,10 @@ jobs:
     with:
       # Map git ref to deploy environment:
       # - main or v* tags -> prod
-      # Note: deploy.yaml can be overridden with force_prod=true
+      # - add_bluegreen -> dev (while testing)
       deploy_env: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && 'prod' || 'dev' }}
       app_namespace: csf
       helm_release: csf
       helm_chart_dir: ./helm
-
-      # Canary controls (can be toggled via repo variables or per-branch env)
-      canary_enabled: ${{ vars.CANARY_ENABLED }}
-      canary_weight:  ${{ vars.CANARY_WEIGHT }}
-      canary_image_tag: ''   # default to built tag in deploy.yaml
-
-      # Allow forcing prod from branch for tests (set repo var FORCE_PROD=true temporarily)
-      force_prod: ${{ vars.FORCE_PROD }}
+      canary_image_tag: ''  # Default to built tag in deploy.yaml
     secrets: inherit

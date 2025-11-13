@@ -470,7 +470,9 @@ Instead, it is **dynamically injected** during deployment:
 
 ---
 
-#### Value Injection Flow (Local → CI → Terraform)
+<!-- markdownlint-disable MD033 -->
+
+#### Value Injection Flow (Local -> CI -> Terraform)
 
 | Layer | Source of Truth | Purpose | Example Override |
 |:------|:----------------|:---------|:----------------|
@@ -478,8 +480,66 @@ Instead, it is **dynamically injected** during deployment:
 | **CI/CD (GitHub Actions)** | `.github/workflows/deploy.yaml` | Overrides ingress host and annotations per environment during `helm upgrade`. | `--set ingress.hosts[0].host=csf.dawnforgegaming.com` |
 | **Terraform (app_chart module)** | `infra/envs/prod/main.tf` | Provides the authoritative domain, ACM cert ARN, and environment wiring into Helm values. | `var.app_domain = "csf.dawnforgegaming.com"` <br> `var.acm_certificate_arn = module.acm_csf.certificate_arn` |
 
-> In short: **Helm sets defaults → CI customizes per environment → Terraform anchors production.**
+> In short: **Helm sets defaults -> CI customizes per environment -> Terraform anchors production.**
 > This ensures reproducible deployments with environment-specific configuration baked into infrastructure as code.
+
+<!-- markdownlint-enable MD033 -->
+
+### CD Modes
+
+#### Modes
+
+- **Blue/Green**: Stage Green -> Smoke Test -> Full Cutover -> Disable ex-Blue
+- **Canary (%)**: Stage Canary -> Smoke Test -> Weighted Shift -> Canary Promotion (optional)
+
+#### Blue/Green Flow
+
+1. Stage green deploy
+2. Set green weight to 0%
+3. Smoke test green via in-cluster curl pod
+    - If fail: disable green
+    - If pass:
+        - promote green weight to 100%
+        - disable old stable blue
+
+#### Canary Flow
+
+1. Stage canary deploy (with stable pinned)
+2. Set canary weight to 0%
+3. Smoke test canary via in-cluster curl pod
+    - If fail: disable canary
+    - If pass: shift traffic (1–99%) to canary or promote (100%) canary to blue
+
+### Manual Production Deployment (UI Trigger)
+
+How to manually trigger a production deployment using the GitHub Actions UI, without requiring a new commit.
+
+#### How It Works
+
+The `CD - Manual Deploy to EKS` workflow accepts the following inputs:
+
+- **deploy_env**: Target environment (`dev` or `prod`)
+- **force_prod**: Allows UI-triggered production deploys without using main/tags
+- **canary_enabled**: Enables or disables canary path
+- **canary_weight**: Canary traffic weight 0–100
+- **canary_image_tag**: Override image tag to deploy
+
+#### Steps to Trigger a Manual Prod Deploy
+
+1. Go to **Actions → CD - Deploy to EKS**
+2. Click **Run workflow**
+3. Enter:
+   - `deploy_env`: `prod`
+   - `force_prod`: `false`
+   - `canary_enabled`: `false` (or `true` if testing)
+   - `canary_weight`: `0`
+   - `canary_image_tag`: `<version>`
+4. Run the workflow
+5. The workflow will:
+   - Fetch the image tag
+   - Run helm upgrade
+   - Deploy only stable (or staged canary)
+   - Apply ingress settings for prod
 
 ## Type Inference with MonkeyType
 
