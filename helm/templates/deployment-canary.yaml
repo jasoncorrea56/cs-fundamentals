@@ -35,6 +35,7 @@ spec:
       labels:
         {{- include "cs-fundamentals.labels" . | nindent 8 }}
         canary: "true"
+        track: "canary"
         {{- with .Values.canary.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
