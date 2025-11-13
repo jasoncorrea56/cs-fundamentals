@@ -1,4 +1,7 @@
 MINIKUBE_PROFILE ?= minikube
+DEV_NS           ?= csf-dev
+DEV_RELEASE      ?= csf
+DEV_ENV_PRIMARY  ?= deploy/k8s/overlays/dev/.local.secret.env
 
 .PHONY: k8s-up
 k8s-up:
@@ -11,6 +14,60 @@ k8s-up:
 .PHONY: k8s-env
 k8s-env:
 	@eval $$(minikube -p $(MINIKUBE_PROFILE) docker-env) && echo "Docker env configured for Minikube"
+
+.PHONY: dev-namespace
+dev-namespace:
+	kubectl create namespace $(DEV_NS) --dry-run=client -o yaml | kubectl apply -f -
+
+.PHONY: dev-image
+dev-image:
+	# Build the dev image inside Minikube's Docker daemon so pulls succeed
+	eval "$$(minikube docker-env)" && docker build -t cs-fundamentals:dev .
+
+.PHONY: dev-secrets
+dev-secrets: dev-namespace
+	# Strict mode: only accept the overlay-local file; no fallbacks.
+	@if [ ! -f "$(DEV_ENV_PRIMARY)" ]; then \
+		printf '%s\n%s\n  %s\n' \
+		  "ERROR: Missing secret env file for dev." \
+		  "Create it with at least the DB_URL line at:" \
+		  "$(DEV_ENV_PRIMARY)"; \
+		exit 1; \
+	fi
+	# Declaratively create/update the Secret from the overlay-local env file
+	@( \
+		if command -v kustomize >/dev/null 2>&1; then \
+			kustomize build deploy/k8s/overlays/dev; \
+		else \
+			kubectl kustomize deploy/k8s/overlays/dev; \
+		fi \
+	) | kubectl apply -f -
+
+.PHONY: dev-install
+dev-install: dev-image dev-secrets
+	helm upgrade --install $(DEV_RELEASE) ./helm \
+		-f helm/values-minikube.yaml \
+		-n $(DEV_NS) --create-namespace --wait --timeout 5m
+
+.PHONY: dev-setup
+dev-setup: dev-install
+
+init:
+	@echo "🚀 Starting local environment..."
+	make k8s-up
+	@echo "✅ Minikube started."
+
+	@echo "🔧 Setting up Dev namespace..."
+	make dev-namespace
+	@echo "✅ Local Dev namespace ready."
+
+	@echo "🔧 Setting up Dev secrets..."
+	make dev-secrets
+	@echo "✅ Local Dev secrets ready."
+
+	@echo "🌱 Building Dev image..."
+	make dev-image
+	@echo "🎉 Initialization complete!"
 
 .PHONY: dev
 dev:

@@ -258,10 +258,16 @@ NOTE: If using an IDE like VSCode or PyCharm, right-click on the test module or 
 
 ### Runtime Prep
 
-- Copy project environment variable file `local.env` to `.env`
+- Copy project environment variable file `local.env` to `.local.env` and update as needed.
 
     ```bash
-    cp local.env .env
+    cp local.env .local.env
+    ```
+
+- Copy project secret environment variable file `local.secret.env` to `/deploy/k8s/overlays/dev/.local.secret.env` and updated as needed.
+
+    ```bash
+    cp local.secret.env /deploy/k8s/overlays/dev/.local.secret.env
     ```
 
 ### Run API with Makefile
@@ -290,13 +296,50 @@ make dev
 make down
 ```
 
-### Helm Chart
+- Check Dev
 
 ```bash
-# Package and install
-helm install csf ./cs-fundamentals --set image.repository=ghcr.io/your-org/cs-fundamentals --set image.tag=latest
+helm -n csf-dev status csf --show-resources
+```
 
-# Or with Ingress
+### Secrets (Prod via ASM + CSI)
+
+Prod uses AWS Secrets Manager with the Secrets Store CSI Driver. Terraform provides the following:
+
+- Creates a JSON secret at `csf/db-url` with `{ "db_url": "..." }`
+- Provisions an IRSA role for ServiceAccount `csf-app`
+- Installs a SecretProviderClass `csf-db-spc` that syncs `db_url` into a namespaced K8s Secret `csf-db` (key `DB_URL`)
+
+Helm (Prod):
+
+- Does **not** create a ServiceAccount; it uses the TF-managed `csf-app`
+- Mounts the CSI volume (read-only) and reads `DB_URL` from the synced K8s Secret
+
+Minikube/Dev uses a plain K8s Secret for convenience (`helm/values-minikube.yaml`).
+
+To apply changes in Dev:
+
+```bash
+helm upgrade --install csf ./helm -f helm/values-minikube.yaml -n csf-dev --create-namespace
+```
+
+To apply changes in Prod:
+
+```bash
+helm upgrade --install csf ./helm -f helm/values-prod.yaml -n csf
+```
+
+### Helm Chart
+
+Package and Install
+
+```bash
+helm install csf ./cs-fundamentals --set image.repository=ghcr.io/your-org/cs-fundamentals --set image.tag=latest
+```
+
+With Ingress
+
+```bash
 helm install csf ./cs-fundamentals --set ingress.enabled=true --set ingress.className=nginx --set ingress.hosts[0].host=csf.localtest.me
 ```
 
@@ -410,6 +453,33 @@ docker compose run --rm admin health
   ```bash
   LOG_FORMAT=json LOG_LEVEL=INFO docker compose --profile prod up
   ```
+
+### CI / Terraform Host Overrides
+
+Ingress host configuration for production is not defined statically in the Helm chart.
+Instead, it is **dynamically injected** during deployment:
+
+| Layer | Source | Responsibility |
+|-------|---------|----------------|
+| **Terraform** | `modules/app_chart` | Passes `var.app_domain` (`csf.dawnforgegaming.com`) and ACM certificate ARN directly into the Helm release. Ensures the Ingress always points to the correct domain and certificate. |
+| **CI/CD (GitHub Actions)** | `deploy.yaml` | During the `helm upgrade` step, the pipeline overrides the Ingress host and annotations explicitly for the current environment (`DEPLOY_ENV=prod`). |
+| **Helm chart defaults** | `helm/values-prod.yaml` | Provides a minimal fallback (`ingress.enabled=true`, `className=alb`) for local or test deployments. Host values here are placeholders only. |
+
+> 🔒 This setup ensures the production host and TLS configuration are **authoritative** from infrastructure and CI configuration, not from local values files.
+> Developers can still deploy locally without touching real DNS or ACM certificates.
+
+---
+
+#### Value Injection Flow (Local → CI → Terraform)
+
+| Layer | Source of Truth | Purpose | Example Override |
+|:------|:----------------|:---------|:----------------|
+| **Helm (values-prod.yaml)** | `helm/values-prod.yaml` | Baseline chart config used for local or dev deployments. | `ingress.enabled=true` <br> `className=alb` |
+| **CI/CD (GitHub Actions)** | `.github/workflows/deploy.yaml` | Overrides ingress host and annotations per environment during `helm upgrade`. | `--set ingress.hosts[0].host=csf.dawnforgegaming.com` |
+| **Terraform (app_chart module)** | `infra/envs/prod/main.tf` | Provides the authoritative domain, ACM cert ARN, and environment wiring into Helm values. | `var.app_domain = "csf.dawnforgegaming.com"` <br> `var.acm_certificate_arn = module.acm_csf.certificate_arn` |
+
+> In short: **Helm sets defaults → CI customizes per environment → Terraform anchors production.**
+> This ensures reproducible deployments with environment-specific configuration baked into infrastructure as code.
 
 ## Type Inference with MonkeyType
 

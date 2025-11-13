@@ -1,0 +1,19 @@
+# Dev overlay whose *only* job is to create a stable-named Secret from your local .env.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: csf-dev
+
+# Generate Secret from the overlay-local secret env file (not in Git).
+secretGenerator:
+  - name: csf-db-dev
+    envs:
+      - ./.local.secret.env
+    type: Opaque
+
+generatorOptions:
+  # We need a predictable Secret name so Helm can reference it.
+  disableNameSuffixHash: true
+
+# No additional resources in the overlay intentionally.
+resources: []

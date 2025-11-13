@@ -6,7 +6,13 @@ metadata:
   labels:
     {{- include "cs-fundamentals.labels" . | nindent 4 }}
 spec:
-  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- /* Prefer maxUnavailable for small replica sets and HPA friendliness.
+        Fallback to minAvailable if maxUnavailable not provided. */ -}}
+  {{- if hasKey .Values.pdb "maxUnavailable" }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: {{ .Values.pdb.minAvailable | default 1 }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "cs-fundamentals.name" . }}

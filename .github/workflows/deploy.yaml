@@ -1,0 +1,273 @@
+name: CD - Deploy to EKS
+
+on:
+  workflow_call:
+    inputs:
+      deploy_env:
+        description: "Target environment (dev|prod)"
+        required: true
+        type: string
+      app_namespace:
+        description: "Kubernetes namespace"
+        required: false
+        type: string
+        default: csf
+      helm_release:
+        description: "Helm release name"
+        required: false
+        type: string
+        default: csf
+      helm_chart_dir:
+        description: "Path to Helm chart"
+        required: false
+        type: string
+        default: ./helm
+      # Canary controls
+      canary_enabled:
+        description: "Enable canary (true|false)"
+        required: false
+        type: string
+        default: "false"
+      canary_weight:
+        description: "Canary traffic weight 1-99"
+        required: false
+        type: string
+        default: "10"
+      canary_image_tag:
+        description: "Override tag for canary image (defaults to built IMAGE_TAG)"
+        required: false
+        type: string
+        default: ""
+      # Allow prod deploy from branch (testing only)
+      force_prod:
+        description: "Force prod environment even if not main/tag"
+        required: false
+        type: string
+        default: "false"
+    secrets:
+      AWS_ROLE_TO_ASSUME:
+        required: true
+      AWS_REGION:
+        required: true
+      EKS_CLUSTER_NAME:
+        required: true
+      ECR_REGISTRY:
+        required: false
+      APP_DOMAIN:
+        required: false
+      ACM_CERT_ARN:
+        required: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  K8S_NAMESPACE: ${{ inputs.app_namespace }}
+  HELM_RELEASE: ${{ inputs.helm_release }}
+  HELM_CHART_DIR: ${{ inputs.helm_chart_dir }}
+
+  # Helm default fullname: "<release>-<chartName>" -> "csf-cs-fundamentals"
+  APP_DEPLOYMENT_NAME: csf-cs-fundamentals
+  APP_SERVICE_NAME: csf-cs-fundamentals
+
+  # Prod routing (only used when DEPLOY_ENV=prod)
+  APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+  ACM_CERT_ARN: ${{ secrets.ACM_CERT_ARN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Respect caller env or force_prod in the UI
+    environment: ${{ (inputs.force_prod == 'true' && 'prod') || (inputs.deploy_env == 'prod' && 'prod') || 'dev' }}
+
+    steps:
+      - name: Checkout Repo at Built SHA
+        uses: actions/checkout@v4
+
+      - name: Download Built Image Refs from Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-refs
+
+      - name: Load Image Refs into Env
+        id: imagerefs
+        run: |
+          set -Eeuo pipefail
+          source image-refs.env || { echo "image-refs.env missing"; exit 1; }
+
+          echo "GHCR_REF=${ghcr_ref:-}"         >> "$GITHUB_ENV"
+          echo "GHCR_LATEST=${ghcr_latest:-}"   >> "$GITHUB_ENV"
+          echo "GHCR_VERSION=${ghcr_version:-}" >> "$GITHUB_ENV"
+
+          echo "ECR_REF=${ecr_ref:-}"           >> "$GITHUB_ENV"
+          echo "ECR_LATEST=${ecr_latest:-}"     >> "$GITHUB_ENV"
+          echo "ECR_VERSION=${ecr_version:-}"   >> "$GITHUB_ENV"
+
+          echo "SHA=${sha:-}"                   >> "$GITHUB_ENV"
+          echo "VERSION=${version:-}"           >> "$GITHUB_ENV"
+
+          IMAGE_TAG="${version:-${sha}}"
+          [ -n "${IMAGE_TAG}" ] || { echo "Missing version/sha in image-refs"; exit 1; }
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+
+          if [ -n "${ecr_ref:-}" ]; then
+            REGISTRY_REPO="${ecr_ref%:*}"
+            REGISTRY="${REGISTRY_REPO%/*}"
+            REPO="${REGISTRY_REPO#${REGISTRY}/}"
+            echo "ECR_REGISTRY=${REGISTRY}" >> "$GITHUB_ENV"
+            echo "ECR_REPO=${REPO}"         >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Configure KubeConfig (EKS)
+        env:
+          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          set -Eeuo pipefail
+          aws eks update-kubeconfig \
+            --name "${EKS_CLUSTER_NAME}" \
+            --region "${AWS_REGION}"
+          kubectl auth can-i get pods -A
+
+      - name: Ensure namespace exists
+        run: |
+          set -Eeuo pipefail
+          kubectl get ns "${K8S_NAMESPACE}" >/dev/null 2>&1 || \
+            kubectl create ns "${K8S_NAMESPACE}"
+
+      - name: Resolve Deploy Target & Canary Flags
+        id: cfg
+        env:
+          CALLER_ENV: ${{ inputs.deploy_env }}
+          FORCE_PROD: ${{ inputs.force_prod }}
+          CANARY_ENABLED_IN: ${{ inputs.canary_enabled }}
+          CANARY_WEIGHT_IN: ${{ inputs.canary_weight }}
+          CANARY_IMAGE_TAG_IN: ${{ inputs.canary_image_tag }}
+        run: |
+          set -Eeuo pipefail
+          # Effective environment: force_prod overrides
+          if [ "${FORCE_PROD}" = "true" ]; then
+            DEPLOY_ENV="prod"
+          else
+            DEPLOY_ENV="${CALLER_ENV}"
+          fi
+          echo "deploy_env=${DEPLOY_ENV}" >> "$GITHUB_OUTPUT"
+
+          # Normalize booleans
+          CANARY_ENABLED=$(echo "${CANARY_ENABLED_IN}" | tr '[:upper:]' '[:lower:]')
+          [ "${CANARY_ENABLED}" = "true" ] || CANARY_ENABLED="false"
+          echo "canary_enabled=${CANARY_ENABLED}" >> "$GITHUB_OUTPUT"
+
+          # Weight bounds
+          W="${CANARY_WEIGHT_IN:-10}"
+          if [ "${W}" -lt 1 ] || [ "${W}" -gt 99 ]; then
+            echo "Invalid canary_weight=${W}; must be 1..99"
+            exit 1
+          fi
+          echo "canary_weight=${W}" >> "$GITHUB_OUTPUT"
+
+          # Canary image tag defaults to built IMAGE_TAG
+          echo "canary_image_tag=${CANARY_IMAGE_TAG_IN:-$IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Helm Upgrade (Stable or Canary)
+        env:
+          FALLBACK_ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          DEPLOY_ENV: ${{ steps.cfg.outputs.deploy_env }}
+          CANARY_ENABLED: ${{ steps.cfg.outputs.canary_enabled }}
+          CANARY_WEIGHT: ${{ steps.cfg.outputs.canary_weight }}
+          CANARY_IMAGE_TAG: ${{ steps.cfg.outputs.canary_image_tag }}
+        run: |
+          set -Eeuo pipefail
+
+          REGISTRY="${ECR_REGISTRY:-$FALLBACK_ECR_REGISTRY}"
+          REPO="${ECR_REPO:-cs-fundamentals}"
+          [ -n "${REGISTRY}" ] || { echo "No ECR registry configured"; exit 1; }
+          [ -n "${IMAGE_TAG}" ] || { echo "IMAGE_TAG not set"; exit 1; }
+
+          IMAGE_REPO="${REGISTRY}/${REPO}"
+          echo "Registry: ${IMAGE_REPO}"
+          echo "Deploy env: ${DEPLOY_ENV}"
+          echo "Canary enabled: ${CANARY_ENABLED}"
+
+          # Base helm args
+          HELM_ARGS=(
+            upgrade --install "${HELM_RELEASE}" "${HELM_CHART_DIR}"
+            --namespace "${K8S_NAMESPACE}"
+            --create-namespace
+            -f "${HELM_CHART_DIR}/values.yaml"
+            --set image.repository="${IMAGE_REPO}"
+            --set serviceAccount.create=false
+          )
+
+          # Prod ingress wiring
+          if [ "${DEPLOY_ENV}" = "prod" ]; then
+            [ -n "${APP_DOMAIN:-}" ] && [ -n "${ACM_CERT_ARN:-}" ] || {
+              echo "APP_DOMAIN/ACM_CERT_ARN missing for prod"; exit 1;
+            }
+            HELM_ARGS+=(
+              -f "${HELM_CHART_DIR}/values-prod.yaml"
+              --set ingress.enabled=true
+              --set ingress.className=alb
+              --set ingress.hosts[0].host="${APP_DOMAIN}"
+              --set ingress.hosts[0].paths[0].path="/"
+              --set ingress.hosts[0].paths[0].pathType=Prefix
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/scheme"="internet-facing"
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/target-type"="ip"
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/healthcheck-path"="/api/v1/healthz"
+              --set-string ingress.annotations."alb\.ingress\.kubernetes\.io\/certificate-arn"="${ACM_CERT_ARN}"
+            )
+          fi
+
+          if [ "${DEPLOY_ENV}" = "prod" ] && [ "${CANARY_ENABLED}" = "true" ]; then
+            echo "Running CANARY deploy (prod) with weight=${CANARY_WEIGHT}"
+
+            # Detect current STABLE image tag to avoid touching it
+            CURRENT_IMAGE=$(kubectl -n "${K8S_NAMESPACE}" get deploy "${APP_DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[0].image}' || true)
+            if [ -z "${CURRENT_IMAGE}" ]; then
+              echo "No existing stable deployment found; cannot run canary safely."
+              exit 1
+            fi
+            CURRENT_TAG="${CURRENT_IMAGE##*:}"
+            echo "Stable currently running tag: ${CURRENT_TAG}"
+
+            HELM_ARGS+=(
+              --set image.tag="${CURRENT_TAG}"
+              --set canary.enabled=true
+              --set canary.image.repository="${IMAGE_REPO}"
+              --set canary.image.tag="${CANARY_IMAGE_TAG}"
+              --set canary.weight="${CANARY_WEIGHT}"
+            )
+          else
+            echo "Running NORMAL deploy (set stable to new image)"
+            HELM_ARGS+=( --set image.tag="${IMAGE_TAG}" --set canary.enabled=false )
+          fi
+
+          helm "${HELM_ARGS[@]}"
+
+      - name: Wait for rollout (stable)
+        run: |
+          set -Eeuo pipefail
+          kubectl rollout status deploy/${{ env.APP_DEPLOYMENT_NAME }} \
+            -n ${{ env.K8S_NAMESPACE }} --timeout=180s
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+
+      - name: Wait for rollout (canary - if present)
+        if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
+        run: |
+          set -Eeuo pipefail
+          kubectl rollout status deploy/${{ env.APP_DEPLOYMENT_NAME }}-canary \
+            -n ${{ env.K8S_NAMESPACE }} --timeout=180s
+          kubectl get deploy,svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide
+
+      - name: Show Service & Ingress
+        if: always()
+        run: |
+          kubectl get svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide

@@ -22,3 +22,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{- /* Canary helpers */ -}}
+
+{{- define "cs-fundamentals.canary.fullname" -}}
+{{- $suffix := default "canary" .Values.canary.nameSuffix -}}
+{{- printf "%s-%s" (include "cs-fundamentals.fullname" .) $suffix | trunc 63 | trimSuffix "-" -}}
+{{- end -}}

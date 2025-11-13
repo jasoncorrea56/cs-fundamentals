@@ -1,27 +1,33 @@
-# This workflow will install Python dependencies, lint/format, and run tests with a Python version matrix
-# After lint/tests succeed, we conditionally call the reusable build workflow for pushes to main or version tags.
+# This workflow installs Python deps, lints/formats, and runs tests with a Python matrix.
+# After lint/tests succeed, it conditionally calls the reusable build workflow on allowed pushes.
 
-name: Automation - Lint/Tests
+name: Automation - Lint/Scan/Test
 
 on:
   push:
-    branches: [ main ]  # Merge to main
+    branches: [ '**' ]  # CI on any branch push (automation only)
     tags:    [ 'v*', 'release-*' ]
   pull_request:
-    branches: [ main ]  # PR targeting main
+    branches: [ main ]  # Full CI for PRs targeting main
     types: [ opened, synchronize, reopened ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Forwarded to the reusable build workflow - needed for GHCR/ECR + OIDC
 permissions:
   contents: read
+  packages: write
+  security-events: write
+  id-token: write
 
 jobs:
   pre-commit:
     name: Pre-Commit Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -49,6 +55,8 @@ jobs:
       matrix:
         python-version: [ '3.11.13', '3.12', '3.13' ]
     continue-on-error: ${{ matrix.python-version != '3.11' }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -60,7 +68,6 @@ jobs:
 
       - name: Install Deps
         shell: bash
-        # Sync default dependencies and fail CI if drift between pyproject.toml and uv.lock
         run: |
           uv sync --frozen --all-groups
 
@@ -73,8 +80,8 @@ jobs:
     name: Semgrep (SAST)
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
       contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -100,7 +107,6 @@ jobs:
           else
             echo 'SEMGREP_BASE=--metrics=off' >> "$GITHUB_ENV"
           fi
-          # Include local override config first
           echo 'SEMGREP_CONFIGS=--config .semgrep.yaml --config p/ci --config p/security-audit --config p/python' >> "$GITHUB_ENV"
 
       - name: Semgrep Code Vuln Scan - Gated
@@ -125,13 +131,15 @@ jobs:
   osv-prep:
     name: Export deps for OSV (uv -> requirements)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
         with:
           python-version: '3.11.13'
           enable-cache: true
-      # Export all groups/extras; drop hashes so OSV treats it as a lock manifest
+      # Export all groups/extras - drop hashes so OSV treats it as a lock manifest
       - name: Export Requirements from uv.lock
         run: |
           uv export --format=requirements-txt --all-groups --all-extras --no-hashes -o osv-requirements.txt
@@ -164,6 +172,8 @@ jobs:
   trivy-fs:
     name: Trivy (File System Analysis - Vulnerabilities/Secrets/Licenses)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: aquasecurity/trivy-action@0.24.0
@@ -180,17 +190,18 @@ jobs:
           license-policy: trivy-license-policy.yaml
           license-full: true
 
-  # After lint and tests pass, call the reusable build workflow.
+  # After lint and tests pass, call the reusable build workflow for allowed pushes only.
   build-and-push:
     name: Build, Scan & Push
     needs: [pre-commit, pytest, semgrep, osv, trivy-fs]
-    if: >
-      github.event_name == 'push' &&
-      (startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))
+    if: |
+      github.event_name == 'push' && (
+        github.ref_name == 'main' ||
+        github.ref_name == 'add_bluegreen' ||
+        startsWith(github.ref, 'refs/tags/v')
+      )
     uses: ./.github/workflows/build.yaml
-    # Inherit repo secrets (GITHUB_TOKEN) for GHCR login/push inside the called workflow
+    with:
+      # Only tag :latest on main or version tags
+      push_latest: ${{ github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v') }}
     secrets: inherit
-    permissions:
-      contents: read
-      packages: write
-      security-events: write

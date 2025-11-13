@@ -1,7 +1,7 @@
 image:
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: "v0.2.0"
+  tag: "v0.5.6"
   pullPolicy: IfNotPresent
   fullname: ""
 
@@ -19,14 +19,26 @@ service:
 
 probes:
   path: /api/v1/healthz
-  timeoutSeconds: 2
-  periodSeconds: 10
-  failureThreshold: 3
-  successThreshold: 1
-  initialDelaySeconds: 5
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+    successThreshold: 1
+  liveness:
+    initialDelaySeconds: 15  # 5s slower to avoid restart flaps on cold start
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+    successThreshold: 1
+  startup:
+    enabled: true
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    failureThreshold: 12  # ~60s to become ready before liveness kicks in
 
 ingress:
-  enabled: true
+  enabled: false
   className: "alb"
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -34,16 +46,8 @@ ingress:
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-west-2:948319129176:certificate/e6b92505-243a-45a0-bb66-54474bf1fac3"
-  hosts:
-    - host: "csf.jasoncorrea.com"   # ExternalDNS uses to create the A record
-      paths:
-        - path: /
-          pathType: Prefix
-  # Optional TLS block for ALB TLS termination (ALB uses annotation above).
-  # Empty is fine, but including host for clarity.
+  hosts: []
   tls: {}
-    # - hosts: ["csf.jasoncorrea.com"]
 
 serviceAccount:
   create: true
@@ -64,13 +68,27 @@ resources:
 autoscaling:
   enabled: false
   minReplicas: 2
-  maxReplicas: 5
+  maxReplicas: 4
   targetCPUUtilizationPercentage: 70
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30  # Quick to scale up
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300   # Slow to scale down & avoid flapping
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
 
 pdb:
-  enabled: false
-  minAvailable: 1
+  enabled: true
+  maxUnavailable: 1  # Prefer maxUnavailable for to allow one eviction at a time.
+  # minAvailable: 1  # Fallback used only if maxUnavailable not set
 
 nodeSelector: {}
 tolerations: []
@@ -99,6 +117,8 @@ secret:
 
 secretsStore:
   enabled: false
+  spcName: csf-db-spc
+  mountPath: /mnt/secrets-store
 
 podSecurityContext:
   fsGroup: 2000
@@ -116,3 +136,20 @@ containerSecurityContext:
 
 devWritableTmp:
   enabled: true
+
+canary:
+  # When enabled, the chart will provision a parallel Deployment + Service.
+  # If weight is between 1 and 99, configure ALB weighted routing.
+  enabled: false
+  replicas: 1
+  weight: 10  # % of traffic to send to canary via ALB.
+  nameSuffix: "canary"
+
+  # If empty, falls back to stable image settings.
+  image:
+    repository: ""
+    tag: ""
+
+  env: []
+  podLabels: {}
+  podAnnotations: {}

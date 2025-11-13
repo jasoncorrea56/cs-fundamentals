@@ -1,35 +1,44 @@
-{{- /* local flags (safe even if values are missing) */ -}}
+{{- if .Values.canary.enabled }}
+
+{{- $baseImageRepo := .Values.image.repository -}}
+{{- $baseImageTag := .Values.image.tag -}}
+{{- $canaryImageRepo := default $baseImageRepo .Values.canary.image.repository -}}
+{{- $canaryImageTag := default $baseImageTag .Values.canary.image.tag -}}
+{{- $replicas := default 1 .Values.canary.replicas -}}
+
+{{- /* local flags shared with primary deployment */ -}}
 {{- $useSecrets := (default false .Values.secretsStore.enabled) -}}
 {{- $useTmp := (default false .Values.devWritableTmp.enabled) -}}
-
-{{- /* rollout strategy locals (nil-safe & IDE-friendly) */ -}}
-{{- $strategy := (default (dict) (get .Values "strategy")) -}}
-{{- $rolling := (default (dict) (index $strategy "rollingUpdate")) -}}
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cs-fundamentals.fullname" . }}
+  name: {{ include "cs-fundamentals.canary.fullname" . }}
   labels:
     {{- include "cs-fundamentals.labels" . | nindent 4 }}
+    canary: "true"
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ $replicas }}
+  revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: {{ default "25%" (index $rolling "maxSurge") }}
-      maxUnavailable: {{ default 0 (index $rolling "maxUnavailable") }}
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "cs-fundamentals.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
+      canary: "true"
   template:
     metadata:
       labels:
         {{- include "cs-fundamentals.labels" . | nindent 8 }}
-      {{- with .Values.podAnnotations }}
+        canary: "true"
+        {{- with .Values.canary.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.canary.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -37,20 +46,21 @@ spec:
       serviceAccountName: {{ .Values.serviceAccount.name | quote }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-
       containers:
         - name: app
-          # Deterministic image selection: always repo:tag (not fullname).
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ $canaryImageRepo }}:{{ $canaryImageTag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
 
-          {{- if or .Values.env $useTmp }}
+          {{- if or .Values.env .Values.canary.env $useTmp }}
           env:
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 }}
+            {{- end }}
+            {{- if .Values.canary.env }}
+            {{- toYaml .Values.canary.env | nindent 12 }}
             {{- end }}
             {{- if $useTmp }}
             - name: TMPDIR
@@ -58,17 +68,11 @@ spec:
             {{- end }}
           {{- end }}
 
-          {{- if or .Values.config.enabled .Values.secret.enabled }}
-          envFrom:
-            {{- if .Values.config.enabled }}
-            - configMapRef:
-                name: {{ include "cs-fundamentals.fullname" . }}
-            {{- end }}
-            {{- if .Values.secret.enabled }}
-            - secretRef:
-                name: {{ include "cs-fundamentals.fullname" . }}-secret
-            {{- end }}
-          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
 
           readinessProbe:
             httpGet:
@@ -90,19 +94,6 @@ spec:
             failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
             successThreshold: {{ .Values.probes.liveness.successThreshold }}
 
-          {{- if .Values.probes.startup.enabled }}
-          startupProbe:
-            httpGet:
-              path: {{ .Values.probes.path }}
-              port: http
-            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
-            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
-          {{- end }}
-
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-
           {{- if or $useSecrets $useTmp }}
           volumeMounts:
             {{- if $useSecrets }}
@@ -115,22 +106,6 @@ spec:
               mountPath: /tmp
             {{- end }}
           {{- end }}
-
-          securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
-
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
 
       {{- if or $useSecrets $useTmp }}
       volumes:
@@ -147,3 +122,5 @@ spec:
           emptyDir: {}
         {{- end }}
       {{- end }}
+
+{{- end }}
