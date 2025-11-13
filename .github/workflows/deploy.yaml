@@ -29,7 +29,7 @@ on:
         type: string
         default: "false"
       canary_weight:
-        description: "Canary traffic weight 1-99"
+        description: "Canary traffic weight 0-100"
         required: false
         type: string
         default: "10"
@@ -161,29 +161,45 @@ jobs:
           fi
           echo "deploy_env=${DEPLOY_ENV}" >> "$GITHUB_OUTPUT"
 
-          # Normalize booleans
+          # Normalize canary enabled flag
           CANARY_ENABLED=$(echo "${CANARY_ENABLED_IN}" | tr '[:upper:]' '[:lower:]')
           [ "${CANARY_ENABLED}" = "true" ] || CANARY_ENABLED="false"
           echo "canary_enabled=${CANARY_ENABLED}" >> "$GITHUB_OUTPUT"
 
-          # Weight bounds (blue/green + canary): 0..100
-          W="${CANARY_WEIGHT_IN:-10}"
+          # Treat canary_weight as 0..100
+          W="${CANARY_WEIGHT_IN:-0}"
           if [ "${W}" -lt 0 ] || [ "${W}" -gt 100 ]; then
             echo "Invalid canary_weight=${W}; must be 0..100"
             exit 1
           fi
           echo "canary_weight=${W}" >> "$GITHUB_OUTPUT"
 
+          if [ "${W}" -eq 100 ]; then
+            FULL_PROMOTION="true"
+          else
+            FULL_PROMOTION="false"
+          fi
+          echo "canary_full_promotion=${FULL_PROMOTION}" >> "$GITHUB_OUTPUT"
+
           # Canary image tag defaults to built IMAGE_TAG
           echo "canary_image_tag=${CANARY_IMAGE_TAG_IN:-$IMAGE_TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Helm Upgrade (Stable or Canary)
+      - name: Helm Upgrade (Stage deploy)
+        id: stage
         env:
           FALLBACK_ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
           DEPLOY_ENV: ${{ steps.cfg.outputs.deploy_env }}
           CANARY_ENABLED: ${{ steps.cfg.outputs.canary_enabled }}
-          CANARY_WEIGHT: ${{ steps.cfg.outputs.canary_weight }}
           CANARY_IMAGE_TAG: ${{ steps.cfg.outputs.canary_image_tag }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          K8S_NAMESPACE: ${{ env.K8S_NAMESPACE }}
+          HELM_RELEASE: ${{ env.HELM_RELEASE }}
+          HELM_CHART_DIR: ${{ env.HELM_CHART_DIR }}
+          APP_DEPLOYMENT_NAME: ${{ env.APP_DEPLOYMENT_NAME }}
+          APP_DOMAIN: ${{ env.APP_DOMAIN }}
+          ACM_CERT_ARN: ${{ env.ACM_CERT_ARN }}
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPO: ${{ env.ECR_REPO }}
         run: |
           set -Eeuo pipefail
 
@@ -227,47 +243,120 @@ jobs:
           fi
 
           if [ "${DEPLOY_ENV}" = "prod" ] && [ "${CANARY_ENABLED}" = "true" ]; then
-            echo "Running CANARY deploy (prod) with weight=${CANARY_WEIGHT}"
+            echo "Running CANARY STAGE deploy (prod) with weight=0 (no live traffic)"
 
             # Detect current STABLE image tag to avoid touching it
-            CURRENT_IMAGE=$(kubectl -n "${K8S_NAMESPACE}" get deploy "${APP_DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[0].image}' || true)
+            CURRENT_IMAGE=$(kubectl -n "${K8S_NAMESPACE}" get deploy "${APP_DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)
             if [ -z "${CURRENT_IMAGE}" ]; then
-              echo "No existing stable deployment found; cannot run canary safely."
-              exit 1
-            fi
-            CURRENT_TAG="${CURRENT_IMAGE##*:}"
-            echo "Stable currently running tag: ${CURRENT_TAG}"
+              echo "No existing stable deployment found - falling back to NORMAL deploy."
+              HELM_ARGS+=( --set image.tag="${IMAGE_TAG}" --set canary.enabled=false )
+            else
+              CURRENT_TAG="${CURRENT_IMAGE##*:}"
+              echo "Stable currently running tag: ${CURRENT_TAG}"
 
-            HELM_ARGS+=(
-              --set image.tag="${CURRENT_TAG}"
-              --set canary.enabled=true
-              --set canary.image.repository="${IMAGE_REPO}"
-              --set canary.image.tag="${CANARY_IMAGE_TAG}"
-              --set canary.weight="${CANARY_WEIGHT}"
-            )
+              HELM_ARGS+=(
+                --set image.tag="${CURRENT_TAG}"
+                --set canary.enabled=true
+                --set canary.image.repository="${IMAGE_REPO}"
+                --set canary.image.tag="${CANARY_IMAGE_TAG}"
+                --set canary.weight=0
+              )
+            fi
           else
-            echo "Running NORMAL deploy (set stable to new image)"
+            echo "Running NORMAL deploy (set stable to new image, canary disabled)"
             HELM_ARGS+=( --set image.tag="${IMAGE_TAG}" --set canary.enabled=false )
           fi
 
           helm "${HELM_ARGS[@]}"
 
       - name: Wait for rollout (stable)
+        env:
+          K8S_NAMESPACE: ${{ env.K8S_NAMESPACE }}
+          APP_DEPLOYMENT_NAME: ${{ env.APP_DEPLOYMENT_NAME }}
         run: |
           set -Eeuo pipefail
-          kubectl rollout status deploy/${{ env.APP_DEPLOYMENT_NAME }} \
-            -n ${{ env.K8S_NAMESPACE }} --timeout=180s
-          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+          kubectl rollout status deploy/${APP_DEPLOYMENT_NAME} \
+            -n "${K8S_NAMESPACE}" --timeout=180s
+          kubectl get pods -n "${K8S_NAMESPACE}" -o wide
 
-      - name: Wait for rollout (canary - if present)
+      - name: Wait for rollout (canary - if staged)
         if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
+        env:
+          K8S_NAMESPACE: ${{ env.K8S_NAMESPACE }}
+          APP_DEPLOYMENT_NAME: ${{ env.APP_DEPLOYMENT_NAME }}
         run: |
           set -Eeuo pipefail
-          kubectl rollout status deploy/${{ env.APP_DEPLOYMENT_NAME }}-canary \
-            -n ${{ env.K8S_NAMESPACE }} --timeout=180s
-          kubectl get deploy,svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide
+          if kubectl get deploy/${APP_DEPLOYMENT_NAME}-canary -n "${K8S_NAMESPACE}" >/dev/null 2>&1; then
+            kubectl rollout status deploy/${APP_DEPLOYMENT_NAME}-canary \
+              -n "${K8S_NAMESPACE}" --timeout=180s
+            kubectl get deploy,svc,ing -n "${K8S_NAMESPACE}" -o wide
+          else
+            echo "No canary Deployment present - skipping canary rollout wait."
+          fi
+
+      - name: Smoke test canary (in-cluster)
+        if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
+        env:
+          K8S_NAMESPACE: ${{ env.K8S_NAMESPACE }}
+          APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
+          HELM_RELEASE: ${{ env.HELM_RELEASE }}
+          HELM_CHART_DIR: ${{ env.HELM_CHART_DIR }}
+        run: |
+          set -Eeuo pipefail
+          echo "Running canary smoke test via Service ${APP_SERVICE_NAME}-canary..."
+
+          if ! kubectl -n "${K8S_NAMESPACE}" run canary-smoke --rm -i --restart=Never \
+                --image=curlimages/curl:8.7.1 -- \
+                sh -c 'for i in 1 2 3; do curl -fsS http://"'"${APP_SERVICE_NAME}"'-canary"/api/v1/healthz && exit 0 || sleep 3; done; exit 1'; then
+            echo "Canary smoke test FAILED - disabling canary and leaving stable unchanged"
+            helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
+              --namespace "${K8S_NAMESPACE}" \
+              --reuse-values \
+              --set canary.enabled=false \
+              --set canary.replicas=0
+            exit 1
+          fi
+
+      - name: Promote canary / cutover traffic
+        if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
+        env:
+          K8S_NAMESPACE: ${{ env.K8S_NAMESPACE }}
+          HELM_RELEASE: ${{ env.HELM_RELEASE }}
+          HELM_CHART_DIR: ${{ env.HELM_CHART_DIR }}
+          CANARY_WEIGHT: ${{ steps.cfg.outputs.canary_weight }}
+          CANARY_FULL_PROMOTION: ${{ steps.cfg.outputs.canary_full_promotion }}
+          CANARY_IMAGE_TAG: ${{ steps.cfg.outputs.canary_image_tag }}
+        run: |
+          set -Eeuo pipefail
+          W="${CANARY_WEIGHT}"
+
+          if [ "${W}" -eq 0 ]; then
+            echo "Canary is healthy and staged at 0% traffic. Skipping auto-promotion (manual promotion required or run with canary_weight>0)."
+            exit 0
+          fi
+
+          if [ "${CANARY_FULL_PROMOTION}" = "true" ]; then
+            echo "Promoting canary (${CANARY_IMAGE_TAG}) to STABLE and disabling canary..."
+            helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
+              --namespace "${K8S_NAMESPACE}" \
+              --reuse-values \
+              --set image.tag="${CANARY_IMAGE_TAG}" \
+              --set canary.enabled=false \
+              --set canary.replicas=0
+            exit 0
+          fi
+
+          echo "Enabling weighted canary traffic: ${W}% via ALB actions"
+          helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
+            --namespace "${K8S_NAMESPACE}" \
+            --reuse-values \
+            --set canary.enabled=true \
+            --set canary.weight="${W}"
 
       - name: Show Service & Ingress
         if: always()
+        env:
+          K8S_NAMESPACE: ${{ env.K8S_NAMESPACE }}
         run: |
-          kubectl get svc,ing -n ${{ env.K8S_NAMESPACE }} -o wide
+          set -Eeuo pipefail
+          kubectl get svc,ing -n "${K8S_NAMESPACE}" -o wide
