@@ -6,6 +6,10 @@
 {{- $canaryImageTag := default $baseImageTag .Values.canary.image.tag -}}
 {{- $replicas := default 1 .Values.canary.replicas -}}
 
+{{- /* local flags shared with primary deployment */ -}}
+{{- $useSecrets := (default false .Values.secretsStore.enabled) -}}
+{{- $useTmp := (default false .Values.devWritableTmp.enabled) -}}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,7 +53,8 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
-          {{- if or .Values.env .Values.canary.env .Values.devWritableTmp.enabled }}
+
+          {{- if or .Values.env .Values.canary.env $useTmp }}
           env:
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 }}
@@ -57,15 +62,18 @@ spec:
             {{- if .Values.canary.env }}
             {{- toYaml .Values.canary.env | nindent 12 }}
             {{- end }}
-            {{- if .Values.devWritableTmp.enabled }}
+            {{- if $useTmp }}
             - name: TMPDIR
               value: /tmp
             {{- end }}
           {{- end }}
+
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+
           readinessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
@@ -75,6 +83,7 @@ spec:
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
             successThreshold: {{ .Values.probes.readiness.successThreshold }}
+
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
@@ -84,5 +93,34 @@ spec:
             timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
             successThreshold: {{ .Values.probes.liveness.successThreshold }}
+
+          {{- if or $useSecrets $useTmp }}
+          volumeMounts:
+            {{- if $useSecrets }}
+            - name: secrets-store
+              mountPath: {{ .Values.secretsStore.mountPath | default "/mnt/secrets-store" | quote }}
+              readOnly: true
+            {{- end }}
+            {{- if $useTmp }}
+            - name: tmp
+              mountPath: /tmp
+            {{- end }}
+          {{- end }}
+
+      {{- if or $useSecrets $useTmp }}
+      volumes:
+        {{- if $useSecrets }}
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Values.secretsStore.spcName | default "csf-db-spc" | quote }}
+        {{- end }}
+        {{- if $useTmp }}
+        - name: tmp
+          emptyDir: {}
+        {{- end }}
+      {{- end }}
 
 {{- end }}
