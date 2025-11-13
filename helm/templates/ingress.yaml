@@ -13,7 +13,7 @@ metadata:
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- if and .Values.canary.enabled (gt (int .Values.canary.weight) 0) (lt (int .Values.canary.weight) 100) }}
+    {{- if and .Values.canary.enabled (ge (int .Values.canary.weight) 0) (le (int .Values.canary.weight) 100) }}
     alb.ingress.kubernetes.io/actions.csf-weighted: >
       {"Type":"forward","ForwardConfig":{"TargetGroups":[
         {"ServiceName":"{{ include "cs-fundamentals.fullname" . }}","ServicePort":"{{ .Values.service.port }}","Weight":{{ sub 100 (int .Values.canary.weight) }}},
@@ -33,8 +33,9 @@ spec:
           - path: {{ .path | quote }}
             pathType: {{ .pathType }}
             backend:
-              {{- if and $.Values.canary.enabled (gt (int $.Values.canary.weight) 0) (lt (int $.Values.canary.weight) 100) }}
-              # Weighted split between stable and canary via ALB action.
+              {{- if and $.Values.canary.enabled (ge (int $.Values.canary.weight) 0) (le (int $.Values.canary.weight) 100) }}
+              # Weighted split between stable (blue) and canary (green) via ALB action.
+              # 0% canary => all traffic to blue; 100% canary => all traffic to green.
               service:
                 name: csf-weighted
                 port:

@@ -166,10 +166,10 @@ jobs:
           [ "${CANARY_ENABLED}" = "true" ] || CANARY_ENABLED="false"
           echo "canary_enabled=${CANARY_ENABLED}" >> "$GITHUB_OUTPUT"
 
-          # Weight bounds
+          # Weight bounds (blue/green + canary): 0..100
           W="${CANARY_WEIGHT_IN:-10}"
-          if [ "${W}" -lt 1 ] || [ "${W}" -gt 99 ]; then
-            echo "Invalid canary_weight=${W}; must be 1..99"
+          if [ "${W}" -lt 0 ] || [ "${W}" -gt 100 ]; then
+            echo "Invalid canary_weight=${W}; must be 0..100"
             exit 1
           fi
           echo "canary_weight=${W}" >> "$GITHUB_OUTPUT"
