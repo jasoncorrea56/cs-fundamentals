@@ -1,7 +1,7 @@
 image:
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: "v0.5.1"
+  tag: "v0.5.2"
   pullPolicy: IfNotPresent
   fullname: ""
 
