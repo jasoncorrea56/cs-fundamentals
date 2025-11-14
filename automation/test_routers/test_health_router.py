@@ -55,12 +55,22 @@ async def test_healthz_returns_ok() -> None:
 
 
 def test_version_uses_get_app_version(monkeypatch: pytest.MonkeyPatch) -> None:
-    """version() should return the app name and version from get_app_version()."""
+    """version() should return app name, image tag, and version from get_app_version()."""
     monkeypatch.setattr(hl, "get_app_version", lambda: "1.2.3")
+
     dummy_settings = type("DummySettings", (), {"app_name": "cs-fundamentals"})
     monkeypatch.setattr(hl, "settings", dummy_settings)
+
+    # Ensure deterministic value for the env var
+    monkeypatch.setenv("CSF_IMAGE_TAG", "0.6.9-dxrdbfe")
+
     result = hl.version()
-    assert result == {"app": "cs-fundamentals", "version": "1.2.3"}
+
+    assert result == {
+        "app": "cs-fundamentals",
+        "image-tag": "0.6.9-dxrdbfe",
+        "version": "1.2.3",
+    }
 
 
 def test_http_endpoints(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,6 +79,8 @@ def test_http_endpoints(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
 
     # Mock get_app_version for predictable output
     monkeypatch.setattr(hl, "get_app_version", lambda: "9.9.9")
+
+    # Mock settings
     monkeypatch.setattr(
         hl,
         "settings",
@@ -78,6 +90,9 @@ def test_http_endpoints(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
             {"env": "t", "log_level": "INFO", "port": 80, "db_url": None, "app_name": "cs-f"},
         )(),
     )
+
+    # Ensure deterministic image tag
+    monkeypatch.setenv("CSF_IMAGE_TAG", "test-tag-123")
 
     # /configz
     r1 = client.get("/configz")
@@ -94,4 +109,8 @@ def test_http_endpoints(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
     # /version
     r3 = client.get("/version")
     assert r3.status_code == 200
-    assert r3.json() == {"app": "cs-f", "version": "9.9.9"}
+    assert r3.json() == {
+        "app": "cs-f",
+        "image-tag": "test-tag-123",
+        "version": "9.9.9",
+    }
