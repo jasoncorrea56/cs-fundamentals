@@ -97,19 +97,23 @@ jobs:
           set -Eeuo pipefail
           source image-refs.env || { echo "image-refs.env missing"; exit 1; }
 
-          echo "GHCR_REF=${ghcr_ref:-}"         >> "$GITHUB_ENV"
-          echo "GHCR_LATEST=${ghcr_latest:-}"   >> "$GITHUB_ENV"
-          echo "GHCR_VERSION=${ghcr_version:-}" >> "$GITHUB_ENV"
+          echo "GHCR_REF=${ghcr_ref:-}"                 >> "$GITHUB_ENV"
+          echo "GHCR_LATEST=${ghcr_latest:-}"           >> "$GITHUB_ENV"
+          echo "GHCR_VERSION=${ghcr_version:-}"         >> "$GITHUB_ENV"
+          echo "GHCR_VERSION_SHA=${ghcr_version_sha:-}" >> "$GITHUB_ENV"
 
-          echo "ECR_REF=${ecr_ref:-}"           >> "$GITHUB_ENV"
-          echo "ECR_LATEST=${ecr_latest:-}"     >> "$GITHUB_ENV"
-          echo "ECR_VERSION=${ecr_version:-}"   >> "$GITHUB_ENV"
+          echo "ECR_REF=${ecr_ref:-}"                   >> "$GITHUB_ENV"
+          echo "ECR_LATEST=${ecr_latest:-}"             >> "$GITHUB_ENV"
+          echo "ECR_VERSION=${ecr_version:-}"           >> "$GITHUB_ENV"
+          echo "ECR_VERSION_SHA=${ecr_version_sha:-}"   >> "$GITHUB_ENV"
 
-          echo "SHA=${sha:-}"                   >> "$GITHUB_ENV"
-          echo "VERSION=${version:-}"           >> "$GITHUB_ENV"
+          echo "SHA=${sha:-}"                           >> "$GITHUB_ENV"
+          echo "VERSION=${version:-}"                   >> "$GITHUB_ENV"
+          echo "VERSION_SHA=${version_sha:-}"           >> "$GITHUB_ENV"
 
-          IMAGE_TAG="${version:-${sha}}"
-          [ -n "${IMAGE_TAG}" ] || { echo "Missing version/sha in image-refs"; exit 1; }
+          # Version precedence: version+sha, then version, then raw sha
+          IMAGE_TAG="${version_sha:-${version:-${sha}}}"
+          [ -n "${IMAGE_TAG}" ] || { echo "Missing version_sha/version/sha in image-refs"; exit 1; }
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
 
           if [ -n "${ecr_ref:-}" ]; then
