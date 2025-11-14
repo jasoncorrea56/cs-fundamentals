@@ -310,7 +310,27 @@ jobs:
           echo "Running canary smoke test via Service ${APP_SERVICE_NAME}-canary..."
 
           if ! kubectl -n "${K8S_NAMESPACE}" run canary-smoke --rm -i --restart=Never \
-                --image=curlimages/curl:8.7.1 -- \
+                --image=curlimages/curl:8.7.1 \
+                --overrides='{
+                  "apiVersion": "v1",
+                  "kind": "Pod",
+                  "spec": {
+                    "securityContext": {
+                      "runAsNonRoot": true,
+                      "seccompProfile": { "type": "RuntimeDefault" }
+                    },
+                    "containers": [{
+                      "name": "canary-smoke",
+                      "image": "curlimages/curl:8.7.1",
+                      "securityContext": {
+                        "allowPrivilegeEscalation": false,
+                        "runAsNonRoot": true,
+                        "seccompProfile": { "type": "RuntimeDefault" },
+                        "capabilities": { "drop": ["ALL"] }
+                      }
+                    }]
+                  }
+                }' -- \
                 sh -c 'for i in 1 2 3; do curl -fsS http://"'"${APP_SERVICE_NAME}"'-canary"/api/v1/healthz && exit 0 || sleep 3; done; exit 1'; then
             echo "Canary smoke test FAILED - disabling canary and leaving stable unchanged"
             helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
