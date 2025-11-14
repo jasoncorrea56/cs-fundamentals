@@ -541,6 +541,11 @@ The `CD - Manual Deploy to EKS` workflow accepts the following inputs:
    - Deploy only stable (or staged canary)
    - Apply ingress settings for prod
 
+#### ⚠️ Manual Deploys: Important Branch Requirement
+
+Manual deploys always execute the workflow code from the branch they are run against.
+If you’re testing CD changes, always run against your feature branch.
+
 ## Type Inference with MonkeyType
 
 MonkeyType infers and applies type hints from **runtime traces** collected during test runs. It complements `mypy` by filling in missing annotations to speed up strict typing adoption.
