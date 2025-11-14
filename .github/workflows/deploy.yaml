@@ -321,6 +321,8 @@ jobs:
             restartPolicy: Never
             securityContext:
               runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
               seccompProfile:
                 type: RuntimeDefault
             containers:
@@ -329,9 +331,23 @@ jobs:
                 securityContext:
                   allowPrivilegeEscalation: false
                   runAsNonRoot: true
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  readOnlyRootFilesystem: true
+                  seccompProfile:
+                    type: RuntimeDefault
                   capabilities:
-                    drop: ["ALL"]
-                command: ["sh", "-c", "for i in 1 2 3; do curl -fsS http://${APP_SERVICE_NAME}-canary/api/v1/healthz && exit 0 || sleep 3; done; exit 1"]
+                    drop:
+                      - ALL
+                command:
+                  - sh
+                  - -c
+                  - |
+                    for i in 1 2 3; do
+                      curl -fsS "http://${APP_SERVICE_NAME}-canary/api/v1/healthz" && exit 0
+                      sleep 3
+                    done
+                    exit 1
           EOF
 
           echo "Waiting for canary-smoke Pod to complete..."
