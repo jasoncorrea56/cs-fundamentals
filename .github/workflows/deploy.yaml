@@ -306,37 +306,66 @@ jobs:
           set -Eeuo pipefail
           echo "Running canary smoke test via Service ${APP_SERVICE_NAME}-canary..."
 
-          if ! kubectl -n "${K8S_NAMESPACE}" run canary-smoke --rm -i --restart=Never \
-                --image=curlimages/curl:8.7.1 \
-                --overrides='{
-                  "apiVersion": "v1",
-                  "kind": "Pod",
-                  "spec": {
-                    "securityContext": {
-                      "runAsNonRoot": true,
-                      "seccompProfile": { "type": "RuntimeDefault" }
-                    },
-                    "containers": [{
-                      "name": "canary-smoke",
-                      "image": "curlimages/curl:8.7.1",
-                      "securityContext": {
-                        "allowPrivilegeEscalation": false,
-                        "runAsNonRoot": true,
-                        "seccompProfile": { "type": "RuntimeDefault" },
-                        "capabilities": { "drop": ["ALL"] }
-                      }
-                    }]
-                  }
-                }' -- \
-                sh -c 'for i in 1 2 3; do curl -fsS http://"'"${APP_SERVICE_NAME}"'-canary"/api/v1/healthz && exit 0 || sleep 3; done; exit 1'; then
-            echo "Canary smoke test FAILED - disabling canary and leaving stable unchanged"
+          # Clean up any old pod from previous runs
+          kubectl -n "${K8S_NAMESPACE}" delete pod canary-smoke --ignore-not-found || true
+
+          # Create a Pod configured to satisfy PodSecurity "restricted"
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: canary-smoke
+            namespace: ${K8S_NAMESPACE}
+          spec:
+            restartPolicy: Never
+            securityContext:
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - name: canary-smoke
+                image: curlimages/curl:8.7.1
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
+                  capabilities:
+                    drop: ["ALL"]
+                command: ["sh", "-c"]
+                args:
+                  - |
+                    for i in 1 2 3; do
+                      curl -fsS http://${APP_SERVICE_NAME}-canary/api/v1/healthz && exit 0 || sleep 3
+                    done
+                    exit 1
+          EOF
+
+          # Wait for the pod to finish
+          for i in {1..30}; do
+            STATUS=$(kubectl -n "${K8S_NAMESPACE}" get pod canary-smoke -o jsonpath='{.status.phase}' 2>/dev/null || echo "Pending")
+            echo "canary-smoke status: ${STATUS}"
+            if [ "${STATUS}" = "Succeeded" ] || [ "${STATUS}" = "Failed" ]; then
+              break
+            fi
+            sleep 2
+          done
+
+          STATUS=$(kubectl -n "${K8S_NAMESPACE}" get pod canary-smoke -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+          if [ "${STATUS}" != "Succeeded" ]; then
+            echo "Canary smoke test FAILED (pod phase=${STATUS})"
+            kubectl -n "${K8S_NAMESPACE}" logs canary-smoke || true
             helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
               --namespace "${K8S_NAMESPACE}" \
               --reuse-values \
               --set canary.enabled=false \
               --set canary.replicas=0
+            kubectl -n "${K8S_NAMESPACE}" delete pod canary-smoke --ignore-not-found || true
             exit 1
           fi
+
+          echo "Canary smoke test PASSED"
+          kubectl -n "${K8S_NAMESPACE}" delete pod canary-smoke --ignore-not-found || true
 
       - name: Promote canary / cutover traffic
         if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
