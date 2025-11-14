@@ -187,22 +187,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image (SHA)
-        env:
-          IMAGE_NAME: ${{ inputs.image_name }}
-          GIT_SHA: ${{ steps.meta.outputs.sha }}
-        run: |
-          set -Eeuo pipefail
-          docker push "${IMAGE_NAME}:${GIT_SHA}"
-
-      - name: Push image (Version)
-        env:
-          IMAGE_NAME: ${{ inputs.image_name }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          set -Eeuo pipefail
-          docker push "${IMAGE_NAME}:${VERSION}"
-
       - name: Push image (Version-SHA7)
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
@@ -252,37 +236,16 @@ jobs:
           ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
-          VERSION: ${{ steps.version.outputs.version }}
           VERSION_SHA: ${{ steps.version.outputs.version_sha }}
           PUSH_LATEST: ${{ inputs.push_latest }}
         run: |
           set -Eeuo pipefail
-          # SHA tag
-          docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
-          # Version tag (semver)
-          docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
           # Version-SHA tag (semver + commit)
           docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
           # Latest (optional)
           if [ "${PUSH_LATEST}" = "true" ]; then
             docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:latest"
           fi
-
-      - name: Push Image to ECR (SHA)
-        if: ${{ inputs.push_to_ecr }}
-        env:
-          ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
-          ECR_REPO: ${{ inputs.ecr_repo }}
-          GIT_SHA: ${{ steps.meta.outputs.sha }}
-        run: docker push "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
-
-      - name: Push Image to ECR (Version)
-        if: ${{ inputs.push_to_ecr }}
-        env:
-          ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
-          ECR_REPO: ${{ inputs.ecr_repo }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: docker push "${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
 
       - name: Push Image to ECR (Version-SHA7)
         if: ${{ inputs.push_to_ecr }}
@@ -306,20 +269,20 @@ jobs:
           ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
-          VERSION: ${{ steps.version.outputs.version }}
           VERSION_SHA: ${{ steps.version.outputs.version_sha }}
         run: |
           {
-            echo "ghcr_ref=${GHCR_IMAGE}:${GIT_SHA}"
+            # Canonical refs (for CD)
+            echo "ghcr_ref=${GHCR_IMAGE}:${VERSION_SHA}"
             echo "ghcr_latest=${GHCR_IMAGE}:latest"
-            echo "ghcr_version=${GHCR_IMAGE}:${VERSION}"
             echo "ghcr_version_sha=${GHCR_IMAGE}:${VERSION_SHA}"
-            echo "ecr_ref=${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
+
+            echo "ecr_ref=${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
             echo "ecr_latest=${ECR_REGISTRY}/${ECR_REPO}:latest"
-            echo "ecr_version=${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
             echo "ecr_version_sha=${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
+
+            # Raw pieces for deploy.yaml to make decisions
             echo "sha=${GIT_SHA}"
-            echo "version=${VERSION}"
             echo "version_sha=${VERSION_SHA}"
           } | tee image-refs.env
 
