@@ -103,11 +103,9 @@ jobs:
 
           echo "ECR_REF=${ecr_ref:-}"                   >> "$GITHUB_ENV"
           echo "ECR_LATEST=${ecr_latest:-}"             >> "$GITHUB_ENV"
-          echo "ECR_VERSION=${ecr_version:-}"           >> "$GITHUB_ENV"
           echo "ECR_VERSION_SHA=${ecr_version_sha:-}"   >> "$GITHUB_ENV"
 
           echo "SHA=${sha:-}"                           >> "$GITHUB_ENV"
-          echo "VERSION=${version:-}"                   >> "$GITHUB_ENV"
           echo "VERSION_SHA=${version_sha:-}"           >> "$GITHUB_ENV"
 
           # Version precedence: version+sha, then version, then raw sha
