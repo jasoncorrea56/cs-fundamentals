@@ -13,6 +13,7 @@ spec:
   selector:
     app.kubernetes.io/name: {{ include "cs-fundamentals.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    track: "stable"
   ports:
     - name: http
       port: {{ .Values.service.port }}

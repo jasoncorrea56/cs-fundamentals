@@ -64,17 +64,32 @@ jobs:
           echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
 
-      - name: Detect Version (Git tag then pyproject.toml)
+      - name: Detect Version (pyproject.toml then Git tag)
         id: version
         run: |
           set -Eeuo pipefail
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true)
+
+          # 1) Prefer version from pyproject.toml
+          VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | cut -d '"' -f2 || true)
+
+          # 2) Fallback: latest git tag (v*-style tags or similar)
           if [[ -z "$VERSION" ]]; then
-            VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | cut -d '"' -f2)
-            VERSION="v${VERSION}"
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true)
           fi
+
+          if [[ -z "$VERSION" ]]; then
+            echo "Could not determine version from pyproject.toml or git tags"
+            exit 1
+          fi
+
+          SHA="${{ steps.meta.outputs.sha }}"
+          VERSION_SHA="${VERSION}-${SHA}"
+
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version_sha=${VERSION_SHA}" >> "$GITHUB_OUTPUT"
+
           echo "Detected version: ${VERSION}"
+          echo "Composite version+sha tag: ${VERSION_SHA}"
 
       - name: Validate Inputs
         env:
@@ -103,6 +118,7 @@ jobs:
           tags: |
             ${{ inputs.image_name }}:${{ steps.meta.outputs.sha }}
             ${{ inputs.image_name }}:${{ steps.version.outputs.version }}
+            ${{ inputs.image_name }}:${{ steps.version.outputs.version_sha }}
             ${{ inputs.image_name }}${{ inputs.push_latest && ':latest' || '' }}
           build-args: |
             GIT_SHA=${{ steps.meta.outputs.sha }}
@@ -171,13 +187,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image (SHA tag)
+      - name: Push image (SHA)
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
         run: |
           set -Eeuo pipefail
           docker push "${IMAGE_NAME}:${GIT_SHA}"
+
+      - name: Push image (Version)
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -Eeuo pipefail
+          docker push "${IMAGE_NAME}:${VERSION}"
+
+      - name: Push image (Version-SHA7)
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          VERSION_SHA: ${{ steps.version.outputs.version_sha }}
+        run: |
+          set -Eeuo pipefail
+          docker push "${IMAGE_NAME}:${VERSION_SHA}"
 
       - name: Push image (:latest)
         if: ${{ inputs.push_latest == true }}
@@ -186,14 +218,6 @@ jobs:
         run: |
           set -Eeuo pipefail
           docker push "${IMAGE_NAME}:latest"
-
-      - name: Push image (version tag)
-        env:
-          IMAGE_NAME: ${{ inputs.image_name }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          set -Eeuo pipefail
-          docker push "${IMAGE_NAME}:${VERSION}"
 
       # --- Optional ECR Login and Push ---
       - name: Resolve ECR/AWS Settings
@@ -229,13 +253,16 @@ jobs:
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
           VERSION: ${{ steps.version.outputs.version }}
+          VERSION_SHA: ${{ steps.version.outputs.version_sha }}
           PUSH_LATEST: ${{ inputs.push_latest }}
         run: |
           set -Eeuo pipefail
           # SHA tag
           docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
-          # Version tag
+          # Version tag (semver)
           docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
+          # Version-SHA tag (semver + commit)
+          docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
           # Latest (optional)
           if [ "${PUSH_LATEST}" = "true" ]; then
             docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:latest"
@@ -257,6 +284,14 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: docker push "${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
 
+      - name: Push Image to ECR (Version-SHA7)
+        if: ${{ inputs.push_to_ecr }}
+        env:
+          ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
+          ECR_REPO: ${{ inputs.ecr_repo }}
+          VERSION_SHA: ${{ steps.version.outputs.version_sha }}
+        run: docker push "${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
+
       - name: Push Image to ECR (Latest)
         if: ${{ inputs.push_to_ecr && inputs.push_latest }}
         env:
@@ -272,16 +307,20 @@ jobs:
           ECR_REPO: ${{ inputs.ecr_repo }}
           GIT_SHA: ${{ steps.meta.outputs.sha }}
           VERSION: ${{ steps.version.outputs.version }}
+          VERSION_SHA: ${{ steps.version.outputs.version_sha }}
         run: |
           {
             echo "ghcr_ref=${GHCR_IMAGE}:${GIT_SHA}"
             echo "ghcr_latest=${GHCR_IMAGE}:latest"
             echo "ghcr_version=${GHCR_IMAGE}:${VERSION}"
+            echo "ghcr_version_sha=${GHCR_IMAGE}:${VERSION_SHA}"
             echo "ecr_ref=${ECR_REGISTRY}/${ECR_REPO}:${GIT_SHA}"
             echo "ecr_latest=${ECR_REGISTRY}/${ECR_REPO}:latest"
             echo "ecr_version=${ECR_REGISTRY}/${ECR_REPO}:${VERSION}"
+            echo "ecr_version_sha=${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
             echo "sha=${GIT_SHA}"
             echo "version=${VERSION}"
+            echo "version_sha=${VERSION_SHA}"
           } | tee image-refs.env
 
       - name: Upload Image Refs
@@ -344,12 +383,7 @@ jobs:
   deploy:
     name: Deploy to EKS
     needs: [build-and-push, smoke-test, admin-test]
-    # Allow deploy from:
-    # - main / tags (prod)
-    # - add_bluegreen (dev) while testing
-    # We'll still call deploy.yaml with explicit deploy_env & canary flags.
     if: ${{ github.event_name == 'push' && (
-            github.ref == 'refs/heads/add_bluegreen' ||
             github.ref == 'refs/heads/main' ||
             startsWith(github.ref, 'refs/tags/v')
           ) }}
@@ -357,17 +391,9 @@ jobs:
     with:
       # Map git ref to deploy environment:
       # - main or v* tags -> prod
-      # Note: deploy.yaml can be overridden with force_prod=true
       deploy_env: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && 'prod' || 'dev' }}
       app_namespace: csf
       helm_release: csf
       helm_chart_dir: ./helm
-
-      # Canary controls (can be toggled via repo variables or per-branch env)
-      canary_enabled: ${{ vars.CANARY_ENABLED }}
-      canary_weight:  ${{ vars.CANARY_WEIGHT }}
-      canary_image_tag: ''   # default to built tag in deploy.yaml
-
-      # Allow forcing prod from branch for tests (set repo var FORCE_PROD=true temporarily)
-      force_prod: ${{ vars.FORCE_PROD }}
+      canary_image_tag: ''  # Default to built tag in deploy.yaml
     secrets: inherit

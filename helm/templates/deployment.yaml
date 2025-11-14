@@ -29,6 +29,7 @@ spec:
     metadata:
       labels:
         {{- include "cs-fundamentals.labels" . | nindent 8 }}
+        track: "stable"
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
