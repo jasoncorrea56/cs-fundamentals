@@ -99,7 +99,6 @@ jobs:
 
           echo "GHCR_REF=${ghcr_ref:-}"                 >> "$GITHUB_ENV"
           echo "GHCR_LATEST=${ghcr_latest:-}"           >> "$GITHUB_ENV"
-          echo "GHCR_VERSION=${ghcr_version:-}"         >> "$GITHUB_ENV"
           echo "GHCR_VERSION_SHA=${ghcr_version_sha:-}" >> "$GITHUB_ENV"
 
           echo "ECR_REF=${ecr_ref:-}"                   >> "$GITHUB_ENV"
@@ -112,7 +111,7 @@ jobs:
           echo "VERSION_SHA=${version_sha:-}"           >> "$GITHUB_ENV"
 
           # Version precedence: version+sha, then version, then raw sha
-          IMAGE_TAG="${version_sha:-${version:-${sha}}}"
+          IMAGE_TAG="${version_sha}"
           [ -n "${IMAGE_TAG}" ] || { echo "Missing version_sha/version/sha in image-refs"; exit 1; }
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
 

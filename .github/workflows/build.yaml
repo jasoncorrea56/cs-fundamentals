@@ -51,6 +51,7 @@ jobs:
     outputs:
       image_name: ${{ inputs.image_name }}
       sha: ${{ steps.meta.outputs.sha }}
+      version_sha: ${{ steps.version.outputs.version_sha }}
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -307,7 +308,7 @@ jobs:
       - name: Run container and probe /api/v1/healthz
         run: |
           IMAGE="${{ needs.build-and-push.outputs.image_name }}"
-          TAG="${{ needs.build-and-push.outputs.sha }}"
+          TAG="${{ needs.build-and-push.outputs.version_sha }}"
           docker run -d --rm -p 18080:8080 --name app "${IMAGE}:${TAG}"
 
           for i in {1..30}; do
@@ -340,7 +341,7 @@ jobs:
       - name: Run admin health task
         run: |
           IMAGE="${{ needs.build-and-push.outputs.image_name }}"
-          TAG="${{ needs.build-and-push.outputs.sha }}"
+          TAG="${{ needs.build-and-push.outputs.version_sha }}"
           docker run --rm --entrypoint python "${IMAGE}:${TAG}" -m cs_fundamentals.admin health
 
   deploy:
