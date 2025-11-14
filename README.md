@@ -1,5 +1,20 @@
 # cs-fundamentals
 
+[![CI Status](https://github.com/jasoncorrea56/cs-fundamentals/actions/workflows/automation.yaml/badge.svg)](https://github.com/jasoncorrea56/cs-fundamentals/actions/workflows/automation.yaml)
+![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
+![Ruff](https://img.shields.io/badge/code%20style-ruff-black?logo=ruff&logoColor=white)
+![Semgrep](https://img.shields.io/badge/security-semgrep-blue?logo=semgrep&logoColor=white)
+![Trivy](https://img.shields.io/badge/vulnerability%20scan-trivy-red?logo=trivy&logoColor=white)
+![SBOM](https://img.shields.io/badge/SBOM-syft-yellow?logo=linux&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.11-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009485?logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/kubernetes-1.34-blue?logo=kubernetes&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-chart-0F1689?logo=helm&logoColor=white)
+![AWS ECR](https://img.shields.io/badge/AWS-ECR-orange?logo=amazon-aws&logoColor=white)
+![AWS EKS](https://img.shields.io/badge/AWS-EKS-orange?logo=amazon-eks&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-modular-7B42BC?logo=terraform&logoColor=white)
+
 Python project to hone computer science fundamentals of data structures, algorithms and problem solving patterns. Includes pytests to verify implementation accuracy for normal and practice classes.
 
 ## Setup
