@@ -385,13 +385,14 @@ jobs:
     needs: [build-and-push, smoke-test, admin-test]
     if: ${{ github.event_name == 'push' && (
             github.ref == 'refs/heads/main' ||
+            github.ref == 'refs/heads/eks_polish' ||
             startsWith(github.ref, 'refs/tags/v')
           ) }}
     uses: ./.github/workflows/deploy.yaml
     with:
       # Map git ref to deploy environment:
       # - main or v* tags -> prod
-      deploy_env: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && 'prod' || 'dev' }}
+      deploy_env: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/eks_polish' || startsWith(github.ref, 'refs/tags/v')) && 'prod' || 'dev' }}
       app_namespace: csf
       helm_release: csf
       helm_chart_dir: ./helm
