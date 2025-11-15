@@ -154,20 +154,11 @@ jobs:
           CANARY_IMAGE_TAG_IN: ${{ inputs.canary_image_tag }}
         run: |
           set -Eeuo pipefail
-
-          # Effective environment:
-          # - Prod now REQUIRES FORCE_PROD="true".
-          # - Any prod call without force_prod is downgraded to dev (freezes auto-prod deploys).
+          # Effective environment: force_prod overrides
           if [ "${FORCE_PROD}" = "true" ]; then
-            # Honor the caller's requested env when explicitly forced.
-            DEPLOY_ENV="${CALLER_ENV}"
+            DEPLOY_ENV="prod"
           else
-            if [ "${CALLER_ENV}" = "prod" ]; then
-              echo "Auto prod deploy blocked (FORCE_PROD!=true). Downgrading to dev."
-              DEPLOY_ENV="dev"
-            else
-              DEPLOY_ENV="${CALLER_ENV}"
-            fi
+            DEPLOY_ENV="${CALLER_ENV}"
           fi
           echo "deploy_env=${DEPLOY_ENV}" >> "$GITHUB_OUTPUT"
 
