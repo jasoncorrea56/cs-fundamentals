@@ -234,16 +234,15 @@ jobs:
           GHCR_IMAGE: ${{ inputs.image_name }}
           ECR_REGISTRY: ${{ steps.cfg.outputs.ecr_registry }}
           ECR_REPO: ${{ inputs.ecr_repo }}
-          GIT_SHA: ${{ steps.meta.outputs.sha }}
           VERSION_SHA: ${{ steps.version.outputs.version_sha }}
           PUSH_LATEST: ${{ inputs.push_latest }}
         run: |
           set -Eeuo pipefail
-          # Version-SHA tag (semver + commit)
-          docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
+          # Version-SHA7 tag (semver + commit)
+          docker tag "${GHCR_IMAGE}:${VERSION_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:${VERSION_SHA}"
           # Latest (optional)
           if [ "${PUSH_LATEST}" = "true" ]; then
-            docker tag "${GHCR_IMAGE}:${GIT_SHA}" "${ECR_REGISTRY}/${ECR_REPO}:latest"
+            docker tag "${GHCR_IMAGE}:latest" "${ECR_REGISTRY}/${ECR_REPO}:latest"
           fi
 
       - name: Push Image to ECR (Version-SHA7)
@@ -353,7 +352,7 @@ jobs:
     with:
       # Map git ref to deploy environment:
       # - main or v* tags -> prod
-      deploy_env: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && 'prod' || 'dev' }}
+      deploy_env: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags:v')) && 'prod' || 'dev' }}
       app_namespace: csf
       helm_release: csf
       helm_chart_dir: ./helm
