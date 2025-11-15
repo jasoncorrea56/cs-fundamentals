@@ -344,10 +344,11 @@ jobs:
   deploy:
     name: Deploy to EKS
     needs: [build-and-push, smoke-test, admin-test]
-    if: ${{ github.event_name == 'push' && (
-            github.ref == 'refs/heads/main' ||
-            startsWith(github.ref, 'refs/tags/v')
-          ) }}
+    if: false  # Temporarily disable auto-deploys; manual deploy workflow still works
+    # if: ${{ github.event_name == 'push' && (
+    #         github.ref == 'refs/heads/main' ||
+    #         startsWith(github.ref, 'refs/tags/v')
+    #       ) }}
     uses: ./.github/workflows/deploy.yaml
     with:
       # Map git ref to deploy environment:
