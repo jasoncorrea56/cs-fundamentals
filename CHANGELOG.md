@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.1...v0.7.2) (2025-11-15)
+
+
+### Bug Fixes
+
+* add release-please json config and cleanup ([db8cafb](https://github.com/jasoncorrea56/cs-fundamentals/commit/db8cafb322e190f1fa23506df59167de18ff33d0))
+* remove latest tag to fix ECR collision ([b468a91](https://github.com/jasoncorrea56/cs-fundamentals/commit/b468a9106e462e133aa961b551ac8e1366d615e8))
+
 ## 0.1.0 (2025-11-15)
 
 
