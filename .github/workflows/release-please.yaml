@@ -13,11 +13,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Run release-please
+      - name: Run release-please (manifest mode)
         uses: google-github-actions/release-please-action@v4
         with:
-          package-name: cs-fundamentals
-          release-type: python
-          extra-files: |
-            pyproject.toml
-            helm/Chart.yaml
+          command: manifest
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

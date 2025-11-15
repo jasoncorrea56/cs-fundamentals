@@ -202,5 +202,5 @@ jobs:
     uses: ./.github/workflows/build.yaml
     with:
       # Only tag :latest on main or version tags
-      push_latest: ${{ github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v') }}
+      push_latest: false  # ${{ github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v') }}
     secrets: inherit
