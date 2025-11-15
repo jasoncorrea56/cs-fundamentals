@@ -43,7 +43,7 @@ class TestSingletonPattern:
         assert not hasattr(borg_reset_child, "shared_variable")
 
     def test_normal_base_print(self, capsys) -> None:
-        """Covers NormalClass.print_access (line ~27)."""
+        """Covers NormalClass.print_access."""
         base = NormalClass()
         base.print_access()
         out = capsys.readouterr().out
@@ -125,7 +125,7 @@ class TestSingletonPattern:
         assert reset.get_instance_access() is None
 
     def test_borg_reset_child_print(self, capsys) -> None:
-        """Covers BorgSingletonResetChild.print_access (lines ~118–119)."""
+        """Covers BorgSingletonResetChild.print_access."""
         reset = BorgSingletonResetChild()
         reset.set_access("Fresh")
         reset.print_access()
