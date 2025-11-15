@@ -4,14 +4,13 @@ image:
   # when doing real deployments / canary releases.
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: "0.7.2"  # x-release-please-version
+  tag: 0.7.2  # x-release-please-version
   pullPolicy: IfNotPresent
-  fullname: ""
+  fullname: ''
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
+nameOverride: ''
+fullnameOverride: ''
 replicaCount: 2
 
 service:
@@ -42,19 +41,19 @@ probes:
 
 ingress:
   enabled: false
-  className: "alb"
+  className: alb
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
   hosts: []
   tls: {}
 
 serviceAccount:
   create: true
-  name: "csf-app"
+  name: csf-app
   annotations: {}
 
 podAnnotations: {}
@@ -62,11 +61,11 @@ podLabels: {}
 
 resources:
   limits:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: 500m
+    memory: 512Mi
   requests:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: 100m
+    memory: 128Mi
 
 autoscaling:
   enabled: false
@@ -92,14 +91,13 @@ pdb:
   enabled: true
   maxUnavailable: 1  # Prefer maxUnavailable for to allow one eviction at a time.
   # minAvailable: 1  # Fallback used only if maxUnavailable not set
-
 nodeSelector: {}
 tolerations: []
 affinity: {}
 
 env:
   - name: LOG_LEVEL
-    value: "info"
+    value: info
   - name: DB_URL
     valueFrom:
       secretKeyRef:
@@ -111,7 +109,7 @@ config:
   mountPath: /app/config
   data:
     APP_NAME: cs-fundamentals
-    FEATURE_FLAG_EXAMPLE: "false"
+    FEATURE_FLAG_EXAMPLE: 'false'
 
 # Base64-encoded values can be provided via extraManifests or directly with stringData
 secret:
@@ -133,7 +131,8 @@ containerSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
   capabilities:
-    drop: ["ALL"]
+    drop:
+      - ALL
   seccompProfile:
     type: RuntimeDefault
 
@@ -146,13 +145,10 @@ canary:
   enabled: false
   replicas: 1
   weight: 10  # % of traffic to send to canary via ALB.
-  nameSuffix: "canary"
-
-  # If empty, falls back to stable image settings.
+  nameSuffix: canary
   image:
-    repository: ""
-    tag: ""
-
+    repository: ''
+    tag: ''
   env: []
   podLabels: {}
   podAnnotations: {}
