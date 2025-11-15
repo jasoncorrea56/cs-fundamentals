@@ -16,7 +16,7 @@ on:
         description: "Also tag and push :latest"
         required: false
         type: boolean
-        default: true
+        default: false
       push_to_ecr:
         description: "Also push to Amazon ECR"
         required: false
@@ -117,8 +117,6 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ inputs.image_name }}:${{ steps.meta.outputs.sha }}
-            ${{ inputs.image_name }}:${{ steps.version.outputs.version }}
             ${{ inputs.image_name }}:${{ steps.version.outputs.version_sha }}
             ${{ inputs.image_name }}${{ inputs.push_latest && ':latest' || '' }}
           build-args: |
