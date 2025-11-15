@@ -88,9 +88,9 @@ autoscaling:
           periodSeconds: 60
 
 pdb:
-  enabled: true  # Prefer maxUnavailable for to allow one eviction at a time.
+  enabled: true
+  maxUnavailable: 1  # Prefer maxUnavailable for to allow one eviction at a time.
   # minAvailable: 1  # Fallback used only if maxUnavailable not set
-  maxUnavailable: 1
 nodeSelector: {}
 tolerations: []
 affinity: {}
