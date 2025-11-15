@@ -4,7 +4,7 @@ image:
   # when doing real deployments / canary releases.
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: "latest"
+  tag: "0.7.2"  # x-release-please-version
   pullPolicy: IfNotPresent
   fullname: ""
 

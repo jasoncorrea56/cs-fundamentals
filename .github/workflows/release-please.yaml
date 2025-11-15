@@ -21,3 +21,4 @@ jobs:
           extra-files: |
             pyproject.toml
             helm/Chart.yaml
+            helm/values.yaml

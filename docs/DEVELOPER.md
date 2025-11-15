@@ -57,10 +57,10 @@ Add a new dependency:
 uv add ruff
 ```
 
-Refresh the lockfile:
+Refresh the lockfile with latest version of all dependencies:
 
 ```bash
-uv lock
+uv lock --upgrade
 ```
 
 Sync dependencies into the venv:
