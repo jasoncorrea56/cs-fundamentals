@@ -1,17 +1,24 @@
 image:
+  # Default bootstrap image for infra-managed installs.
+  # CI/CD will override this tag with a version-sha7 tag (i.e. 0.6.9-20f4983)
+  # when doing real deployments / canary releases.
+  # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: 0.7.2
+  tag: 0.7.2  # x-release-please-version
   pullPolicy: IfNotPresent
   fullname: ''
+
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
 replicaCount: 2
+
 service:
   type: ClusterIP
   port: 80
   targetPort: 8080
   annotations: {}
+
 probes:
   path: /api/v1/healthz
   readiness:
@@ -21,7 +28,7 @@ probes:
     failureThreshold: 3
     successThreshold: 1
   liveness:
-    initialDelaySeconds: 15
+    initialDelaySeconds: 15  # 5s slower to avoid restart flaps on cold start
     periodSeconds: 10
     timeoutSeconds: 2
     failureThreshold: 3
@@ -30,7 +37,8 @@ probes:
     enabled: true
     initialDelaySeconds: 0
     periodSeconds: 5
-    failureThreshold: 12
+    failureThreshold: 12  # ~60s to become ready before liveness kicks in
+
 ingress:
   enabled: false
   className: alb
@@ -42,12 +50,15 @@ ingress:
     alb.ingress.kubernetes.io/ssl-redirect: '443'
   hosts: []
   tls: {}
+
 serviceAccount:
   create: true
   name: csf-app
   annotations: {}
+
 podAnnotations: {}
 podLabels: {}
+
 resources:
   limits:
     cpu: 500m
@@ -55,6 +66,7 @@ resources:
   requests:
     cpu: 100m
     memory: 128Mi
+
 autoscaling:
   enabled: false
   minReplicas: 2
@@ -63,23 +75,26 @@ autoscaling:
   targetMemoryUtilizationPercentage: 80
   behavior:
     scaleUp:
-      stabilizationWindowSeconds: 30
+      stabilizationWindowSeconds: 30  # Quick to scale up
       policies:
         - type: Percent
           value: 100
           periodSeconds: 60
     scaleDown:
-      stabilizationWindowSeconds: 300
+      stabilizationWindowSeconds: 300   # Slow to scale down & avoid flapping
       policies:
         - type: Percent
           value: 50
           periodSeconds: 60
+
 pdb:
-  enabled: true
+  enabled: true  # Prefer maxUnavailable for to allow one eviction at a time.
+  # minAvailable: 1  # Fallback used only if maxUnavailable not set
   maxUnavailable: 1
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
 env:
   - name: LOG_LEVEL
     value: info
@@ -88,22 +103,28 @@ env:
       secretKeyRef:
         name: csf-db
         key: DB_URL
+
 config:
   enabled: true
   mountPath: /app/config
   data:
     APP_NAME: cs-fundamentals
     FEATURE_FLAG_EXAMPLE: 'false'
+
+# Base64-encoded values can be provided via extraManifests or directly with stringData
 secret:
   enabled: false
   stringData: {}
+
 secretsStore:
   enabled: false
   spcName: csf-db-spc
   mountPath: /mnt/secrets-store
+
 podSecurityContext:
   fsGroup: 2000
   runAsNonRoot: true
+
 containerSecurityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: false
@@ -114,12 +135,16 @@ containerSecurityContext:
       - ALL
   seccompProfile:
     type: RuntimeDefault
+
 devWritableTmp:
   enabled: true
+
 canary:
+  # When enabled, the chart will provision a parallel Deployment + Service.
+  # If weight is between 0 and 100, configure ALB weighted routing (0% = all blue, 100% = all green).
   enabled: false
   replicas: 1
-  weight: 10
+  weight: 10  # % of traffic to send to canary via ALB.
   nameSuffix: canary
   image:
     repository: ''

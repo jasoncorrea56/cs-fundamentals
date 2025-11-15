@@ -22,11 +22,14 @@
           "type": "yaml",
           "path": "helm/Chart.yaml",
           "jsonpath": "$.appVersion"
-        },
+        }
+      ],
+      "extra-file-updaters": [
         {
-          "type": "yaml",
-          "path": "helm/values.yaml",
-          "jsonpath": "$.image.tag"
+          "file": "helm/values.yaml",
+          "type": "regex",
+          "pattern": "tag:\\s*\"(?<version>[^\"]+)\"\\s*#\\s*x-release-please-version",
+          "replacement": "tag: \"${version}\"  # x-release-please-version"
         }
       ]
     }
