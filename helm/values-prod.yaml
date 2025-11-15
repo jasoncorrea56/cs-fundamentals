@@ -7,6 +7,8 @@ ingress:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
+    # Tag the ALB so Terraform can auto-discover it for alarms.
+    alb.ingress.kubernetes.io/tags: "Environment=prod,Service=cs-fundamentals"
   hosts:
     - host: placeholder.invalid   # Real host comes from deploy.yaml or Terraform
       paths:

@@ -76,6 +76,47 @@ def test_normalize_payload_fallback_other_object() -> None:
     assert out == {"context": "THING"}
 
 
+def test_normalize_payload_handles_model_dump_exception() -> None:
+    """If model_dump() raises, _normalize_payload should fall back gracefully."""
+
+    class BadV2:
+        # Looks like a v2 model (has model_dump) but it fails.
+        def model_dump(self) -> dict[str, Any]:
+            raise RuntimeError("boom from model_dump")
+
+    out = resp._normalize_payload(BadV2())
+    # We mostly care that it does NOT crash and returns a dict with 'context'
+    assert "context" in out
+    assert out["context"].__class__.__name__ == "BadV2"
+
+
+def test_normalize_payload_handles_dict_exception() -> None:
+    """If dict() raises, _normalize_payload should also fall back gracefully."""
+
+    class BadV1:
+        # Looks like a v1 model (has dict) but it fails.
+        def dict(self) -> dict[str, Any]:
+            raise RuntimeError("boom from dict")
+
+    out = resp._normalize_payload(BadV1())
+    # Again, no crash; wraps the object as context
+    assert "context" in out
+    assert out["context"].__class__.__name__ == "BadV1"
+
+
+def test_normalize_payload_sequence_of_models() -> None:
+    """Sequences (list/tuple/set) should go through the sequence branch and normalize children."""
+
+    class Child(BaseModel):
+        a: int
+
+    payload: dict[str, Any] = {
+        "items": [Child(a=1), Child(a=2)],
+    }
+    out = resp._normalize_payload(payload)
+    assert out == {"items": [{"a": 1}, {"a": 2}]}
+
+
 # ------------------------------------- _now() --------------------------------------
 
 

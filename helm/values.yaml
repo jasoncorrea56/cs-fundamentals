@@ -1,7 +1,10 @@
 image:
+  # Default bootstrap image for infra-managed installs.
+  # CI/CD will override this tag with a version-sha7 tag (i.e. 0.6.9-20f4983)
+  # when doing real deployments / canary releases.
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: "v0.6.9"
+  tag: "latest"
   pullPolicy: IfNotPresent
   fullname: ""
 

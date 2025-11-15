@@ -50,6 +50,8 @@ spec:
 
           {{- if or .Values.env $useTmp }}
           env:
+            - name: CSF_IMAGE_TAG
+              value: "{{ .Values.image.tag | default .Chart.AppVersion }}"
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 }}
             {{- end }}

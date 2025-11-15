@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter
 
 from cs_fundamentals.config import settings
@@ -29,4 +31,8 @@ async def healthz() -> dict[str, str]:
 
 @router.get("/version")
 def version() -> dict[str, str]:
-    return {"app": settings.app_name, "version": get_app_version()}
+    return {
+        "app": settings.app_name,
+        "image-tag": os.getenv("CSF_IMAGE_TAG", "unknown"),
+        "version": get_app_version(),
+    }

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "ECR image tag to deploy (i.e. v0.6.5 or a short SHA)"
+        description: "ECR image tag to deploy (i.e. 0.6.9-84c9da0 or latest)"
         required: true
         type: string
       canary_enabled:
@@ -56,12 +56,16 @@ jobs:
           {
             echo "ghcr_ref="
             echo "ghcr_latest="
-            echo "ghcr_version="
+            echo "ghcr_version_sha="
+
+            # Canonical ECR refs
             echo "ecr_ref=${ECR_REGISTRY}/${REPO}:${IMAGE_TAG}"
             echo "ecr_latest=${ECR_REGISTRY}/${REPO}:latest"
-            echo "ecr_version=${ECR_REGISTRY}/${REPO}:${IMAGE_TAG}"
+            echo "ecr_version_sha=${ECR_REGISTRY}/${REPO}:${IMAGE_TAG}"
+
+            # Raw pieces for deploy.yaml
             echo "sha="
-            echo "version=${IMAGE_TAG}"
+            echo "version_sha=${IMAGE_TAG}"
           } > image-refs.env
 
           echo "Generated image-refs.env:"

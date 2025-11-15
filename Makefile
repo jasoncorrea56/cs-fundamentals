@@ -49,9 +49,6 @@ dev-install: dev-image dev-secrets
 		-f helm/values-minikube.yaml \
 		-n $(DEV_NS) --create-namespace --wait --timeout 5m
 
-.PHONY: dev-setup
-dev-setup: dev-install
-
 init:
 	@echo "🚀 Starting local environment..."
 	make k8s-up
@@ -61,12 +58,8 @@ init:
 	make dev-namespace
 	@echo "✅ Local Dev namespace ready."
 
-	@echo "🔧 Setting up Dev secrets..."
-	make dev-secrets
-	@echo "✅ Local Dev secrets ready."
-
-	@echo "🌱 Building Dev image..."
-	make dev-image
+	@echo "🌱 Setting up Dev secrets + building & installing image..."
+	make dev-install
 	@echo "🎉 Initialization complete!"
 
 .PHONY: dev

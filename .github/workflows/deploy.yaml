@@ -99,20 +99,17 @@ jobs:
 
           echo "GHCR_REF=${ghcr_ref:-}"                 >> "$GITHUB_ENV"
           echo "GHCR_LATEST=${ghcr_latest:-}"           >> "$GITHUB_ENV"
-          echo "GHCR_VERSION=${ghcr_version:-}"         >> "$GITHUB_ENV"
           echo "GHCR_VERSION_SHA=${ghcr_version_sha:-}" >> "$GITHUB_ENV"
 
           echo "ECR_REF=${ecr_ref:-}"                   >> "$GITHUB_ENV"
           echo "ECR_LATEST=${ecr_latest:-}"             >> "$GITHUB_ENV"
-          echo "ECR_VERSION=${ecr_version:-}"           >> "$GITHUB_ENV"
           echo "ECR_VERSION_SHA=${ecr_version_sha:-}"   >> "$GITHUB_ENV"
 
           echo "SHA=${sha:-}"                           >> "$GITHUB_ENV"
-          echo "VERSION=${version:-}"                   >> "$GITHUB_ENV"
           echo "VERSION_SHA=${version_sha:-}"           >> "$GITHUB_ENV"
 
           # Version precedence: version+sha, then version, then raw sha
-          IMAGE_TAG="${version_sha:-${version:-${sha}}}"
+          IMAGE_TAG="${version_sha}"
           [ -n "${IMAGE_TAG}" ] || { echo "Missing version_sha/version/sha in image-refs"; exit 1; }
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
 
@@ -309,17 +306,81 @@ jobs:
           set -Eeuo pipefail
           echo "Running canary smoke test via Service ${APP_SERVICE_NAME}-canary..."
 
-          if ! kubectl -n "${K8S_NAMESPACE}" run canary-smoke --rm -i --restart=Never \
-                --image=curlimages/curl:8.7.1 -- \
-                sh -c 'for i in 1 2 3; do curl -fsS http://"'"${APP_SERVICE_NAME}"'-canary"/api/v1/healthz && exit 0 || sleep 3; done; exit 1'; then
-            echo "Canary smoke test FAILED - disabling canary and leaving stable unchanged"
-            helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
-              --namespace "${K8S_NAMESPACE}" \
-              --reuse-values \
-              --set canary.enabled=false \
-              --set canary.replicas=0
-            exit 1
-          fi
+          # Clean up any prior run
+          kubectl -n "${K8S_NAMESPACE}" delete pod canary-smoke --ignore-not-found
+
+          # Create a Pod that is explicitly PodSecurity 'restricted' compliant
+          kubectl -n "${K8S_NAMESPACE}" apply -f - <<EOF
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: canary-smoke
+            labels:
+              app: canary-smoke
+          spec:
+            restartPolicy: Never
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - name: canary-smoke
+                image: curlimages/curl:8.7.1
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  readOnlyRootFilesystem: true
+                  seccompProfile:
+                    type: RuntimeDefault
+                  capabilities:
+                    drop:
+                      - ALL
+                command:
+                  - sh
+                  - -c
+                  - |
+                    for i in 1 2 3; do
+                      curl -fsS "http://${APP_SERVICE_NAME}-canary/api/v1/healthz" && exit 0
+                      sleep 3
+                    done
+                    exit 1
+          EOF
+
+          echo "Waiting for canary-smoke Pod to complete..."
+          for i in {1..20}; do
+            phase=$(kubectl -n "${K8S_NAMESPACE}" get pod canary-smoke -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+            echo "canary-smoke phase=${phase} (attempt ${i})"
+
+            if [ "${phase}" = "Succeeded" ]; then
+              echo "Canary smoke test PASSED."
+              kubectl -n "${K8S_NAMESPACE}" delete pod canary-smoke --ignore-not-found
+              exit 0
+            fi
+
+            if [ "${phase}" = "Failed" ]; then
+              echo "Canary smoke test pod FAILED; logs:"
+              kubectl -n "${K8S_NAMESPACE}" logs canary-smoke || true
+              break
+            fi
+
+            sleep 3
+          done
+
+          echo "Canary smoke test FAILED - disabling canary and leaving stable unchanged"
+          kubectl -n "${K8S_NAMESPACE}" logs canary-smoke || true
+
+          helm upgrade "${HELM_RELEASE}" "${HELM_CHART_DIR}" \
+            --namespace "${K8S_NAMESPACE}" \
+            --reuse-values \
+            --set canary.enabled=false \
+            --set canary.replicas=0
+
+          kubectl -n "${K8S_NAMESPACE}" delete pod canary-smoke --ignore-not-found || true
+          exit 1
 
       - name: Promote canary / cutover traffic
         if: ${{ steps.cfg.outputs.canary_enabled == 'true' && steps.cfg.outputs.deploy_env == 'prod' }}
