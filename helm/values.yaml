@@ -42,12 +42,13 @@ probes:
 ingress:
   enabled: false
   className: alb
+  certificateArn: ""
+  sslRedirectEnabled: true
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
   hosts: []
   tls: {}
 
@@ -117,7 +118,7 @@ secret:
   stringData: {}
 
 secretsStore:
-  enabled: false
+  enabled: true
   spcName: csf-db-spc
   mountPath: /mnt/secrets-store
 
