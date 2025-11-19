@@ -58,17 +58,17 @@ Minikube/Dev:
 
 Production is fronted by an **AWS Application Load Balancer (ALB)**:
 
-- **Domain**: e.g. `csf.example-domain.com`
+- **Domain**: e.g. `csf.jasoncorrea.dev`
 - **TLS**: via ACM certificate
 - ALB Ingress annotations & hostnames are injected by Terraform + CI (see [CI_CD.md](CI_CD.md)).
 
 Key properties:
 
 - Terraform **`app_chart` module** passes:
-  - `var.app_domain = "csf.example-domain.com"`
+  - `var.app_domain = "csf.jasoncorrea.dev"`
   - `var.acm_certificate_arn = module.acm_csf.certificate_arn`
 - CI (`deploy.yaml`) wires these into the `helm upgrade` command:
-  - `--set ingress.hosts[0].host=csf.example-domain.com`
+  - `--set ingress.hosts[0].host=csf.jasoncorrea.dev`
   - ALB/ACM annotations for TLS termination.
 
 Helm defaults in `values-prod.yaml` keep:

@@ -12,12 +12,14 @@ ingress:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
+    # Dev ALB Security Group
+    alb.ingress.kubernetes.io/security-groups: "sg-0acb59a44ebe7bdaf"
     # Dev: HTTP-only (no ACM / TLS)
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     # Tag the ALB so Terraform can auto-discover it for alarms.
     alb.ingress.kubernetes.io/tags: "Environment=dev,Service=cs-fundamentals"
   hosts:
-    - host: csf-dev.dawnforgegaming.com
+    - host: csf-dev.jasoncorrea.dev
       paths:
         - path: /
           pathType: Prefix
