@@ -13,7 +13,7 @@ ingress:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
     # Dev ALB Security Group
-    alb.ingress.kubernetes.io/security-groups: "sg-0acb59a44ebe7bdaf"
+    alb.ingress.kubernetes.io/security-groups: "sg-00fb8da740eb6fe3b"
     # Dev: HTTP-only (no ACM / TLS)
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     # Tag the ALB so Terraform can auto-discover it for alarms.
