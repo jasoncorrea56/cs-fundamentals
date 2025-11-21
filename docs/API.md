@@ -8,7 +8,7 @@ Base URL examples:
 
 - Local (uvicorn / Docker): `http://127.0.0.1:8080`
 - Local k8s (port‑forward/NodePort/Ingress): varies per setup
-- Prod EKS: `https://csf.example-domain.com` (behind ALB + TLS)
+- Prod EKS: `https://csf.jasoncorrea.dev` (behind ALB + TLS)
 
 ---
 

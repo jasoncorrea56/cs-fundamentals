@@ -4,7 +4,7 @@ image:
   # when doing real deployments / canary releases.
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: 0.7.2  # x-release-please-version
+  tag: 0.7.3  # x-release-please-version
   pullPolicy: IfNotPresent
   fullname: ''
 
@@ -42,12 +42,13 @@ probes:
 ingress:
   enabled: false
   className: alb
+  certificateArn: ""
+  sslRedirectEnabled: true
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
   hosts: []
   tls: {}
 
@@ -117,7 +118,7 @@ secret:
   stringData: {}
 
 secretsStore:
-  enabled: false
+  enabled: true
   spcName: csf-db-spc
   mountPath: /mnt/secrets-store
 

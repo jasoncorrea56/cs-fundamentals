@@ -19,6 +19,12 @@ metadata:
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+    {{- if .Values.ingress.sslRedirectEnabled }}
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    {{- if .Values.ingress.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn | quote }}
+    {{- end }}
+    {{- end }}
     {{- if $useWeighted }}
     alb.ingress.kubernetes.io/actions.csf-weighted: >
       {"Type":"forward","ForwardConfig":{"TargetGroups":[
@@ -54,8 +60,4 @@ spec:
               {{- end }}
           {{- end }}
     {{- end }}
-  {{- if .Values.ingress.tls }}
-  tls:
-    {{- toYaml .Values.ingress.tls | nindent 4 }}
-  {{- end }}
 {{- end }}

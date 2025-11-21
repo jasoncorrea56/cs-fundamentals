@@ -125,7 +125,7 @@ Instead, it is dynamically injected during deployment:
 
 | Layer               | Source              | Responsibility |
 |---------------------|---------------------|----------------|
-| **Terraform**       | `modules/app_chart` | Passes `var.app_domain` (`csf.example-domain.com`) and ACM certificate ARN directly into the Helm release. Ensures the Ingress always points to the correct domain and certificate. |
+| **Terraform**       | `modules/app_chart` | Passes `var.app_domain` (`csf.jasoncorrea.dev`) and ACM certificate ARN directly into the Helm release. Ensures the Ingress always points to the correct domain and certificate. |
 | **CI/CD (GitHub)**  | `deploy.yaml`       | During the `helm upgrade` step, overrides Ingress host and annotations for the current environment (`DEPLOY_ENV=prod`). |
 | **Helm defaults**   | `helm/values-prod.yaml` | Minimal fallback (`ingress.enabled=true`, `className=alb`) for local or test deployments. Host values are placeholders only. |
 
@@ -136,8 +136,8 @@ Instead, it is dynamically injected during deployment:
 | Layer                     | Source of Truth         | Purpose                                   | Example Override |
 |---------------------------|-------------------------|-------------------------------------------|------------------|
 | **Helm (values-prod.yaml)** | `helm/values-prod.yaml` | Baseline chart config for local/test.     | `ingress.enabled=true`, `className=alb` |
-| **CI/CD (GitHub Actions)**  | `.github/workflows/deploy.yaml` | Overrides hosts/annotations per env. | `--set ingress.hosts[0].host=csf.example-domain.com` |
-| **Terraform (app_chart)**   | `infra/envs/prod/main.tf` | Authoritative domain & ACM wiring.      | `var.app_domain = "csf.example-domain.com"`; `var.acm_certificate_arn = module.acm_csf.certificate_arn` |
+| **CI/CD (GitHub Actions)**  | `.github/workflows/deploy.yaml` | Overrides hosts/annotations per env. | `--set ingress.hosts[0].host=csf.jasoncorrea.dev` |
+| **Terraform (app_chart)**   | `infra/envs/prod/main.tf` | Authoritative domain & ACM wiring.      | `var.app_domain = "csf.jasoncorrea.dev"`; `var.acm_certificate_arn = module.acm_csf.certificate_arn` |
 
 ---
 
