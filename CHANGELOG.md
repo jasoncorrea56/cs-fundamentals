@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.2...v0.8.0) (2025-11-24)
+
+
+### Features
+
+* **helm:** add dev values and refine ALB ingress for EKS dev env ([8db012a](https://github.com/jasoncorrea56/cs-fundamentals/commit/8db012a5ebc06ab06522db950514eadb7e9bdf0c))
+* **helm:** finalize dev ingress via ALB on csf-dev.jasoncorrea.dev ([959b9c6](https://github.com/jasoncorrea56/cs-fundamentals/commit/959b9c6c6208a1651774653fae43877ae2397aba))
+
 ## [0.7.2](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.1...v0.7.2) (2025-11-15)
 
 
