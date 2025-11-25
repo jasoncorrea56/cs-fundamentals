@@ -64,6 +64,9 @@ docker compose --profile prod up
 See [LOCAL-K8S.md](LOCAL-K8S.md) for detailed steps. At a high level:
 
 ```bash
+# Set k8s context to local
+kubectl config use-context minikube
+
 # One-time-ish env bootstrap
 make init        # starts Minikube, creates dev namespace, secrets, dev image
 
