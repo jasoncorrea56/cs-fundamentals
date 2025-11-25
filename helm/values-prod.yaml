@@ -1,3 +1,5 @@
+# Prod overlay applied on top of values.yaml
+
 replicaCount: 2
 
 ingress:
@@ -10,10 +12,12 @@ ingress:
     # Tag the ALB so Terraform can auto-discover it for alarms.
     alb.ingress.kubernetes.io/tags: "Environment=prod,Service=cs-fundamentals"
   hosts:
-    - host: placeholder.invalid   # Real host comes from deploy.yaml or Terraform
+    - host: placeholder.invalid   # Real host via TF/CI --set or values override
       paths:
         - path: /
           pathType: Prefix
+  tls:
+    enabled: true
 
 serviceAccount:
   create: false  # TF creates SA with IRSA (secret_sync module)
@@ -51,7 +55,6 @@ containerSecurityContext:
 devWritableTmp:
   enabled: true
 
-# Non-secret app config (aligns with pydantic env names)
 config:
   enabled: true
   data:
