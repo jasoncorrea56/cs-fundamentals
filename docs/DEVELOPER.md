@@ -269,6 +269,7 @@ uv run mypy .
 For a quick dev run:
 
 ```bash
+kubectl config use-context minikube
 make init
 make dev
 ```

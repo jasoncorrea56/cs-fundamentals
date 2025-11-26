@@ -30,6 +30,7 @@ cp local.secret.env deploy/k8s/overlays/dev/.local.secret.env
 Run:
 
 ```bash
+kubectl config use-context minikube
 make init
 ```
 

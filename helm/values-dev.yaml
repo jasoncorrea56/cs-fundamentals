@@ -1,39 +1,30 @@
-image:
-  tag: 0.7.4-db9f48d
+# Dev overlay applied on top of values.yaml
 
 replicaCount: 1
 
+image:
+  # For dev we usually override tag via CI or manually,
+  # but this can be a reasonable default:
+  tag: 0.7.5
+
 ingress:
   enabled: true
-  className: alb
-  certificateArn: ""
-  sslRedirectEnabled: false
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
-    # Dev ALB Security Group
-    alb.ingress.kubernetes.io/security-groups: "sg-00fb8da740eb6fe3b"
-    # Dev: HTTP-only (no ACM / TLS)
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-    # Tag the ALB so Terraform can auto-discover it for alarms.
     alb.ingress.kubernetes.io/tags: "Environment=dev,Service=cs-fundamentals"
   hosts:
     - host: csf-dev.jasoncorrea.dev
       paths:
         - path: /
           pathType: Prefix
-  listenPorts: '[{"HTTP":80}]'
   tls:
-    enabled: false
-    acmCertificateArn: ""
+    enabled: true
 
 serviceAccount:
   create: false  # TF creates SA with IRSA (secret_sync module)
   name: csf-app
 
 secretsStore:
-  enabled: false
+  enabled: true
   spcName: csf-db-spc  # Match TF secret_sync.spc_name
   mountPath: /mnt/secrets-store
 
@@ -49,22 +40,6 @@ env:
         name: csf-db
         key: DB_URL
 
-# Harden container FS
-containerSecurityContext:
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 1000
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop: ["ALL"]
-  seccompProfile:
-    type: RuntimeDefault
-
-# Keep a tmp dir available (read-only root FS needs it)
-devWritableTmp:
-  enabled: true
-
-# Non-secret app config (aligns with pydantic env names)
 config:
   enabled: true
   data:

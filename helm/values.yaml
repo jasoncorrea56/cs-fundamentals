@@ -1,16 +1,17 @@
+# Base values.yaml
+
 image:
   # Default bootstrap image for infra-managed installs.
-  # CI/CD will override this tag with a version-sha7 tag (i.e. 0.6.9-20f4983)
-  # when doing real deployments / canary releases.
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: 0.7.4  # x-release-please-version
+  tag: 0.7.5  # x-release-please-version
   pullPolicy: IfNotPresent
-  fullname: ''
+  fullname: ""
 
 imagePullSecrets: []
-nameOverride: ''
-fullnameOverride: ''
+nameOverride: ""
+fullnameOverride: ""
+
 replicaCount: 2
 
 service:
@@ -42,15 +43,15 @@ probes:
 ingress:
   enabled: false
   className: alb
-  certificateArn: ""
+  certificateArn: ""           # Env overlays or TF/CI set this
   sslRedirectEnabled: true
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /api/v1/healthz
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-  hosts: []
-  tls: {}
+  hosts: []                    # Env overlays / TF fill host(s)
+  tls: {}                      # Env overlays / TF can override if needed
 
 serviceAccount:
   create: true
@@ -99,6 +100,8 @@ affinity: {}
 env:
   - name: LOG_LEVEL
     value: info
+  - name: LOG_FORMAT
+    value: text
   - name: DB_URL
     valueFrom:
       secretKeyRef:
@@ -110,7 +113,7 @@ config:
   mountPath: /app/config
   data:
     APP_NAME: cs-fundamentals
-    FEATURE_FLAG_EXAMPLE: 'false'
+    FEATURE_FLAG_EXAMPLE: "false"
 
 # Base64-encoded values can be provided via extraManifests or directly with stringData
 secret:
@@ -128,7 +131,7 @@ podSecurityContext:
 
 containerSecurityContext:
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
   capabilities:
@@ -148,8 +151,8 @@ canary:
   weight: 10  # % of traffic to send to canary via ALB.
   nameSuffix: canary
   image:
-    repository: ''
-    tag: ''
+    repository: ""
+    tag: ""
   env: []
   podLabels: {}
   podAnnotations: {}
