@@ -4,7 +4,7 @@ image:
   # Default bootstrap image for infra-managed installs.
   # repository: ghcr.io/jasoncorrea56/cs-fundamentals
   repository: 948319129176.dkr.ecr.us-west-2.amazonaws.com/cs-fundamentals
-  tag: 0.7.5  # x-release-please-version
+  tag: 0.7.6  # x-release-please-version
   pullPolicy: IfNotPresent
   fullname: ""
 
