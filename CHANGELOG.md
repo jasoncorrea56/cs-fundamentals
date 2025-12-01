@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.0](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.2...v0.8.0) (2025-12-01)
+
+
+### Features
+
+* add QA environment support and update licensing ([7776c05](https://github.com/jasoncorrea56/cs-fundamentals/commit/7776c0564a331a5e2cf15f3295c2a50c09d93717))
+* **helm:** add dev values and refine ALB ingress for EKS dev env ([8db012a](https://github.com/jasoncorrea56/cs-fundamentals/commit/8db012a5ebc06ab06522db950514eadb7e9bdf0c))
+* **helm:** consolidate base+env values and standardize TLS ([da221d6](https://github.com/jasoncorrea56/cs-fundamentals/commit/da221d6c487db796b0bc9d7087c8801ea3cba871))
+* **helm:** finalize dev ingress via ALB on csf-dev.jasoncorrea.dev ([959b9c6](https://github.com/jasoncorrea56/cs-fundamentals/commit/959b9c6c6208a1651774653fae43877ae2397aba))
+
 ## [0.7.2](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.1...v0.7.2) (2025-11-15)
 
 
