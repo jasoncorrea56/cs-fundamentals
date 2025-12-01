@@ -14,6 +14,7 @@
 ![AWS ECR](https://img.shields.io/badge/AWS-ECR-orange?logo=amazon-aws&logoColor=white)
 ![AWS EKS](https://img.shields.io/badge/AWS-EKS-orange?logo=amazon-eks&logoColor=white)
 ![Terraform](https://img.shields.io/badge/Terraform-modular-7B42BC?logo=terraform&logoColor=white)
+![License: Apache-2.0 OR MIT](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-green)
 
 **cs-fundamentals** is a practice and reference project for computer science fundamentals:
 
@@ -91,3 +92,14 @@ For specific commands and detailed flows, follow the links in the documentation 
 ## Contributing
 
 This project is not open to external contributions. It is maintained as a personal and portfolio codebase.
+
+## License
+
+This project is **dual-licensed** under:
+
+- **Apache License 2.0**
+- **MIT License**
+
+You may choose **either** license when using this software.
+
+See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.

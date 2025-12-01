@@ -1,18 +1,18 @@
-# Dev overlay applied on top of values.yaml
+# QA overlay applied on top of values.yaml
 
 replicaCount: 1
 
 image:
-  # For dev we usually override tag via CI or manually,
+  # For qa we usually override tag via CI or manually,
   # but this can be a reasonable default:
   tag: 0.7.7
 
 ingress:
   enabled: true
   annotations:
-    alb.ingress.kubernetes.io/tags: "Environment=dev,Service=cs-fundamentals"
+    alb.ingress.kubernetes.io/tags: "Environment=qa,Service=cs-fundamentals"
   hosts:
-    - host: csf-dev.jasoncorrea.dev
+    - host: csf-qa.jasoncorrea.dev
       paths:
         - path: /
           pathType: Prefix
@@ -44,7 +44,7 @@ config:
   enabled: true
   data:
     APP_NAME: "CS Fundamentals API"
-    ENV: "dev"
+    ENV: "qa"
     PORT: "8080"
     LOG_LEVEL: "INFO"
     LOG_FORMAT: "json"
