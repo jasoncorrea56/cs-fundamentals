@@ -26,7 +26,7 @@ jobs:
     name: Build, Scan & Push Image
     uses: ./.github/workflows/build.yaml
     with:
-      push_latest: "false"
+      push_latest: false
       # ECR settings default from secrets if not provided explicitly
     secrets: inherit
 
@@ -45,9 +45,9 @@ jobs:
       helm_chart_dir: ./helm
 
       # Canary disabled for Dev/QA; prod canary is via manual deploy
-      canary_enabled: "false"
+      canary_enabled: false
       canary_weight: "0"
       canary_image_tag: ""
 
-      force_prod: "false"
+      force_prod: false
     secrets: inherit
