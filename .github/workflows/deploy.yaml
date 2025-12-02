@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       deploy_env:
-        description: "Target environment (dev|prod)"
+        description: "Target environment (dev|qa|prod)"
         required: true
         type: string
       app_namespace:
@@ -38,7 +38,6 @@ on:
         required: false
         type: string
         default: ""
-      # Allow prod deploy from branch (testing only)
       force_prod:
         description: "Force prod environment even if not main/tag"
         required: false
@@ -79,8 +78,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # Respect caller env or force_prod in the UI
-    environment: ${{ (inputs.force_prod == 'true' && 'prod') || (inputs.deploy_env == 'prod' && 'prod') || 'dev' }}
+    # Use GitHub Environments: dev | qa | prod
+    # force_prod=true overrides deploy_env to prod.
+    environment: ${{ inputs.force_prod == 'true' && 'prod' || inputs.deploy_env }}
 
     steps:
       - name: Checkout Repo at Built SHA
@@ -224,11 +224,16 @@ jobs:
             --set serviceAccount.create=false
           )
 
-          # Prod ingress wiring
-          if [ "${DEPLOY_ENV}" = "prod" ]; then
+          # Environment-specific overlays
+          if [ "${DEPLOY_ENV}" = "dev" ]; then
+            HELM_ARGS+=( -f "${HELM_CHART_DIR}/values-dev.yaml" )
+          elif [ "${DEPLOY_ENV}" = "qa" ]; then
+            HELM_ARGS+=( -f "${HELM_CHART_DIR}/values-qa.yaml" )
+          elif [ "${DEPLOY_ENV}" = "prod" ]; then
             [ -n "${APP_DOMAIN:-}" ] && [ -n "${ACM_CERT_ARN:-}" ] || {
               echo "APP_DOMAIN/ACM_CERT_ARN missing for prod"; exit 1;
             }
+
             HELM_ARGS+=(
               -f "${HELM_CHART_DIR}/values-prod.yaml"
               --set ingress.enabled=true

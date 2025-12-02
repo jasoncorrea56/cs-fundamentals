@@ -3,8 +3,17 @@ name: CD - Manual Deploy to EKS
 on:
   workflow_dispatch:
     inputs:
+      deploy_env:
+        description: "Target environment (dev|qa|prod)"
+        required: true
+        type: choice
+        options:
+          - "dev"
+          - "qa"
+          - "prod"
+        default: "prod"
       image_tag:
-        description: "ECR image tag to deploy (i.e. 0.6.9-84c9da0 or latest)"
+        description: "ECR image tag to deploy (i.e. 0.7.6-a71e692)"
         required: true
         type: string
       canary_enabled:
@@ -21,13 +30,13 @@ on:
         type: string
         default: "0"
       force_prod:
-        description: "Force prod routing (normally true here)"
+        description: "Force prod routing (normally false - prod should come from deploy_env=prod)"
         required: false
         type: choice
         options:
           - "false"
           - "true"
-        default: "true"
+        default: "false"
 
 permissions:
   contents: read
@@ -52,7 +61,7 @@ jobs:
             exit 1
           fi
 
-          # This mimics build.yaml's image-refs.env structure enough for deploy.yaml
+          # Mimic build.yaml's image-refs.env structure enough for deploy.yaml
           {
             echo "ghcr_ref="
             echo "ghcr_latest="
@@ -79,23 +88,21 @@ jobs:
           retention-days: 3
 
   deploy:
-    name: Deploy existing image to EKS (prod)
+    name: Deploy existing image to EKS
     needs: prepare-image-refs
     uses: ./.github/workflows/deploy.yaml
     with:
-      deploy_env: prod
+      deploy_env:   ${{ inputs.deploy_env }}
       app_namespace: csf
-      helm_release: csf
+      helm_release:  csf
       helm_chart_dir: ./helm
 
       # Canary / Blue-Green controls:
       # - canary_enabled=true, canary_weight=0 -> stage-only
       # - canary_enabled=true, canary_weight>0 -> canary / blue-green behavior
-      canary_enabled: ${{ inputs.canary_enabled }}
-      canary_weight:  ${{ inputs.canary_weight }}
-      # Let deploy.yaml default canary_image_tag to IMAGE_TAG from image-refs.env
+      canary_enabled:   ${{ inputs.canary_enabled }}
+      canary_weight:    ${{ inputs.canary_weight }}
       canary_image_tag: ''
 
-      # Still pass through force_prod, but for this workflow it's basically always prod
       force_prod: ${{ inputs.force_prod }}
     secrets: inherit
