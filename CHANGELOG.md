@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.8.0](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.2...v0.8.0) (2025-12-02)
+
+
+### Features
+
+* add QA environment support and update licensing ([7776c05](https://github.com/jasoncorrea56/cs-fundamentals/commit/7776c0564a331a5e2cf15f3295c2a50c09d93717))
+* **ci:** implement unified 3-env CI/CD (Dev/QA/Prod) with PR-only CI, push-based CD, and deploy-only manual workflow ([08b5423](https://github.com/jasoncorrea56/cs-fundamentals/commit/08b5423341d2eab9e78433d31f2ced73cb4d9a33))
+* **helm:** add dev values and refine ALB ingress for EKS dev env ([8db012a](https://github.com/jasoncorrea56/cs-fundamentals/commit/8db012a5ebc06ab06522db950514eadb7e9bdf0c))
+* **helm:** consolidate base+env values and standardize TLS ([da221d6](https://github.com/jasoncorrea56/cs-fundamentals/commit/da221d6c487db796b0bc9d7087c8801ea3cba871))
+* **helm:** finalize dev ingress via ALB on csf-dev.jasoncorrea.dev ([959b9c6](https://github.com/jasoncorrea56/cs-fundamentals/commit/959b9c6c6208a1651774653fae43877ae2397aba))
+
+
+### Bug Fixes
+
+* include environment overlays in CD Helm args ([9216d27](https://github.com/jasoncorrea56/cs-fundamentals/commit/9216d272df0a461844332feb20c3d0c18fa1e898))
+* remove quotes ([9ea6a6a](https://github.com/jasoncorrea56/cs-fundamentals/commit/9ea6a6a6d8d3457204c4fa48f411952577f8186d))
+
+
+### Documentation
+
+* updated CI/CD doc ([e9b0533](https://github.com/jasoncorrea56/cs-fundamentals/commit/e9b0533ba1aee0d092fb278bd5e26009eb090539))
+
 ## [0.7.2](https://github.com/jasoncorrea56/cs-fundamentals/compare/v0.7.1...v0.7.2) (2025-11-15)
 
 
