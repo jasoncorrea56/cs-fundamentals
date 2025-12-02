@@ -224,11 +224,16 @@ jobs:
             --set serviceAccount.create=false
           )
 
-          # Prod ingress wiring
-          if [ "${DEPLOY_ENV}" = "prod" ]; then
+          # Environment-specific overlays
+          if [ "${DEPLOY_ENV}" = "dev" ]; then
+            HELM_ARGS+=( -f "${HELM_CHART_DIR}/values-dev.yaml" )
+          elif [ "${DEPLOY_ENV}" = "qa" ]; then
+            HELM_ARGS+=( -f "${HELM_CHART_DIR}/values-qa.yaml" )
+          elif [ "${DEPLOY_ENV}" = "prod" ]; then
             [ -n "${APP_DOMAIN:-}" ] && [ -n "${ACM_CERT_ARN:-}" ] || {
               echo "APP_DOMAIN/ACM_CERT_ARN missing for prod"; exit 1;
             }
+
             HELM_ARGS+=(
               -f "${HELM_CHART_DIR}/values-prod.yaml"
               --set ingress.enabled=true
