@@ -1,0 +1,53 @@
+# This workflow handles CI/CD on push:
+# - Push to any non-main branch -> build, scan, push image -> deploy to Dev
+# - Push to main -> build, scan, push image -> deploy to QA
+
+name: CD - Build & Deploy (Dev/QA)
+
+on:
+  push:
+    branches:
+      - '**'        # All branches, including main
+    tags-ignore:
+      - '**'        # Explicitly ignore tags here
+
+concurrency:
+  group: build-and-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+
+jobs:
+  build-and-push:
+    name: Build, Scan & Push Image
+    uses: ./.github/workflows/build.yaml
+    with:
+      push_latest: "false"
+      # ECR settings default from secrets if not provided explicitly
+    secrets: inherit
+
+  deploy:
+    name: Deploy to Dev/QA
+    needs: [build-and-push]
+    # No prod deploys from pushes – prod is manual only
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      # Map git ref to deploy environment:
+      # - main  -> qa
+      # - other -> dev
+      deploy_env: ${{ github.ref == 'refs/heads/main' && 'qa' || 'dev' }}
+      app_namespace: csf
+      helm_release: csf
+      helm_chart_dir: ./helm
+
+      # Canary disabled for Dev/QA; prod canary is via manual deploy
+      canary_enabled: "false"
+      canary_weight: "0"
+      canary_image_tag: ""
+
+      force_prod: "false"
+    secrets: inherit
