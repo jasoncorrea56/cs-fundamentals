@@ -47,9 +47,9 @@ curl -s http://127.0.0.1:8080/api/v1/healthz | jq
 
 For richer local/dev flows (Minikube, Skaffold, & Makefile helpers), see:
 
-- [RUNBOOK.md](RUNBOOK.md) - Run the service and call the API
-- [LOCAL-K8S.md](LOCAL-K8S.md) - Minikube + Skaffold workflow
-- [DEVELOPER.md](DEVELOPER.md) - Full local dev environment
+- [RUNBOOK.md](docs/RUNBOOK.md) - Run the service and call the API
+- [LOCAL-K8S.md](docs/LOCAL-K8S.md) - Minikube + Skaffold workflow
+- [DEVELOPER.md](docs/DEVELOPER.md) - Full local dev environment
 
 ---
 
