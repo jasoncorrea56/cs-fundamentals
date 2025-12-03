@@ -5,7 +5,7 @@ replicaCount: 1
 image:
   # For qa we usually override tag via CI or manually,
   # but this can be a reasonable default:
-  tag: 0.7.7
+  tag: 0.7.8
 
 ingress:
   enabled: true
