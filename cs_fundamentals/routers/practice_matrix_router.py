@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import Any, cast, TYPE_CHECKING
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
@@ -9,7 +9,6 @@ from cs_fundamentals.core.handler_factory import make_submit_handler_from_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
-    from typing import Any
 
 
 class MatrixSubmission(BaseModel):

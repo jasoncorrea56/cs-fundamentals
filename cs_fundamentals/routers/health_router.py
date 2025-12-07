@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import os
+from typing import Any  # noqa: TC003
 
 from fastapi import APIRouter
 
 from cs_fundamentals.config import settings
 from cs_fundamentals.core.utility import get_app_version
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any
 
 router = APIRouter(tags=["Health"])
 
