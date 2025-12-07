@@ -143,5 +143,8 @@ trivy-fs.sarif
 .local.secret.env
 deploy/k8s/overlays/dev/.local.secret.env
 
+# VSCode
+.vscode/
+
 # Zipfiles
 *.zip
